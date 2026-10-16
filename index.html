@@ -2,82 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>thing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>browser</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 20px;
-      background-color: #222;
-      color: white;
+      padding: 0;
     }
-    .search-box {
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, blinkmacsystemfont, "segoe ui", roboto, helvetica, arial, sans-serif;
+      background-color: #0f0f11;
+      color: #e4e4e7;
+    }
+    .app-container {
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
     }
-    input {
+    .viewport {
       flex: 1;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
+      width: 100%;
+      height: 100%;
       border: none;
+      background-color: #ffffff;
     }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background-color: #de5833;
-      color: white;
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background-color: #121214;
+      border-top: 1px solid #27272a;
+    }
+    .url-input {
+      flex: 1;
+      background-color: #3f3f46;
+      border: 1px solid #52525b;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #f4f4f5;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .url-input:focus {
+      border-color: #71717a;
+    }
+    .selector {
+      background-color: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #a1a1aa;
+      font-size: 13px;
+      outline: none;
       cursor: pointer;
-      font-weight: bold;
     }
-    #results {
-      background: white;
-      color: black;
-      padding: 20px;
-      border-radius: 8px;
-      min-height: 400px;
-      overflow: auto;
+    .go-btn {
+      background-color: #f4f4f5;
+      color: #09090b;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+    .go-btn:hover {
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
 
-  <h1>test</h1>
-
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="url thing!!!">
-    <button onclick="doSearch()">search</button>
-  </div>
-
-  <div id="results">
-    results will be here
+  <div class="app-container">
+    <iframe id="browserFrame" class="viewport" src="about:blank"></iframe>
+    <div class="nav-bar">
+      <select id="modeSelector" class="selector">
+        <option value="desktop">profile: desktop chrome</option>
+        <option value="mobile">profile: mobile iphone</option>
+        <option value="stealth">profile: stealth mode</option>
+      </select>
+      <input type="text" id="addressBar" class="url-input" placeholder="type a url or search query..." autofocus>
+      <button onclick="navigate()" class="go-btn">go</button>
+    </div>
   </div>
 
   <script>
-    async function doSearch() {
-      const query = document.getElementById('searchInput').value;
-      const resultsDiv = document.getElementById('results');
+    const addressBar = document.getElementById('addressBar');
+    const browserFrame = document.getElementById('browserFrame');
+    const modeSelector = document.getElementById('modeSelector');
 
-      if (!query) return;
+    addressBar.addEventListener('keypress', function(e) {
+      if (e.key === 'enter') {
+        navigate();
+      }
+    });
 
-      resultsDiv.innerHTML = "Loading...";
+    function navigate() {
+      let input = addressBar.value.trim();
+      if (!input) return;
 
-      // If user typed a web link, load it using proxy. Otherwise search on DuckDuckGo!
-      let targetUrl = query;
-      if (!query.startsWith('http://') && !query.startsWith('https://')) {
-        targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      if (!/^https?:\/\//i.test(input)) {
+        if (input.includes('.') && !input.includes(' ')) {
+          input = 'https://' + input;
+        } else {
+          input = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
+        }
       }
 
-      try {
-        const response = await fetch(`/api/proxy?url=${encodeURIComponent(targetUrl)}`);
-        const html = await response.text();
-        resultsDiv.innerHTML = html;
-      } catch (error) {
-        resultsDiv.innerHTML = "<p style='color:red;'>Error loading page. Try another query or URL.</p>";
-      }
+      const selectedMode = modeSelector.value;
+      browserFrame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${selectedMode}`;
     }
   </script>
 
