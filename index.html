@@ -28,7 +28,7 @@
       z-index: 0;
       background: linear-gradient(125deg, #030305, #121218, #0a0a0f, #1a1a24);
       background-size: 400% 400%;
-      animation: glslFluid 15s ease infinite;
+      animation: glslFluid 12s ease infinite;
     }
     @keyframes glslFluid {
       0% { background-position: 0% 50%; }
@@ -54,7 +54,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease;
+      transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
     }
 
     .browser-window.floating {
@@ -137,8 +137,8 @@
       justify-content: center;
     }
     .url-input {
-      width: 340px;
-      max-width: 40vw;
+      width: 300px;
+      max-width: 35vw;
       background: transparent;
       border: none;
       padding: 6px 12px;
@@ -157,7 +157,6 @@
       cursor: pointer;
     }
 
-    /* Circular Google-style Tabs Bar */
     .tabs-bar {
       position: fixed;
       top: 15px;
@@ -192,7 +191,6 @@
       transform: scale(1.05);
     }
 
-    /* Settings Modal */
     .modal {
       display: none;
       position: fixed;
@@ -218,7 +216,6 @@
 
   <div class="fluid-bg"></div>
 
-  <!-- Circular Google-style Tabs -->
   <div class="tabs-bar" id="tabsBar">
     <div class="tab-circle active" onclick="switchTab(1)" id="tab-1">1</div>
     <div class="tab-circle" onclick="addNewTab()" title="new tab">+</div>
@@ -238,6 +235,11 @@
       <option value="desktop">desktop</option>
       <option value="mobile">mobile</option>
       <option value="stealth">incognito</option>
+    </select>
+    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
+    <select id="speedSelector" class="selector">
+      <option value="fast">fast</option>
+      <option value="strong">strong</option>
     </select>
     <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
     <button onclick="toggleStar()" class="icon-btn" id="starBtn" title="favorite">
@@ -263,10 +265,10 @@
   <script>
     let activeTabId = 1;
     let tabCount = 1;
-    let favorites = [];
 
     const addressBar = document.getElementById('addressBar');
     const modeSelector = document.getElementById('modeSelector');
+    const speedSelector = document.getElementById('speedSelector');
 
     addressBar.addEventListener('keypress', e => { if (e.key === 'Enter') navigateActiveWindow(); });
 
@@ -283,11 +285,12 @@
       }
 
       const mode = modeSelector.value;
+      const speed = speedSelector.value;
       const frame = document.getElementById(`frame-${activeTabId}`);
       const title = document.getElementById(`title-${activeTabId}`);
 
       if (frame) {
-        frame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${mode}`;
+        frame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${mode}&speed=${speed}`;
         title.innerText = input;
       }
     }
@@ -296,11 +299,9 @@
       tabCount++;
       const id = tabCount;
       
-      // Hide current window
       document.querySelectorAll('.browser-window').forEach(w => w.style.display = 'none');
       document.querySelectorAll('.tab-circle').forEach(t => t.classList.remove('active'));
 
-      // Create window
       const desktop = document.getElementById('desktopSpace');
       const win = document.createElement('div');
       win.className = 'browser-window';
@@ -313,7 +314,6 @@
       `;
       desktop.appendChild(win);
 
-      // Create tab button
       const tabsBar = document.getElementById('tabsBar');
       const tab = document.createElement('div');
       tab.className = 'tab-circle active';
@@ -338,7 +338,6 @@
       activeTabId = id;
     }
 
-    // Double tap top to split/float with strict mouseup detachment fix
     function splitToFloating(windowId) {
       const win = document.getElementById(windowId);
       if (!win.classList.contains('floating')) {
@@ -348,7 +347,6 @@
         win.style.width = '700px';
         win.style.height = '450px';
 
-        // Add close button to header since it's now floating
         const header = win.querySelector('.window-header');
         if (!header.querySelector('.win-dot')) {
           const controls = document.createElement('div');
@@ -383,6 +381,10 @@
       };
 
       document.onmouseup = function() {
+        isDragging = false;
+      };
+      
+      document.onmouseleave = function() {
         isDragging = false;
       };
     }
