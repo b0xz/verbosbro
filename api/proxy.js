@@ -16,8 +16,6 @@ export default async function handler(req, res) {
 
   try {
     const parsedUrl = new URL(targetUrl);
-    
-    // Forward incoming cookies if any
     const incomingCookies = req.headers.cookie || '';
 
     const response = await fetch(targetUrl, {
@@ -33,9 +31,9 @@ export default async function handler(req, res) {
       redirect: 'follow'
     });
 
-    const contentType = response.headers.get('content-type'] || 'application/octet-stream';
+    // FIXED: changed square bracket to parenthesis here so it doesn't crash!
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
-    // Copy set-cookie headers back if possible
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
       res.setHeader('set-cookie', setCookie);
@@ -56,7 +54,6 @@ export default async function handler(req, res) {
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
-          // Intercept all link clicks and rewrite them through the proxy
           document.addEventListener('click', function(e) {
             const anchor = e.target.closest('a');
             if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -68,7 +65,6 @@ export default async function handler(req, res) {
             }
           }, true);
 
-          // Intercept form submissions
           document.addEventListener('submit', function(e) {
             const form = e.target.closest('form');
             if (form) {
