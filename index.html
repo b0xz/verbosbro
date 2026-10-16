@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>thing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #222;
+      color: white;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background-color: #de5833;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #results {
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 8px;
+      min-height: 400px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>test</h1>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="url thing!!!">
+    <button onclick="doSearch()">search</button>
+  </div>
+
+  <div id="results">
+    results will be here
+  </div>
+
+  <script>
+    async function doSearch() {
+      const query = document.getElementById('searchInput').value;
+      const resultsDiv = document.getElementById('results');
+
+      if (!query) return;
+
+      resultsDiv.innerHTML = "Loading...";
+
+      // If user typed a web link, load it using proxy. Otherwise search on DuckDuckGo!
+      let targetUrl = query;
+      if (!query.startsWith('http://') && !query.startsWith('https://')) {
+        targetUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+      }
+
+      try {
+        const response = await fetch(`/api/proxy?url=${encodeURIComponent(targetUrl)}`);
+        const html = await response.text();
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        resultsDiv.innerHTML = "<p style='color:red;'>Error loading page. Try another query or URL.</p>";
+      }
+    }
+  </script>
+
+</body>
+</html>
