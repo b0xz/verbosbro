@@ -17,54 +17,76 @@ export default async function handler(req, res) {
   try {
     const parsedUrl = new URL(targetUrl);
     
+    // Forward incoming cookies if any
+    const incomingCookies = req.headers.cookie || '';
+
     const response = await fetch(targetUrl, {
       headers: {
         'user-agent': userAgent,
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'accept-language': 'en-us,en;q=0.9',
         'cache-control': 'no-cache',
-        'pragma': 'no-cache'
+        'pragma': 'no-cache',
+        'cookie': incomingCookies,
+        'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
       },
       redirect: 'follow'
     });
 
-    const contentType = response.headers.get('content-type') || 'text/html';
-    let body = await response.text();
+    const contentType = response.headers.get('content-type'] || 'application/octet-stream';
+
+    // Copy set-cookie headers back if possible
+    const setCookie = response.headers.get('set-cookie');
+    if (setCookie) {
+      res.setHeader('set-cookie', setCookie);
+    }
 
     res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', '*');
     res.setHeader('content-type', contentType);
     res.removeHeader('x-frame-options');
     res.removeHeader('content-security-policy');
+    res.removeHeader('x-content-type-options');
 
     if (contentType.includes('text/html')) {
+      let body = await response.text();
       const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
       
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
+          // Intercept all link clicks and rewrite them through the proxy
           document.addEventListener('click', function(e) {
             const anchor = e.target.closest('a');
-            if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
+            if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
               e.preventDefault();
-              const absoluteUrl = new URL(anchor.getAttribute('href'), document.baseURI).href;
-              window.location.href = '/api/proxy?url=' + encodeURIComponent(absoluteUrl) + '&mode=${mode}';
+              try {
+                const absoluteUrl = new URL(anchor.getAttribute('href'), document.baseURI).href;
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(absoluteUrl) + '&mode=${mode}';
+              } catch (err) {}
             }
           }, true);
 
+          // Intercept form submissions
           document.addEventListener('submit', function(e) {
             const form = e.target.closest('form');
             if (form) {
               e.preventDefault();
-              const actionUrl = new URL(form.getAttribute('action') || '', document.baseURI).href;
-              const formData = new FormData(form);
-              const params = new URLSearchParams(formData).toString();
-              
-              let finalUrl = actionUrl;
-              if (form.method.toLowerCase() === 'get' || !form.method) {
-                finalUrl += (finalUrl.includes('?') ? '&' : '?') + params;
-              }
-              
-              window.location.href = '/api/proxy?url=' + encodeURIComponent(finalUrl) + '&mode=${mode}';
+              try {
+                const actionUrl = new URL(form.getAttribute('action') || window.location.href, document.baseURI).href;
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData).toString();
+                
+                let finalUrl = actionUrl;
+                const method = (form.method || 'get').toLowerCase();
+                
+                if (method === 'get' && params) {
+                  finalUrl += (finalUrl.includes('?') ? '&' : '?') + params;
+                }
+                
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(finalUrl) + '&mode=${mode}';
+              } catch (err) {}
             }
           }, true);
         </script>
@@ -75,9 +97,13 @@ export default async function handler(req, res) {
       } else {
         body = injectionScript + body;
       }
-    }
 
-    return res.status(200).send(body);
+      return res.status(200).send(body);
+    } else {
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      return res.status(200).send(buffer);
+    }
   } catch (error) {
     return res.status(500).send(`<h3>proxy connection error</h3><p>failed to retrieve resource: ${error.message}</p>`);
   }
