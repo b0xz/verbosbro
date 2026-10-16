@@ -18,10 +18,9 @@ export default async function handler(req, res) {
   try {
     const parsedUrl = new URL(targetUrl);
     
-    // Built-in optimization: execute asynchronous pre-flight socket setup when 'strong' is chosen to make it fast while retaining power
     const fetchHeaders = {
       'user-agent': userAgent,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-us,en;q=0.9',
       'cache-control': 'no-cache',
       'pragma': 'no-cache',
@@ -39,8 +38,7 @@ export default async function handler(req, res) {
     const response = await fetch(targetUrl, {
       headers: fetchHeaders,
       redirect: 'follow',
-      // keep connection fast and prevent hanging requests
-      signal: AbortSignal.timeout(9000) 
+      signal: AbortSignal.timeout(9500)
     });
 
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
@@ -58,7 +56,7 @@ export default async function handler(req, res) {
       const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
       if (speed === 'strong') {
-        // Advanced structural cleaning procedures to optimize rendering of complex pages
+        // Super duper strong string parsing procedures: sanitize nonces and integrity subresource checks that block iframe rendering
         body = body.replace(/integrity="[^"]*"/g, '');
         body = body.replace(/nonce="[^"]*"/g, '');
       }
@@ -66,6 +64,7 @@ export default async function handler(req, res) {
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
+          // Super duper strong click interceptor to capture all target elements
           document.addEventListener('click', function(e) {
             const anchor = e.target.closest('a');
             if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -77,6 +76,7 @@ export default async function handler(req, res) {
             }
           }, true);
 
+          // Super duper strong form submit and search interceptor
           document.addEventListener('submit', function(e) {
             const form = e.target.closest('form');
             if (form) {
