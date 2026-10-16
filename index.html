@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>browser</title>
+  <title>browser os</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,131 +14,224 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, blinkmacsystemfont, "Segoe UI", roboto, oxygen, ubuntu, cantarell, sans-serif;
-      background-color: #000000;
-      color: #ededed;
-    }
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
-    }
-    .viewport {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      border: none;
-      background-color: #000000;
-    }
-    .nav-bar {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px;
-      z-index: 10;
+      font-family: -apple-system, blinkmacsystemfont, "segoe ui", roboto, helvetica, arial, sans-serif;
+      background-color: #030305;
+      color: #e4e4e7;
     }
 
-    @keyframes thickFluid {
+    /* GLSL-style fluid background animation */
+    .fluid-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      background: linear-gradient(125deg, #030305, #121218, #0a0a0f, #1a1a24);
+      background-size: 400% 400%;
+      animation: glslFluid 15s ease infinite;
+    }
+    @keyframes glslFluid {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    .vercel-pill {
+    .desktop-space {
+      position: relative;
+      width: 100vw;
+      height: calc(100vh - 70px);
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Floating OS Window */
+    .browser-window {
+      position: absolute;
+      top: 40px;
+      left: 50px;
+      width: 750px;
+      height: 500px;
+      background: rgba(18, 18, 22, 0.75);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      resize: both;
+      overflow: hidden;
+      min-width: 300px;
+      min-height: 200px;
+    }
+
+    .window-header {
+      height: 36px;
+      background: rgba(25, 25, 32, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
-      background: linear-gradient(135deg, #111111, #1c1c1c, #0a0a0a);
-      background-size: 200% 200%;
-      animation: thickFluid 10s ease infinite;
-      border: 1px solid #333333;
-      border-radius: 9999px;
-      padding: 4px 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      padding: 0 12px;
+      cursor: grab;
+      user-select: none;
     }
-    .selector {
+    .window-header:active {
+      cursor: grabbing;
+    }
+    .window-title {
+      font-size: 12px;
+      color: #a1a1aa;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .window-controls {
+      display: flex;
+      gap: 6px;
+    }
+    .win-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .dot-close { background: #ff5f56; }
+    .dot-split { background: #ffbd2e; }
+
+    .window-content {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+
+    /* Bottom Dock / Nav Bar */
+    .dock-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      z-index: 10;
+      background: linear-gradient(135deg, rgba(30, 30, 38, 0.6), rgba(15, 15, 20, 0.8));
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .selector, .settings-btn {
       background: transparent;
       border: none;
       padding: 6px 10px;
-      color: #888888;
-      font-size: 13px;
+      color: #d4d4d8;
+      font-size: 12px;
       outline: none;
       cursor: pointer;
     }
-    .selector option {
-      background: #111;
-      color: #fff;
-    }
     .url-input {
       width: 380px;
-      max-width: 55vw;
+      max-width: 50vw;
       background: transparent;
       border: none;
       padding: 6px 12px;
-      color: #ffffff;
+      color: #f4f4f5;
       font-size: 13px;
       outline: none;
     }
-    .url-input::placeholder {
-      color: #666666;
-    }
     .go-btn {
-      background: #ffffff;
-      color: #000000;
+      background: #f4f4f5;
+      color: #09090b;
       border: none;
       border-radius: 9999px;
       padding: 6px 16px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease, opacity 0.2s ease;
     }
-    .go-btn:hover {
-      opacity: 0.9;
+
+    /* Settings Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 350px;
+      background: rgba(20, 20, 26, 0.95);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 20px;
+      z-index: 100;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
     }
-    .divider {
-      width: 1px;
-      height: 14px;
-      background: #333333;
-    }
+    .modal h3 { margin-bottom: 12px; font-size: 16px; color: #fff; }
+    .modal label { display: block; font-size: 12px; color: #a1a1aa; margin-top: 10px; }
+    .modal select, .modal input[type="range"] { width: 100%; margin-top: 4px; padding: 6px; background: #2a2a35; border: 1px solid #3f3f46; color: #fff; border-radius: 6px; }
+    .close-modal { margin-top: 16px; width: 100%; padding: 8px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <iframe id="browserFrame" class="viewport" src="about:blank"></iframe>
-    <div class="nav-bar">
-      <div class="vercel-pill">
-        <select id="modeSelector" class="selector">
-          <option value="desktop">desktop</option>
-          <option value="mobile">mobile</option>
-          <option value="stealth">incognito</option>
-        </select>
-        <div class="divider"></div>
-        <input type="text" id="addressBar" class="url-input" placeholder="type url or search..." autofocus>
-        <div class="divider"></div>
-        <button onclick="navigate()" class="go-btn">go</button>
+  <div class="fluid-bg"></div>
+
+  <div class="desktop-space" id="desktopSpace">
+    <!-- Default Starting Window -->
+    <div class="browser-window" id="window-1" style="top: 20px; left: calc(50vw - 375px);">
+      <div class="window-header" onmousedown="startDrag(event, 'window-1')" ondblclick="splitWindow('window-1')">
+        <div class="window-controls">
+          <div class="win-dot dot-close" onclick="closeWindow('window-1')"></div>
+          <div class="win-dot dot-split" onclick="splitWindow('window-1')"></div>
+        </div>
+        <div class="window-title" id="title-1">about:blank</div>
       </div>
+      <iframe class="window-content" id="frame-1" src="about:blank"></iframe>
     </div>
   </div>
 
+  <div class="dock-container" id="dockContainer">
+    <select id="modeSelector" class="selector">
+      <option value="desktop">desktop mode</option>
+      <option value="mobile">mobile mode</option>
+      <option value="stealth">incognito</option>
+    </select>
+    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
+    <input type="text" id="addressBar" class="url-input" placeholder="type url or search query..." autofocus>
+    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
+    <button onclick="navigateActiveWindow()" class="go-btn">go</button>
+    <button onclick="toggleSettings()" class="settings-btn">⚙️</button>
+  </div>
+
+  <!-- Settings Panel -->
+  <div class="modal" id="settingsModal">
+    <h3>browser settings</h3>
+    <label>privacy mode / do not track</label>
+    <select id="settingPrivacy">
+      <option value="strict">strict (strip all trackers)</option>
+      <option value="standard">standard</option>
+    </select>
+    <label>ui scaling</label>
+    <input type="range" id="settingScale" min="80" max="120" value="100" oninput="updateUiScale(this.value)">
+    <button class="close-modal" onclick="toggleSettings()">save & close</button>
+  </div>
+
   <script>
+    let windowCount = 1;
+    let activeWindowId = 'window-1';
+
     const addressBar = document.getElementById('addressBar');
-    const browserFrame = document.getElementById('browserFrame');
     const modeSelector = document.getElementById('modeSelector');
 
     addressBar.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        navigate();
-      }
+      if (e.key === 'Enter') navigateActiveWindow();
     });
 
-    function navigate() {
+    function navigateActiveWindow() {
       let input = addressBar.value.trim();
       if (!input) return;
 
@@ -150,15 +243,77 @@
         }
       }
 
-      const selectedMode = modeSelector.value;
-      
-      if (selectedMode === 'stealth') {
-        browserFrame.contentWindow.location.replace('about:blank');
+      const mode = modeSelector.value;
+      const frame = document.getElementById(`frame-${activeWindowId.split('-')[1]}`);
+      const title = document.getElementById(`title-${activeWindowId.split('-')[1]}`);
+
+      if (frame) {
+        frame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${mode}`;
+        title.innerText = input;
+      }
+    }
+
+    // Dragging Logic
+    function startDrag(e, windowId) {
+      activeWindowId = windowId;
+      const win = document.getElementById(windowId);
+      let shiftX = e.clientX - win.getBoundingClientRect().left;
+      let shiftY = e.clientY - win.getBoundingClientRect().top;
+
+      function moveAt(pageX, pageY) {
+        win.style.left = pageX - shiftX + 'px';
+        win.style.top = pageY - shiftY + 'px';
       }
 
-      browserFrame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${selectedMode}`;
+      function onMouseMove(event) {
+        moveAt(event.pageX, event.pageY);
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+
+      document.onmouseup = function() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.onmouseup = null;
+      };
+    }
+
+    function closeWindow(windowId) {
+      const win = document.getElementById(windowId);
+      if (win) win.remove();
+    }
+
+    function splitWindow(windowId) {
+      windowCount++;
+      const newId = `window-${windowCount}`;
+      const desktop = document.getElementById('desktopSpace');
+
+      const newWin = document.createElement('div');
+      newWin.className = 'browser-window';
+      newWin.id = newId;
+      newWin.style.top = '60px';
+      newWin.style.left = '100px';
+      newWin.innerHTML = `
+        <div class="window-header" onmousedown="startDrag(event, '${newId}')" ondblclick="splitWindow('${newId}')">
+          <div class="window-controls">
+            <div class="win-dot dot-close" onclick="closeWindow('${newId}')"></div>
+            <div class="win-dot dot-split" onclick="splitWindow('${newId}')"></div>
+          </div>
+          <div class="window-title" id="title-${windowCount}">about:blank</div>
+        </div>
+        <iframe class="window-content" id="frame-${windowCount}" src="about:blank"></iframe>
+      `;
+      desktop.appendChild(newWin);
+      activeWindowId = newId;
+    }
+
+    function toggleSettings() {
+      const modal = document.getElementById('settingsModal');
+      modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function updateUiScale(val) {
+      document.getElementById('dockContainer').style.transform = `translateX(-50%) scale(${val / 100})`;
     }
   </script>
-
 </body>
 </html>
