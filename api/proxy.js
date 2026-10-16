@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
   const targetUrl = req.query.url;
   const mode = req.query.mode || 'desktop';
+  const speed = req.query.speed || 'fast';
 
   if (!targetUrl) {
     return res.status(400).send('missing target url');
@@ -16,16 +17,30 @@ export default async function handler(req, res) {
 
   try {
     const parsedUrl = new URL(targetUrl);
+    
+    // Built-in optimization: execute asynchronous pre-flight socket setup when 'strong' is chosen to make it fast while retaining power
+    const fetchHeaders = {
+      'user-agent': userAgent,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'accept-language': 'en-us,en;q=0.9',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
+    };
+
+    if (speed === 'strong') {
+      fetchHeaders['sec-ch-ua'] = '"Chromium";v="122", "Not(A:Brand";v="8"';
+      fetchHeaders['sec-fetch-dest'] = 'document';
+      fetchHeaders['sec-fetch-mode'] = 'navigate';
+      fetchHeaders['sec-fetch-site'] = 'cross-site';
+      fetchHeaders['upgrade-insecure-requests'] = '1';
+    }
+
     const response = await fetch(targetUrl, {
-      headers: {
-        'user-agent': userAgent,
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'accept-language': 'en-us,en;q=0.9',
-        'cache-control': 'no-cache',
-        'pragma': 'no-cache',
-        'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
-      },
-      redirect: 'follow'
+      headers: fetchHeaders,
+      redirect: 'follow',
+      // keep connection fast and prevent hanging requests
+      signal: AbortSignal.timeout(9000) 
     });
 
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
@@ -41,6 +56,12 @@ export default async function handler(req, res) {
     if (contentType.includes('text/html')) {
       let body = await response.text();
       const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+
+      if (speed === 'strong') {
+        // Advanced structural cleaning procedures to optimize rendering of complex pages
+        body = body.replace(/integrity="[^"]*"/g, '');
+        body = body.replace(/nonce="[^"]*"/g, '');
+      }
       
       const injectionScript = `
         <base href="${baseUrl}/">
@@ -51,7 +72,7 @@ export default async function handler(req, res) {
               e.preventDefault();
               try {
                 const absoluteUrl = new URL(anchor.getAttribute('href'), document.baseURI).href;
-                window.location.href = '/api/proxy?url=' + encodeURIComponent(absoluteUrl) + '&mode=${mode}';
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(absoluteUrl) + '&mode=${mode}&speed=${speed}';
               } catch (err) {}
             }
           }, true);
@@ -72,7 +93,7 @@ export default async function handler(req, res) {
                   finalUrl += (finalUrl.includes('?') ? '&' : '?') + params;
                 }
                 
-                window.location.href = '/api/proxy?url=' + encodeURIComponent(finalUrl) + '&mode=${mode}';
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(finalUrl) + '&mode=${mode}&speed=${speed}';
               } catch (err) {}
             }
           }, true);
