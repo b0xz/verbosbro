@@ -46,7 +46,25 @@ export default async function handler(req, res) {
             const anchor = e.target.closest('a');
             if (anchor && anchor.href && !anchor.href.startsWith('javascript:')) {
               e.preventDefault();
-              window.location.href = '/api/proxy?url=' + encodeURIComponent(anchor.href) + '&mode=${mode}';
+              const absoluteUrl = new URL(anchor.getAttribute('href'), document.baseURI).href;
+              window.location.href = '/api/proxy?url=' + encodeURIComponent(absoluteUrl) + '&mode=${mode}';
+            }
+          }, true);
+
+          document.addEventListener('submit', function(e) {
+            const form = e.target.closest('form');
+            if (form) {
+              e.preventDefault();
+              const actionUrl = new URL(form.getAttribute('action') || '', document.baseURI).href;
+              const formData = new FormData(form);
+              const params = new URLSearchParams(formData).toString();
+              
+              let finalUrl = actionUrl;
+              if (form.method.toLowerCase() === 'get' || !form.method) {
+                finalUrl += (finalUrl.includes('?') ? '&' : '?') + params;
+              }
+              
+              window.location.href = '/api/proxy?url=' + encodeURIComponent(finalUrl) + '&mode=${mode}';
             }
           }, true);
         </script>
