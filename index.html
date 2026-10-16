@@ -15,7 +15,7 @@
       height: 100%;
       overflow: hidden;
       font-family: -apple-system, blinkmacsystemfont, "segoe ui", roboto, helvetica, arial, sans-serif;
-      background-color: #0b0b0d;
+      background-color: #050507;
       color: #e4e4e7;
     }
     .app-container {
@@ -23,6 +23,7 @@
       flex-direction: column;
       height: 100vh;
       width: 100vw;
+      position: relative;
     }
     .viewport {
       flex: 1;
@@ -32,58 +33,70 @@
       background-color: #ffffff;
     }
     .nav-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 8px 16px;
-      background-color: rgba(18, 18, 20, 0.8);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      gap: 8px;
+      padding: 6px 10px;
+      background: transparent;
+      z-index: 10;
+    }
+    @keyframes fluidShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .fluid-pill {
+      background: linear-gradient(270deg, #27272a, #3f3f46, #52525b, #27272a);
+      background-size: 300% 300%;
+      animation: fluidShift 8s ease infinite;
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2);
     }
     .selector {
-      background: rgba(40, 40, 45, 0.6);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 9999px;
-      padding: 6px 14px;
-      color: #a1a1aa;
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      color: #d4d4d8;
       font-size: 12px;
       outline: none;
       cursor: pointer;
     }
     .url-input {
-      width: 450px;
-      max-width: 100%;
-      background: linear-gradient(135deg, rgba(60, 60, 65, 0.4), rgba(35, 35, 40, 0.7));
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 9999px;
-      padding: 7px 16px;
+      width: 400px;
+      max-width: 60vw;
+      background: transparent;
+      border: none;
+      padding: 8px 14px;
       color: #f4f4f5;
       font-size: 13px;
       outline: none;
-      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: all 0.2s ease;
     }
-    .url-input:focus {
-      border-color: rgba(255, 255, 255, 0.3);
-      box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.5);
+    .url-input::placeholder {
+      color: #a1a1aa;
     }
     .go-btn {
-      background: rgba(244, 244, 245, 0.9);
-      backdrop-filter: blur(8px);
-      color: #09090b;
+      background: transparent;
+      color: #f4f4f5;
       border: none;
-      border-radius: 9999px;
-      padding: 7px 16px;
+      padding: 8px 16px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: opacity 0.2s ease;
     }
     .go-btn:hover {
-      opacity: 0.85;
+      opacity: 0.7;
+    }
+    .divider {
+      width: 1px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.15);
     }
   </style>
 </head>
@@ -92,13 +105,17 @@
   <div class="app-container">
     <iframe id="browserFrame" class="viewport" src="about:blank"></iframe>
     <div class="nav-bar">
-      <select id="modeSelector" class="selector">
-        <option value="desktop">desktop</option>
-        <option value="mobile">mobile</option>
-        <option value="stealth">stealth</option>
-      </select>
-      <input type="text" id="addressBar" class="url-input" placeholder="type url or search..." autofocus>
-      <button onclick="navigate()" class="go-btn">go</button>
+      <div class="fluid-pill" style="display: flex; align-items: center;">
+        <select id="modeSelector" class="selector">
+          <option value="desktop">desktop</option>
+          <option value="mobile">mobile</option>
+          <option value="stealth">incognito</option>
+        </select>
+        <div class="divider"></div>
+        <input type="text" id="addressBar" class="url-input" placeholder="type url or search..." autofocus>
+        <div class="divider"></div>
+        <button onclick="navigate()" class="go-btn">go</button>
+      </div>
     </div>
   </div>
 
@@ -126,6 +143,11 @@
       }
 
       const selectedMode = modeSelector.value;
+      
+      if (selectedMode === 'stealth') {
+        browserFrame.contentWindow.location.replace('about:blank');
+      }
+
       browserFrame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${selectedMode}`;
     }
   </script>
