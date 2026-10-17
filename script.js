@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT SCRIPT
+   MIKSI CLIENT CONTROLLER
    =================================================== */
 const EDUCATIONAL_PRESETS = {
   none: { title: 'miksi', icon: 'https://www.bing.com/th/id/OIP.cS6NYrx4o3zr-locEJ1AxwHaHa?w=205&h=205&c=8&rs=1&qlt=90&o=6&dpr=1.1&pid=3.1&rm=2' },
@@ -37,7 +37,7 @@ function loadSavedDisguise() {
 }
 loadSavedDisguise();
 
-/* GUI Scale Settings Handler */
+/* GUI Scale Settings */
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 
@@ -50,11 +50,9 @@ const savedScale = localStorage.getItem('miksi_gui_scale') || '1';
 guiScaleSlider.value = savedScale;
 applyGuiScale(savedScale);
 
-guiScaleSlider.addEventListener('input', (e) => {
-  applyGuiScale(e.target.value);
-});
+guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
 
-/* Settings Modal Elements */
+/* Settings Modal */
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const modalCloseBtn = document.getElementById('modal-close');
@@ -82,7 +80,6 @@ presetSelect.addEventListener('change', (e) => {
 
 saveSettingsBtn.addEventListener('click', () => {
   localStorage.setItem('miksi_gui_scale', guiScaleSlider.value);
-
   const selectedPreset = presetSelect.value;
   const titleVal = customTitleInput.value.trim();
   const iconVal = customIconInput.value.trim();
@@ -103,22 +100,47 @@ saveSettingsBtn.addEventListener('click', () => {
   settingsModal.classList.remove('active');
 });
 
-/* Mode Menu Selector logic */
+/* Strength Mode & Device Type Selectors */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
 
+const deviceToggleBtn = document.getElementById('device-toggle-btn');
+const deviceMenu = document.getElementById('device-menu');
+const currentDeviceLabel = document.getElementById('current-device-label');
+const deviceWrapper = document.getElementById('device-wrapper');
+
 let currentMode = localStorage.getItem('miksi_proxy_mode') || 'fast';
+let currentDevice = localStorage.getItem('miksi_device_mode') || 'desktop';
+
 currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
+
+function updateDeviceView(device) {
+  deviceWrapper.className = 'device-viewport';
+  if (device === 'mobile') deviceWrapper.classList.add('mode-mobile');
+  if (device === 'tablet') deviceWrapper.classList.add('mode-tablet');
+}
+updateDeviceView(currentDevice);
 
 modeToggleBtn.addEventListener('click', (e) => {
   e.stopPropagation();
+  deviceMenu.classList.remove('active');
   modeMenu.classList.toggle('active');
 });
 
-document.addEventListener('click', () => modeMenu.classList.remove('active'));
+deviceToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modeMenu.classList.remove('active');
+  deviceMenu.classList.toggle('active');
+});
 
-document.querySelectorAll('.mode-option-btn').forEach(btn => {
+document.addEventListener('click', () => {
+  modeMenu.classList.remove('active');
+  deviceMenu.classList.remove('active');
+});
+
+document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     currentMode = btn.getAttribute('data-mode');
@@ -128,7 +150,18 @@ document.querySelectorAll('.mode-option-btn').forEach(btn => {
   });
 });
 
-/* Proxy Navigation & Multi-Engine Fallback Execution */
+document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentDevice = btn.getAttribute('data-device');
+    localStorage.setItem('miksi_device_mode', currentDevice);
+    currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
+    updateDeviceView(currentDevice);
+    deviceMenu.classList.remove('active');
+  });
+});
+
+/* Proxy Execution Engine */
 const proxyInput = document.getElementById('proxy-input');
 const proxyGoBtn = document.getElementById('proxy-go');
 const proxyViewer = document.getElementById('proxy-viewer');
@@ -141,22 +174,10 @@ const btnCloseViewer = document.getElementById('btn-close-viewer');
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
-
   if (/^https?:\/\//i.test(query)) {
     return query;
   }
   return 'https://' + query;
-}
-
-// Fallback Chain to prevent "Page Unavailable" errors if server API route is missing/500
-function buildProxyUrl(targetUrl) {
-  if (currentMode === 'fast') {
-    // Client-side direct public CORS proxies chain
-    return `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-  } else {
-    // Serverless route with query mode params
-    return `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
-  }
 }
 
 function launchProxy(rawInput) {
@@ -164,17 +185,14 @@ function launchProxy(rawInput) {
   if (!targetUrl) return;
 
   proxyInput.value = targetUrl;
-  const initialProxyUrl = buildProxyUrl(targetUrl);
-
-  proxyIframe.src = initialProxyUrl;
   proxyViewer.classList.add('active');
   btnCloseViewer.classList.remove('hidden');
 
-  // Backup fallback error listener
-  proxyIframe.onerror = () => {
-    console.warn('Primary proxy failed. Triggering backup fallback...');
+  if (currentMode === 'fast') {
     proxyIframe.src = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-  };
+  } else {
+    proxyIframe.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
+  }
 }
 
 proxyGoBtn.addEventListener('click', () => launchProxy(proxyInput.value));
@@ -192,4 +210,71 @@ btnCloseViewer.addEventListener('click', () => {
   proxyViewer.classList.remove('active');
   btnCloseViewer.classList.add('hidden');
   proxyIframe.src = 'about:blank';
+});
+
+/* Real-Time Local Chat Controller */
+const chatToggleBtn = document.getElementById('chat-toggle-btn');
+const chatDrawer = document.getElementById('chat-drawer');
+const chatCloseBtn = document.getElementById('chat-close');
+const chatAuthView = document.getElementById('chat-auth-view');
+const chatMessagesView = document.getElementById('chat-messages-view');
+const chatFooterView = document.getElementById('chat-footer-view');
+const usernameInput = document.getElementById('username-input');
+const signInBtn = document.getElementById('sign-in-btn');
+const chatMsgList = document.getElementById('chat-msg-list');
+const chatInput = document.getElementById('chat-input');
+const chatSendBtn = document.getElementById('chat-send-btn');
+
+let currentUser = localStorage.getItem('miksi_chat_username') || '';
+
+function updateChatAuth() {
+  if (currentUser) {
+    chatAuthView.classList.add('hidden');
+    chatMessagesView.classList.remove('hidden');
+    chatFooterView.classList.remove('hidden');
+  } else {
+    chatAuthView.classList.remove('hidden');
+    chatMessagesView.classList.add('hidden');
+    chatFooterView.classList.add('hidden');
+  }
+}
+
+chatToggleBtn.addEventListener('click', () => {
+  updateChatAuth();
+  chatDrawer.classList.toggle('active');
+});
+
+chatCloseBtn.addEventListener('click', () => chatDrawer.classList.remove('active'));
+
+signInBtn.addEventListener('click', () => {
+  const name = usernameInput.value.trim();
+  if (name) {
+    currentUser = name;
+    localStorage.setItem('miksi_chat_username', name);
+    updateChatAuth();
+  }
+});
+
+function appendMessage(user, text) {
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-msg';
+  msgEl.innerHTML = `<strong>${user}</strong><span>${text}</span>`;
+  chatMsgList.appendChild(msgEl);
+  chatMessagesView.scrollTop = chatMessagesView.scrollHeight;
+}
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if (text && currentUser) {
+    appendMessage(currentUser, text);
+    chatInput.value = '';
+  }
+}
+
+chatSendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
 });
