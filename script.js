@@ -100,7 +100,7 @@ saveSettingsBtn.addEventListener('click', () => {
   settingsModal.classList.remove('active');
 });
 
-/* Strength Mode & Device Type Selectors */
+/* Mode & Device Selectors */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
@@ -110,7 +110,7 @@ const deviceMenu = document.getElementById('device-menu');
 const currentDeviceLabel = document.getElementById('current-device-label');
 const deviceWrapper = document.getElementById('device-wrapper');
 
-let currentMode = localStorage.getItem('miksi_proxy_mode') || 'fast';
+let currentMode = localStorage.getItem('miksi_proxy_mode') || 'strong';
 let currentDevice = localStorage.getItem('miksi_device_mode') || 'desktop';
 
 currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
@@ -161,7 +161,7 @@ document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
   });
 });
 
-/* Proxy Execution Engine */
+/* Proxy Execution Engine (Fully Internal - No External APIs) */
 const proxyInput = document.getElementById('proxy-input');
 const proxyGoBtn = document.getElementById('proxy-go');
 const proxyViewer = document.getElementById('proxy-viewer');
@@ -188,11 +188,8 @@ function launchProxy(rawInput) {
   proxyViewer.classList.add('active');
   btnCloseViewer.classList.remove('hidden');
 
-  if (currentMode === 'fast') {
-    proxyIframe.src = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-  } else {
-    proxyIframe.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
-  }
+  // Uses internal repository API proxy route exclusively
+  proxyIframe.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
 }
 
 proxyGoBtn.addEventListener('click', () => launchProxy(proxyInput.value));
