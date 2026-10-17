@@ -3,406 +3,467 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>browser os</title>
+  <title>mayo</title>
+
+  <!-- Modern low-res pixel fonts (VT323 & Silkscreen) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen&family=VT323&display=swap" rel="stylesheet">
+
   <style>
+    /* ===================================================
+       THEME VARIABLES & STYLES
+       =================================================== */
+    :root {
+      --bg-color: #f7f9fb;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(210, 215, 225, 0.8);
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --accent: #facc15;
+      --accent-hover: #eab308;
+      --pill-bg: #ffffff;
+      --pill-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      --pill-border: #e2e8f0;
+      --glow: rgba(250, 204, 21, 0.3);
+      --font-pixel: 'Silkscreen', monospace;
+      --font-readable: 'VT323', monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #0d1117;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --card-border: rgba(48, 54, 61, 0.8);
+      --text-main: #c9d1d9;
+      --text-sub: #8b949e;
+      --accent: #facc15;
+      --accent-hover: #fde047;
+      --pill-bg: #161b22;
+      --pill-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      --pill-border: #30363d;
+      --glow: rgba(250, 204, 21, 0.15);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: var(--font-readable);
+      letter-spacing: 0.5px;
     }
+
     body, html {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, blinkmacsystemfont, "segoe ui", roboto, helvetica, arial, sans-serif;
-      background-color: #030305;
-      color: #e4e4e7;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    .fluid-bg {
+    /* ===================================================
+       DIAGONAL ANIMATED MAYO BACKGROUND
+       =================================================== */
+    .mayo-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 200%;
+      background-image: url('https://www.bing.com/th/id/OIP.cS6NYrx4o3zr-locEJ1AxwHaHa?w=205&h=205&c=8&rs=1&qlt=90&o=6&dpr=1.1&pid=3.1&rm=2');
+      background-size: 28px 28px;
+      background-repeat: repeat;
+      opacity: 0.1;
+      z-index: 0;
+      pointer-events: none;
+      animation: moveMayo 22s linear infinite;
+    }
+
+    [data-theme="dark"] .mayo-bg {
+      opacity: 0.06;
+      filter: invert(0.9) hue-rotate(180deg);
+    }
+
+    @keyframes moveMayo {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-280px, 280px); }
+    }
+
+    /* ===================================================
+       LAYOUT & UI COMPONENTS
+       =================================================== */
+    .app-container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Top Controls */
+    .top-bar {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .icon-btn {
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      color: var(--text-main);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .svg-icon {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .svg-icon.hidden {
+      display: none;
+    }
+
+    /* Title Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 24px;
+      user-select: none;
+    }
+
+    .brand h1 {
+      font-family: var(--font-pixel);
+      font-size: 3.5rem;
+      color: var(--text-main);
+      letter-spacing: -1px;
+      text-transform: lowercase;
+    }
+
+    /* Frameless Pill Search Bar */
+    .search-wrapper {
+      width: 100%;
+      max-width: 580px;
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .pill-search {
+      width: 100%;
+      background: var(--pill-bg);
+      border: 1px solid var(--pill-border);
+      border-radius: 50px;
+      padding: 14px 56px 14px 24px;
+      font-size: 1.35rem;
+      color: var(--text-main);
+      outline: none;
+      box-shadow: var(--pill-shadow);
+      transition: all 0.2s ease;
+    }
+
+    .pill-search::placeholder {
+      color: var(--text-sub);
+      font-size: 1.2rem;
+    }
+
+    .pill-search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow), var(--pill-shadow);
+    }
+
+    .search-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--accent);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .search-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    /* Quick Shortcuts Grid */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .grid-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    .grid-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .grid-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .svg-logo {
+      width: 20px;
+      height: 20px;
+      color: var(--text-main);
+    }
+
+    .grid-label {
+      font-size: 1.1rem;
+    }
+
+    /* ===================================================
+       PROXY FRAME VIEWER
+       =================================================== */
+    .proxy-viewer {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
-      background: linear-gradient(125deg, #030305, #121218, #0a0a0f, #1a1a24);
-      background-size: 400% 400%;
-      animation: glslFluid 12s ease infinite;
-    }
-    @keyframes glslFluid {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .desktop-space {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      z-index: 1;
-      overflow: hidden;
-    }
-
-    .browser-window {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(18, 18, 22, 0.95);
+      background: var(--bg-color);
+      z-index: 1000;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
     }
 
-    .browser-window.floating {
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
-      resize: both;
-      min-width: 400px;
-      min-height: 300px;
+    .proxy-viewer.active {
+      opacity: 1;
+      pointer-events: all;
     }
 
-    .window-header {
-      height: 32px;
-      background: rgba(25, 25, 32, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    .proxy-header {
+      height: 48px;
+      background: var(--pill-bg);
+      border-bottom: 1px solid var(--pill-border);
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      cursor: grab;
-      user-select: none;
+      padding: 0 14px;
+      gap: 10px;
     }
-    .window-header:active {
-      cursor: grabbing;
-    }
-    .window-title {
-      font-size: 11px;
-      color: #a1a1aa;
-      flex: 1;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      margin-left: 8px;
-    }
-    .window-controls {
-      display: flex;
-      gap: 6px;
-    }
-    .win-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    .dot-close { background: #ff5f56; }
 
-    .window-content {
+    .proxy-nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .proxy-nav-btn:hover {
+      background: var(--card-border);
+    }
+
+    .proxy-address-bar {
+      flex: 1;
+      background: var(--bg-color);
+      border: 1px solid var(--pill-border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 1.1rem;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .proxy-frame {
       flex: 1;
       width: 100%;
       height: 100%;
       border: none;
-      background: #ffffff;
+      background: #fff;
     }
 
-    .dock-container {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      z-index: 10;
-      background: linear-gradient(135deg, rgba(30, 30, 38, 0.7), rgba(15, 15, 20, 0.9));
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 9999px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    @media (max-width: 520px) {
+      .quick-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
-    .selector, .icon-btn {
-      background: transparent;
-      border: none;
-      padding: 6px 8px;
-      color: #d4d4d8;
-      font-size: 12px;
-      outline: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .url-input {
-      width: 300px;
-      max-width: 35vw;
-      background: transparent;
-      border: none;
-      padding: 6px 12px;
-      color: #f4f4f5;
-      font-size: 13px;
-      outline: none;
-    }
-    .go-btn {
-      background: #f4f4f5;
-      color: #09090b;
-      border: none;
-      border-radius: 9999px;
-      padding: 6px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .tabs-bar {
-      position: fixed;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 10;
-    }
-    .tab-circle {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(30, 30, 38, 0.8);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #a1a1aa;
-      font-size: 12px;
-      transition: all 0.2s ease;
-    }
-    .tab-circle.active {
-      border-color: #fff;
-      color: #fff;
-      background: rgba(60, 60, 75, 0.9);
-      box-shadow: 0 0 15px rgba(255,255,255,0.2);
-    }
-    .tab-circle:hover {
-      transform: scale(1.05);
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 350px;
-      background: rgba(20, 20, 26, 0.95);
-      backdrop-filter: blur(25px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 20px;
-      z-index: 100;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.8);
-    }
-    .modal h3 { margin-bottom: 12px; font-size: 16px; color: #fff; }
-    .modal label { display: block; font-size: 12px; color: #a1a1aa; margin-top: 10px; }
-    .modal select, .modal input[type="range"] { width: 100%; margin-top: 4px; padding: 6px; background: #2a2a35; border: 1px solid #3f3f46; color: #fff; border-radius: 6px; }
-    .close-modal { margin-top: 16px; width: 100%; padding: 8px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="fluid-bg"></div>
+  <!-- Diagonal Animated Mayo Background -->
+  <div class="mayo-bg"></div>
 
-  <div class="tabs-bar" id="tabsBar">
-    <div class="tab-circle active" onclick="switchTab(1)" id="tab-1">1</div>
-    <div class="tab-circle" onclick="addNewTab()" title="new tab">+</div>
-  </div>
+  <!-- Main UI Layout -->
+  <div class="app-container">
 
-  <div class="desktop-space" id="desktopSpace">
-    <div class="browser-window" id="window-1">
-      <div class="window-header" ondblclick="splitToFloating('window-1')">
-        <div class="window-title" id="title-1">about:blank</div>
-      </div>
-      <iframe class="window-content" id="frame-1" src="about:blank"></iframe>
+    <!-- Top Action Toolbar -->
+    <div class="top-bar">
+      <!-- Theme Toggle Button -->
+      <button class="icon-btn" id="theme-toggle" title="Toggle Light/Dark Theme">
+        <svg id="theme-icon-sun" class="svg-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="theme-icon-moon" class="svg-icon hidden" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <!-- Cloak Window Button -->
+      <button class="icon-btn" id="cloaking-btn" title="Open in About:Blank Window">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
     </div>
-  </div>
 
-  <div class="dock-container" id="dockContainer">
-    <select id="modeSelector" class="selector">
-      <option value="desktop">desktop</option>
-      <option value="mobile">mobile</option>
-      <option value="stealth">incognito</option>
-    </select>
-    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
-    <select id="speedSelector" class="selector">
-      <option value="fast">fast</option>
-      <option value="strong">strong</option>
-    </select>
-    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
-    <button onclick="toggleStar()" class="icon-btn" id="starBtn" title="favorite">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    </button>
-    <input type="text" id="addressBar" class="url-input" placeholder="type url or search..." autofocus>
-    <div style="width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>
-    <button onclick="navigateActiveWindow()" class="go-btn">go</button>
-    <button onclick="toggleSettings()" class="icon-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-  </div>
+    <!-- Minimal Title Header -->
+    <div class="brand">
+      <h1>mayo</h1>
+    </div>
 
-  <div class="modal" id="settingsModal">
-    <h3>settings</h3>
-    <label>privacy level</label>
-    <select id="settingPrivacy"><option value="strict">strict tracker block</option></select>
-    <label>ui scale</label>
-    <input type="range" min="80" max="120" value="100" oninput="document.getElementById('dockContainer').style.transform=`translateX(-50%) scale(${this.value/100})`">
-    <button class="close-modal" onclick="toggleSettings()">close</button>
-  </div>
+    <!-- Frameless Pill Search Bar -->
+    <div class="search-wrapper">
+      <input 
+        type="text" 
+        id="proxy-input" 
+        class="pill-search" 
+        placeholder="Search web or enter URL..." 
+        autocomplete="off" 
+        autofocus
+      />
+      <button class="search-btn" id="proxy-go" title="Search">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </div>
 
-  <script>
-    let activeTabId = 1;
-    let tabCount = 1;
-
-    const addressBar = document.getElementById('addressBar');
-    const modeSelector = document.getElementById('modeSelector');
-    const speedSelector = document.getElementById('speedSelector');
-
-    addressBar.addEventListener('keypress', e => { if (e.key === 'Enter') navigateActiveWindow(); });
-
-    function navigateActiveWindow() {
-      let input = addressBar.value.trim();
-      if (!input) return;
-
-      if (!/^https?:\/\//i.test(input)) {
-        if (input.includes('.') && !input.includes(' ')) {
-          input = 'https://' + input;
-        } else {
-          input = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
-        }
-      }
-
-      const mode = modeSelector.value;
-      const speed = speedSelector.value;
-      const frame = document.getElementById(`frame-${activeTabId}`);
-      const title = document.getElementById(`title-${activeTabId}`);
-
-      if (frame) {
-        frame.src = `/api/proxy?url=${encodeURIComponent(input)}&mode=${mode}&speed=${speed}`;
-        title.innerText = input;
-      }
-    }
-
-    function addNewTab() {
-      tabCount++;
-      const id = tabCount;
-      
-      document.querySelectorAll('.browser-window').forEach(w => w.style.display = 'none');
-      document.querySelectorAll('.tab-circle').forEach(t => t.classList.remove('active'));
-
-      const desktop = document.getElementById('desktopSpace');
-      const win = document.createElement('div');
-      win.className = 'browser-window';
-      win.id = `window-${id}`;
-      win.innerHTML = `
-        <div class="window-header" ondblclick="splitToFloating('window-${id}')">
-          <div class="window-title" id="title-${id}">about:blank</div>
+    <!-- Shortcuts Grid with Inline SVGs -->
+    <div class="quick-grid">
+      <!-- Google -->
+      <div class="grid-item" data-url="https://www.google.com">
+        <div class="grid-icon">
+          <svg viewBox="0 0 24 24" class="svg-logo">
+            <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.84 16.027 0 12.48 0 5.8 0 0 5.573 0 12.267 0 18.96 5.8 24.533 12.48 24.533c3.6 0 6.64-1.187 8.88-3.52 2.32-2.32 3.04-5.573 3.04-8.187 0-.8-.067-1.427-.187-1.907H12.48z"/>
+          </svg>
         </div>
-        <iframe class="window-content" id="frame-${id}" src="about:blank"></iframe>
-      `;
-      desktop.appendChild(win);
+        <div class="grid-label">Google</div>
+      </div>
 
-      const tabsBar = document.getElementById('tabsBar');
-      const tab = document.createElement('div');
-      tab.className = 'tab-circle active';
-      tab.id = `tab-${id}`;
-      tab.innerText = id;
-      tab.onclick = () => switchTab(id);
-      tabsBar.insertBefore(tab, tabsBar.lastElementChild);
+      <!-- DuckDuckGo -->
+      <div class="grid-item" data-url="https://www.duckduckgo.com">
+        <div class="grid-icon">
+          <svg viewBox="0 0 24 24" class="svg-logo">
+            <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2.2"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></line>
+          </svg>
+        </div>
+        <div class="grid-label">DuckDuckGo</div>
+      </div>
 
-      activeTabId = id;
-      addressBar.value = '';
-    }
+      <!-- Wikipedia -->
+      <div class="grid-item" data-url="https://www.wikipedia.org">
+        <div class="grid-icon">
+          <svg viewBox="0 0 24 24" class="svg-logo">
+            <path fill="currentColor" d="M12.09 13.29l-2.67-6.28H7.13l3.91 8.52h1.96l3.95-8.52h-2.22l-2.64 6.28zM3 4h18v2H3V4zm0 14h18v2H3v-2z"/>
+          </svg>
+        </div>
+        <div class="grid-label">Wikipedia</div>
+      </div>
 
-    function switchTab(id) {
-      document.querySelectorAll('.browser-window').forEach(w => w.style.display = 'none');
-      document.querySelectorAll('.tab-circle').forEach(t => t.classList.remove('active'));
+      <!-- GitHub -->
+      <div class="grid-item" data-url="https://www.github.com">
+        <div class="grid-icon">
+          <svg viewBox="0 0 24 24" class="svg-logo">
+            <path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </div>
+        <div class="grid-label">GitHub</div>
+      </div>
+    </div>
 
-      const targetWin = document.getElementById(`window-${id}`);
-      if (targetWin) targetWin.style.display = 'flex';
-      const targetTab = document.getElementById(`tab-${id}`);
-      if (targetTab) targetTab.classList.add('active');
+  </div>
 
-      activeTabId = id;
-    }
+  <!-- Fullscreen Proxy Frame Viewer -->
+  <div class="proxy-viewer" id="proxy-viewer">
+    <div class="proxy-header">
+      <button class="proxy-nav-btn" id="btn-close" title="Close">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <button class="proxy-nav-btn" id="btn-reload" title="Reload">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <path d="M23 4v6h-6"></path>
+          <path d="M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </button>
+      <input type="text" id="viewer-url-bar" class="proxy-address-bar" readonly />
+    </div>
+    <iframe id="proxy-iframe" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+  </div>
 
-    function splitToFloating(windowId) {
-      const win = document.getElementById(windowId);
-      if (!win.classList.contains('floating')) {
-        win.classList.add('floating');
-        win.style.top = '50px';
-        win.style.left = '50px';
-        win.style.width = '700px';
-        win.style.height = '450px';
-
-        const header = win.querySelector('.window-header');
-        if (!header.querySelector('.win-dot')) {
-          const controls = document.createElement('div');
-          controls.className = 'window-controls';
-          controls.innerHTML = `<div class="win-dot dot-close" onclick="closeFloatingWindow('${windowId}')"></div>`;
-          header.insertBefore(controls, header.firstChild);
-        }
-
-        enableDragging(win, header);
-      }
-    }
-
-    function enableDragging(win, header) {
-      let isDragging = false;
-      let startX, startY, initialLeft, initialTop;
-
-      header.onmousedown = function(e) {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        initialLeft = win.offsetLeft;
-        initialTop = win.offsetTop;
-        e.preventDefault();
-      };
-
-      document.onmousemove = function(e) {
-        if (!isDragging) return;
-        let dx = e.clientX - startX;
-        let dy = e.clientY - startY;
-        win.style.left = (initialLeft + dx) + 'px';
-        win.style.top = (initialTop + dy) + 'px';
-      };
-
-      document.onmouseup = function() {
-        isDragging = false;
-      };
-      
-      document.onmouseleave = function() {
-        isDragging = false;
-      };
-    }
-
-    function closeFloatingWindow(windowId) {
-      const win = document.getElementById(windowId);
-      if (win) win.remove();
-    }
-
-    function toggleStar() {
-      const btn = document.getElementById('starBtn');
-      btn.style.color = btn.style.color === 'rgb(250, 204, 21)' ? '#d4d4d8' : '#facc15';
-    }
-
-    function toggleSettings() {
-      const modal = document.getElementById('settingsModal');
-      modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
