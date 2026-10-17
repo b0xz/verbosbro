@@ -3,6 +3,7 @@
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
+let isIncognito = false;
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -10,6 +11,32 @@ const proxyInput = document.getElementById('proxy-input');
 const proxyIframe = document.getElementById('proxy-iframe');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
+
+// Load saved settings
+function loadSettings() {
+  const scale = localStorage.getItem('miksi_scale') || '1.15';
+  document.documentElement.style.setProperty('--gui-scale', scale);
+  document.getElementById('gui-scale-slider').value = scale;
+  document.getElementById('gui-scale-val').textContent = parseFloat(scale).toFixed(2) + 'x';
+
+  const bgColor = localStorage.getItem('miksi_bg') || '#121212';
+  document.documentElement.style.setProperty('--bg', bgColor);
+  document.getElementById('bg-color-picker').value = bgColor;
+
+  const accentColor = localStorage.getItem('miksi_accent') || '#ffffff';
+  document.documentElement.style.setProperty('--accent', accentColor);
+  document.getElementById('accent-color-picker').value = accentColor;
+}
+loadSettings();
+
+// Update logs modal on first load
+if (!localStorage.getItem('miksi_welcomed')) {
+  document.getElementById('update-modal').classList.remove('hidden');
+}
+document.getElementById('close-update-modal').addEventListener('click', () => {
+  localStorage.setItem('miksi_welcomed', 'true');
+  document.getElementById('update-modal').classList.add('hidden');
+});
 
 function renderTabs() {
   tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
@@ -66,7 +93,7 @@ window.closeTab = function(id) {
 
 addTabBtn.addEventListener('click', () => addTab());
 
-/* Panic Key (\) */
+/* Panic Key (\) & Incognito */
 let isHidden = false;
 document.addEventListener('keydown', (e) => {
   if (e.key === '\\') {
@@ -100,6 +127,58 @@ gamesClose.addEventListener('click', () => gamesModal.classList.remove('active')
 sbSettings.addEventListener('click', () => settingsModal.classList.add('active'));
 modalClose.addEventListener('click', () => settingsModal.classList.remove('active'));
 
+/* Draggable Modal Logic */
+const modal = document.getElementById('settings-modal');
+const dragHandle = document.getElementById('modal-drag-handle');
+let isDragging = false, startX, startY, initialX, initialY;
+
+dragHandle.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  const rect = modal.getBoundingClientRect();
+  initialX = rect.left;
+  initialY = rect.top;
+  modal.style.position = 'fixed';
+  modal.style.left = initialX + 'px';
+  modal.style.top = initialY + 'px';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  modal.style.left = (initialX + dx) + 'px';
+  modal.style.top = (initialY + dy) + 'px';
+});
+
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+/* Settings Tabs Switcher */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.settings-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.getAttribute('data-pane')).classList.add('active');
+  });
+});
+
+/* Rotating Footer Text */
+const footerQuotes = [
+  "man i love fern",
+  "boii this so tuff",
+  "Made with vercel the goat",
+  "kamran made this, whos that?",
+  "why is fast better than strong ???"
+];
+let quoteIndex = 0;
+const footerCredit = document.getElementById('footer-credit');
+footerCredit.addEventListener('click', () => {
+  quoteIndex = (quoteIndex + 1) % footerQuotes.length;
+  footerCredit.textContent = footerQuotes[quoteIndex];
+});
+
 /* Bottom Dropdown Menus */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
@@ -110,7 +189,7 @@ const deviceMenu = document.getElementById('device-menu');
 const currentDeviceLabel = document.getElementById('current-device-label');
 const deviceWrapper = document.getElementById('device-wrapper');
 
-let currentMode = 'strong';
+let currentMode = 'fast';
 let currentDevice = 'desktop';
 
 modeToggleBtn.addEventListener('click', (e) => {
@@ -151,12 +230,17 @@ document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
   });
 });
 
-/* Proxy Execution */
+/* URL Processing & YouTube Search Fix */
 const proxyGoBtn = document.getElementById('proxy-go');
 
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
+  
+  // If it's a search query like "youtube" or contains spaces without dot, or search terms
+  if (!query.includes('.') || query.includes(' ')) {
+    return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+  }
   if (/^https?:\/\//i.test(query)) return query;
   return 'https://' + query;
 }
@@ -194,7 +278,40 @@ proxyInput.addEventListener('keydown', (e) => {
   }
 });
 
-/* Star Canvas Animation with Fading Corner Trails */
+/* Background Stars Canvas */
+const bgCanvas = document.getElementById('bg-stars');
+const bgCtx = bgCanvas.getContext('2d');
+let stars = [];
+
+function resizeBg() {
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeBg);
+resizeBg();
+
+for (let i = 0; i < 70; i++) {
+  stars.push({
+    x: Math.random() * bgCanvas.width,
+    y: Math.random() * bgCanvas.height,
+    size: Math.random() * 2 + 0.5,
+    speed: Math.random() * 0.5 + 0.2
+  });
+}
+
+function drawBgStars() {
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  bgCtx.fillStyle = '#ffffff';
+  stars.forEach(s => {
+    s.x += s.speed;
+    if (s.x > bgCanvas.width) s.x = 0;
+    bgCtx.fillRect(s.x, s.y, s.size, s.size);
+  });
+  requestAnimationFrame(drawBgStars);
+}
+drawBgStars();
+
+/* Star Canvas Animation */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0;
@@ -205,7 +322,6 @@ function drawStarCanvas() {
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate(angle);
 
-  // Draw 4-pointed star
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
@@ -217,7 +333,6 @@ function drawStarCanvas() {
   ctx.closePath();
   ctx.fill();
 
-  // Draw fading corner trails
   const trailSegments = 8;
   for (let t = 1; t <= trailSegments; t++) {
     ctx.save();
@@ -241,11 +356,21 @@ function drawStarCanvas() {
 }
 drawStarCanvas();
 
-/* Settings Sliders */
-const guiScaleSlider = document.getElementById('gui-scale-slider');
-guiScaleSlider.addEventListener('input', (e) => {
+/* Save Settings */
+document.getElementById('gui-scale-slider').addEventListener('input', (e) => {
   document.documentElement.style.setProperty('--gui-scale', e.target.value);
   document.getElementById('gui-scale-val').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
 });
 
-document.getElementById('save-settings').addEventListener('click', () => settingsModal.classList.remove('active'));
+document.getElementById('save-settings').addEventListener('click', () => {
+  const scale = document.getElementById('gui-scale-slider').value;
+  const bg = document.getElementById('bg-color-picker').value;
+  const accent = document.getElementById('accent-color-picker').value;
+
+  localStorage.setItem('miksi_scale', scale);
+  localStorage.setItem('miksi_bg', bg);
+  localStorage.setItem('miksi_accent', accent);
+
+  loadSettings();
+  settingsModal.classList.remove('active');
+});
