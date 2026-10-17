@@ -1,243 +1,121 @@
-/* ===================================================
-   1. EDUCATIONAL PRESETS & TAB DISGUISE MANAGEMENT
-   =================================================== */
-const EDUCATIONAL_PRESETS = {
-  none: {
-    title: 'mayo',
-    icon: 'https://www.bing.com/th/id/OIP.cS6NYrx4o3zr-locEJ1AxwHaHa?w=205&h=205&c=8&rs=1&qlt=90&o=6&dpr=1.1&pid=3.1&rm=2'
-  },
-  classroom: {
-    title: 'Classes',
-    icon: 'https://ssl.gstatic.com/classroom/favicon.png'
-  },
-  drive: {
-    title: 'My Drive - Google Drive',
-    icon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png'
-  },
-  docs: {
-    title: 'Google Docs',
-    icon: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico'
-  },
-  canvas: {
-    title: 'Dashboard - Canvas',
-    icon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico'
-  },
-  edpuzzle: {
-    title: 'Edpuzzle',
-    icon: 'https://edpuzzle.imgix.net/edpuzzle-logo-icon.png?w=32'
-  },
-  quizlet: {
-    title: 'Flashcards, learning tools, and textbook solutions | Quizlet',
-    icon: 'https://assets.quizlet.com/a-s/j/favicon.ico'
-  },
-  clever: {
-    title: 'Clever | Portal',
-    icon: 'https://assets.clever.com/assets/favicon.ico'
-  },
-  schoology: {
-    title: 'Home | Schoology',
-    icon: 'https://www.schoology.com/sites/default/files/favicon.ico'
-  },
-  khan: {
-    title: 'Dashboard | Khan Academy',
-    icon: 'https://www.khanacademy.org/favicon.ico'
-  },
-  desmos: {
-    title: 'Desmos | Graphing Calculator',
-    icon: 'https://www.desmos.com/favicon.ico'
+export default async function handler(req, res) {
+  const targetUrl = req.query.url || (req.body && req.body.url);
+  const strength = parseInt(req.query.strength || '3', 10);
+
+  if (!targetUrl) {
+    return res.status(400).send('missing target url');
   }
-};
 
-const tabTitleEl = document.getElementById('tab-title');
-const tabFaviconEl = document.getElementById('tab-favicon');
+  const UA_POOLS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64; rv:123.0) Gecko/20100101 Firefox/123.0',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.64 Mobile Safari/537.36'
+  ];
 
-function applyTabDisguise(title, iconUrl) {
-  tabTitleEl.textContent = title;
-  
-  let link = document.querySelector("link[rel*='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    document.head.appendChild(link);
-  }
-  link.href = iconUrl;
-}
+  const userAgent = UA_POOLS[Math.min(Math.max(strength - 1, 0), UA_POOLS.length - 1)];
 
-function loadSavedDisguise() {
-  const savedKey = localStorage.getItem('mayo_disguise_preset') || 'none';
-  const customTitle = localStorage.getItem('mayo_custom_title');
-  const customIcon = localStorage.getItem('mayo_custom_icon');
+  try {
+    const parsedUrl = new URL(targetUrl);
+    const headers = {
+      'user-agent': userAgent,
+      'accept': strength >= 4 ? 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,video/*,*/*;q=0.8' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'accept-language': 'en-US,en;q=0.9',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
+    };
 
-  if (savedKey === 'custom' && customTitle && customIcon) {
-    applyTabDisguise(customTitle, customIcon);
-  } else if (EDUCATIONAL_PRESETS[savedKey]) {
-    const preset = EDUCATIONAL_PRESETS[savedKey];
-    applyTabDisguise(preset.title, preset.icon);
-  }
-}
-
-// Initialize tab mask on page start
-loadSavedDisguise();
-
-/* ===================================================
-   2. SETTINGS MODAL INTERACTION
-   =================================================== */
-const settingsBtn = document.getElementById('settings-btn');
-const settingsModal = document.getElementById('settings-modal');
-const modalCloseBtn = document.getElementById('modal-close');
-const presetSelect = document.getElementById('preset-select');
-const customTitleInput = document.getElementById('custom-title-input');
-const customIconInput = document.getElementById('custom-icon-input');
-const saveSettingsBtn = document.getElementById('save-settings');
-
-settingsBtn.addEventListener('click', () => {
-  const currentPreset = localStorage.getItem('mayo_disguise_preset') || 'none';
-  presetSelect.value = currentPreset;
-  customTitleInput.value = localStorage.getItem('mayo_custom_title') || '';
-  customIconInput.value = localStorage.getItem('mayo_custom_icon') || '';
-  settingsModal.classList.add('active');
-});
-
-modalCloseBtn.addEventListener('click', () => {
-  settingsModal.classList.remove('active');
-});
-
-presetSelect.addEventListener('change', (e) => {
-  const key = e.target.value;
-  if (key !== 'none' && EDUCATIONAL_PRESETS[key]) {
-    customTitleInput.value = EDUCATIONAL_PRESETS[key].title;
-    customIconInput.value = EDUCATIONAL_PRESETS[key].icon;
-  }
-});
-
-saveSettingsBtn.addEventListener('click', () => {
-  const selectedPreset = presetSelect.value;
-  const titleVal = customTitleInput.value.trim();
-  const iconVal = customIconInput.value.trim();
-
-  if (selectedPreset !== 'none' && EDUCATIONAL_PRESETS[selectedPreset]) {
-    const preset = EDUCATIONAL_PRESETS[selectedPreset];
-    // Check if user modified input manually
-    if (titleVal === preset.title && iconVal === preset.icon) {
-      localStorage.setItem('mayo_disguise_preset', selectedPreset);
-      applyTabDisguise(preset.title, preset.icon);
-    } else {
-      localStorage.setItem('mayo_disguise_preset', 'custom');
-      localStorage.setItem('mayo_custom_title', titleVal);
-      localStorage.setItem('mayo_custom_icon', iconVal);
-      applyTabDisguise(titleVal, iconVal);
+    if (strength >= 4) {
+      headers['sec-ch-ua'] = '"Chromium";v="122", "Not(A:Brand";v="8"';
+      headers['sec-fetch-dest'] = 'document';
+      headers['sec-fetch-mode'] = 'navigate';
+      headers['sec-fetch-site'] = 'cross-site';
+      headers['upgrade-insecure-requests'] = '1';
     }
-  } else if (titleVal && iconVal) {
-    localStorage.setItem('mayo_disguise_preset', 'custom');
-    localStorage.setItem('mayo_custom_title', titleVal);
-    localStorage.setItem('mayo_custom_icon', iconVal);
-    applyTabDisguise(titleVal, iconVal);
-  } else {
-    localStorage.setItem('mayo_disguise_preset', 'none');
-    applyTabDisguise(EDUCATIONAL_PRESETS.none.title, EDUCATIONAL_PRESETS.none.icon);
-  }
 
-  settingsModal.classList.remove('active');
-});
+    if (req.headers.cookie) headers.cookie = req.headers.cookie;
 
-/* ===================================================
-   3. LIGHT / DARK THEME TOGGLE
-   =================================================== */
-const themeToggleBtn = document.getElementById('theme-toggle');
-const themeIconSun = document.getElementById('theme-icon-sun');
-const themeIconMoon = document.getElementById('theme-icon-moon');
+    const response = await fetch(targetUrl, { headers, redirect: 'follow' });
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-const savedTheme = localStorage.getItem('mayo_theme') || (prefersDark ? 'dark' : 'light');
+    res.setHeader('access-control-allow-origin', '*');
+    res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+    res.setHeader('access-control-allow-headers', '*');
+    res.setHeader('cache-control', 'no-store');
+    res.setHeader('content-type', contentType);
 
-function setTheme(theme) {
-  if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    themeIconSun.classList.add('hidden');
-    themeIconMoon.classList.remove('hidden');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    themeIconSun.classList.remove('hidden');
-    themeIconMoon.classList.add('hidden');
-  }
-  localStorage.setItem('mayo_theme', theme);
-}
+    try { res.removeHeader('x-frame-options'); } catch (e) {}
+    try { res.removeHeader('content-security-policy'); } catch (e) {}
+    try { res.removeHeader('x-content-type-options'); } catch (e) {}
 
-setTheme(savedTheme);
+    if (contentType.includes('text/html')) {
+      let body = await response.text();
+      const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-themeToggleBtn.addEventListener('click', () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-});
+      if (strength >= 3) {
+        body = body.replace(/integrity="[^"]*"/gi, '');
+        body = body.replace(/nonce="[^"]*"/gi, '');
+        body = body.replace(/crossorigin="[^"]*"/gi, '');
+      }
 
-/* ===================================================
-   4. CLIENT PROXY DISPATCHER
-   =================================================== */
-const proxyInput = document.getElementById('proxy-input');
-const proxyGoBtn = document.getElementById('proxy-go');
-const proxyViewer = document.getElementById('proxy-viewer');
-const proxyIframe = document.getElementById('proxy-iframe');
-const viewerUrlBar = document.getElementById('viewer-url-bar');
-const btnClose = document.getElementById('btn-close');
-const btnReload = document.getElementById('btn-reload');
+      function proxifyUrl(val) {
+        try {
+          if (!val || /^(data:|javascript:|#|mailto:)/i.test(val)) return val;
+          if (val.includes('/api/proxy?url=')) return val;
+          const abs = new URL(val, baseUrl).href;
+          return `/api/proxy?url=${encodeURIComponent(abs)}&strength=${strength}`;
+        } catch (e) {
+          return val;
+        }
+      }
 
-function buildProxyUrl(rawInput) {
-  let query = rawInput.trim();
-  if (!query) return '';
+      body = body.replace(/(<(?:img|script|iframe|audio|video|source|track|embed)[^>]*?\s(?:src|poster)=)["']([^"']+)["']/gi, (m, p1, p2) => {
+        return `${p1}"${proxifyUrl(p2)}"`;
+      });
 
-  let targetUrl = '';
-  const urlPattern = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?$/i;
+      body = body.replace(/(<(?:a|area|link)[^>]*?\shref=)["']([^"']+)["']/gi, (m, p1, p2) => {
+        return `${p1}"${proxifyUrl(p2)}"`;
+      });
 
-  if (urlPattern.test(query)) {
-    if (!query.startsWith('http://') && !query.startsWith('https://')) {
-      targetUrl = 'https://' + query;
-    } else {
-      targetUrl = query;
+      body = body.replace(/url\(([^)]+)\)/gi, (m, p1) => {
+        const cleaned = p1.replace(/["'\s]/g, '');
+        return `url(${proxifyUrl(cleaned)})`;
+      });
+
+      if (strength >= 4) {
+        const injector = `
+          <base href="${baseUrl}/">
+          <script>
+            (function() {
+              function proxify(url) {
+                try { return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href) + '&strength=${strength}'; } catch(e) { return url; }
+              }
+              document.addEventListener('click', function(e) {
+                const el = e.target.closest('a, area');
+                if (el && el.href && !el.href.startsWith('javascript:') && !el.href.startsWith('#')) {
+                  e.preventDefault();
+                  window.location.href = proxify(el.href);
+                }
+              }, true);
+            })();
+          <\/script>
+        `;
+        body = body.includes('<head>') ? body.replace('<head>', `<head>${injector}`) : injector + body;
+      }
+
+      return res.status(200).send(body);
     }
-  } else {
-    targetUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
-  }
 
-  return '/api/proxy?url=' + encodeURIComponent(targetUrl) + '&mode=desktop&speed=fast';
-}
-
-function launchProxy(rawUrl) {
-  const finalProxyUrl = buildProxyUrl(rawUrl);
-  if (!finalProxyUrl) return;
-
-  viewerUrlBar.value = rawUrl;
-  proxyIframe.src = finalProxyUrl;
-  proxyViewer.classList.add('active');
-}
-
-// Event Listeners
-proxyGoBtn.addEventListener('click', () => {
-  launchProxy(proxyInput.value);
-});
-
-proxyInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    launchProxy(proxyInput.value);
-  }
-});
-
-document.querySelectorAll('.grid-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const url = item.getAttribute('data-url');
-    if (url) {
-      proxyInput.value = url;
-      launchProxy(url);
+    if (response.body && typeof response.body.pipe === 'function') {
+      return response.body.pipe(res);
     }
-  });
-});
 
-btnClose.addEventListener('click', () => {
-  proxyViewer.classList.remove('active');
-  proxyIframe.src = 'about:blank';
-});
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return res.status(200).send(buffer);
 
-btnReload.addEventListener('click', () => {
-  if (proxyIframe.src) {
-    proxyIframe.contentWindow.location.reload();
+  } catch (error) {
+    return res.status(500).send(`<h3>miksi proxy connection error</h3><p>${error.message}</p>`);
   }
-});
+}
