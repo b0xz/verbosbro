@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // Always set CORS headers first so client can handle errors gracefully
+  // Set global CORS headers to prevent serverless invocation failures
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
   res.setHeader('access-control-allow-headers', '*');
@@ -10,6 +10,7 @@ export default async function handler(req, res) {
   }
 
   const targetUrl = req.query.url || (req.body && req.body.url);
+  const mode = req.query.mode || 'fast';
 
   if (!targetUrl) {
     return res.status(400).send('Missing target URL parameter.');
@@ -33,6 +34,14 @@ export default async function handler(req, res) {
       'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
     };
 
+    if (mode === 'strong') {
+      headers['sec-ch-ua'] = '"Chromium";v="123", "Not:A-Brand";v="8"';
+      headers['sec-fetch-dest'] = 'document';
+      headers['sec-fetch-mode'] = 'navigate';
+      headers['sec-fetch-site'] = 'cross-site';
+      headers['upgrade-insecure-requests'] = '1';
+    }
+
     const response = await fetch(targetUrl, { 
       headers, 
       redirect: 'follow' 
@@ -41,12 +50,12 @@ export default async function handler(req, res) {
     const contentType = response.headers.get('content-type') || 'text/html';
     res.setHeader('content-type', contentType);
 
-    // Strip frame-blocking headers from target response
+    // Strip framing restrictions
     try { res.removeHeader('x-frame-options'); } catch (e) {}
     try { res.removeHeader('content-security-policy'); } catch (e) {}
     try { res.removeHeader('x-content-type-options'); } catch (e) {}
 
-    // HTML rewriting logic
+    // HTML Rewriting Engine
     if (contentType.includes('text/html')) {
       let body = await response.text();
       const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
@@ -60,7 +69,7 @@ export default async function handler(req, res) {
           if (!val || /^(data:|javascript:|#|mailto:)/i.test(val)) return val;
           if (val.includes('/api/proxy?url=')) return val;
           const abs = new URL(val, baseUrl).href;
-          return `/api/proxy?url=${encodeURIComponent(abs)}`;
+          return `/api/proxy?url=${encodeURIComponent(abs)}&mode=${mode}`;
         } catch (e) {
           return val;
         }
@@ -74,7 +83,7 @@ export default async function handler(req, res) {
         <script>
           (function() {
             function proxify(url) {
-              try { return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href); } catch(e) { return url; }
+              try { return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href) + '&mode=${mode}'; } catch(e) { return url; }
             }
             document.addEventListener('click', function(e) {
               const el = e.target.closest('a, area');
@@ -91,7 +100,7 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Binary / Asset responses (Buffer instead of broken streaming)
+    // Binary / Asset responses as Buffer to prevent streaming crashes
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     return res.status(200).send(buffer);
@@ -100,7 +109,7 @@ export default async function handler(req, res) {
     return res.status(500).send(`
       <div style="color:#fff;background:#121212;font-family:sans-serif;padding:20px;text-align:center;">
         <h3>Proxy Error</h3>
-        <p>Failed to load target URL: ${targetUrl}</p>
+        <p>Failed to retrieve resource: ${targetUrl}</p>
         <p><small>${error.message}</small></p>
       </div>
     `);
