@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
-  // Set global CORS headers to prevent serverless invocation failures
+  // Global CORS headers
   res.setHeader('access-control-allow-origin', '*');
-  res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+  res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('cache-control', 'no-store');
 
@@ -10,45 +10,68 @@ export default async function handler(req, res) {
   }
 
   const targetUrl = req.query.url || (req.body && req.body.url);
-  const mode = req.query.mode || 'fast';
+  const mode = req.query.mode || 'strong';
 
   if (!targetUrl) {
     return res.status(400).send('Missing target URL parameter.');
   }
 
   const UA_POOLS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
   ];
 
   const randomUA = UA_POOLS[Math.floor(Math.random() * UA_POOLS.length)];
 
   try {
     const parsedUrl = new URL(targetUrl);
+    
     const headers = {
       'user-agent': randomUA,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
-      'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`
+      'accept-encoding': 'gzip, deflate, br',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'referer': `${parsedUrl.protocol}//${parsedUrl.host}/`,
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'cross-site',
+      'upgrade-insecure-requests': '1'
     };
 
-    if (mode === 'strong') {
-      headers['sec-ch-ua'] = '"Chromium";v="123", "Not:A-Brand";v="8"';
-      headers['sec-fetch-dest'] = 'document';
-      headers['sec-fetch-mode'] = 'navigate';
-      headers['sec-fetch-site'] = 'cross-site';
-      headers['upgrade-insecure-requests'] = '1';
+    if (req.headers.cookie) {
+      headers.cookie = req.headers.cookie;
     }
 
-    const response = await fetch(targetUrl, { 
-      headers, 
-      redirect: 'follow' 
-    });
+    const fetchOptions = {
+      method: req.method,
+      headers,
+      redirect: 'follow'
+    };
 
-    const contentType = response.headers.get('content-type') || 'text/html';
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
+      if (req.headers['content-type']) {
+        headers['content-type'] = req.headers['content-type'];
+      }
+      if (req.body) {
+        fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
+      }
+    }
+
+    const response = await fetch(targetUrl, fetchOptions);
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
     res.setHeader('content-type', contentType);
+
+    const setCookie = response.headers.get('set-cookie');
+    if (setCookie) {
+      res.setHeader('set-cookie', setCookie);
+    }
 
     // Strip framing restrictions
     try { res.removeHeader('x-frame-options'); } catch (e) {}
@@ -100,16 +123,16 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Binary / Asset responses as Buffer to prevent streaming crashes
+    // Buffer translation for images, styles, scripts, and video fragments
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     return res.status(200).send(buffer);
 
   } catch (error) {
     return res.status(500).send(`
-      <div style="color:#fff;background:#121212;font-family:sans-serif;padding:20px;text-align:center;">
-        <h3>Proxy Error</h3>
-        <p>Failed to retrieve resource: ${targetUrl}</p>
+      <div style="color:#fff;background:#121212;font-family:sans-serif;padding:30px;text-align:center;">
+        <h3 style="color:#ff5555;">Miksi Proxy Connection Error</h3>
+        <p>Unable to connect to target URL: <strong>${targetUrl}</strong></p>
         <p><small>${error.message}</small></p>
       </div>
     `);
