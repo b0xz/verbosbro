@@ -1,182 +1,97 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER
+   MIKSI CLIENT CONTROLLER (TABS, SIDEBAR, PANIC KEY)
    =================================================== */
-const EDUCATIONAL_PRESETS = {
-  none: { title: 'miksi', icon: 'https://www.bing.com/th/id/OIP.cS6NYrx4o3zr-locEJ1AxwHaHa?w=205&h=205&c=8&rs=1&qlt=90&o=6&dpr=1.1&pid=3.1&rm=2' },
-  canvas: { title: 'Dashboard - Canvas', icon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico' },
-  classroom: { title: 'Classes', icon: 'https://ssl.gstatic.com/classroom/favicon.png' },
-  drive: { title: 'My Drive - Google Drive', icon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
-  docs: { title: 'Google Docs', icon: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico' },
-  edpuzzle: { title: 'Edpuzzle', icon: 'https://edpuzzle.imgix.net/edpuzzle-logo-icon.png?w=32' },
-  quizlet: { title: 'Flashcards, learning tools, and textbook solutions | Quizlet', icon: 'https://assets.quizlet.com/a-s/j/favicon.ico' },
-  clever: { title: 'Clever | Portal', icon: 'https://assets.clever.com/assets/favicon.ico' },
-  schoology: { title: 'Home | Schoology', icon: 'https://www.schoology.com/sites/default/files/favicon.ico' },
-  khan: { title: 'Dashboard | Khan Academy', icon: 'https://www.khanacademy.org/favicon.ico' },
-  desmos: { title: 'Desmos | Graphing Calculator', icon: 'https://www.desmos.com/favicon.ico' }
+let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
+let activeTabId = 1;
+
+const tabBar = document.getElementById('tab-bar');
+const addTabBtn = document.getElementById('add-tab-btn');
+const proxyInput = document.getElementById('proxy-input');
+const proxyIframe = document.getElementById('proxy-iframe');
+
+function renderTabs() {
+  const existingTabs = tabBar.querySelectorAll('.tab-item');
+  existingTabs.forEach(el => el.remove());
+
+  tabs.forEach(tab => {
+    const tabEl = document.createElement('div');
+    tabEl.className = `tab-item ${tab.id === activeTabId ? 'active' : ''}`;
+    tabEl.setAttribute('data-tab-id', tab.id);
+    tabEl.innerHTML = `
+      <span class="tab-title-text" style="overflow:hidden; text-overflow:ellipsis;">${tab.title}</span>
+      <button class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</button>
+    `;
+    tabEl.addEventListener('click', () => switchTab(tab.id));
+    tabBar.insertBefore(tabEl, addTabBtn);
+  });
+}
+
+function switchTab(id) {
+  activeTabId = id;
+  const tab = tabs.find(t => t.id === id);
+  if (tab) {
+    proxyInput.value = tab.url;
+    proxyIframe.src = tab.src;
+  }
+  renderTabs();
+}
+
+function addTab(url = '', src = 'about:blank', title = 'New Tab') {
+  const newId = Date.now();
+  tabs.push({ id: newId, title, url, src });
+  switchTab(newId);
+}
+
+window.closeTab = function(id) {
+  if (tabs.length === 1) return;
+  tabs = tabs.filter(t => t.id !== id);
+  if (activeTabId === id) {
+    switchTab(tabs[tabs.length - 1].id);
+  } else {
+    renderTabs();
+  }
 };
 
-const tabTitleEl = document.getElementById('tab-title');
-const tabFaviconEl = document.getElementById('tab-favicon');
+addTabBtn.addEventListener('click', () => addTab());
 
-function applyTabDisguise(title, iconUrl) {
-  tabTitleEl.textContent = title;
-  tabFaviconEl.href = iconUrl;
-}
-
-function loadSavedDisguise() {
-  const savedKey = localStorage.getItem('miksi_disguise_preset') || 'canvas';
-  const customTitle = localStorage.getItem('miksi_custom_title');
-  const customIcon = localStorage.getItem('miksi_custom_icon');
-
-  if (savedKey === 'custom' && customTitle && customIcon) {
-    applyTabDisguise(customTitle, customIcon);
-  } else if (EDUCATIONAL_PRESETS[savedKey]) {
-    const preset = EDUCATIONAL_PRESETS[savedKey];
-    applyTabDisguise(preset.title, preset.icon);
+/* Panic Hide Key (\) */
+let isHidden = false;
+document.addEventListener('keydown', (e) => {
+  if (e.key === '\\') {
+    e.preventDefault();
+    isHidden = !isHidden;
+    document.body.style.display = isHidden ? 'none' : 'block';
   }
-}
-loadSavedDisguise();
+});
 
-/* GUI Scale Settings */
-const guiScaleSlider = document.getElementById('gui-scale-slider');
-const guiScaleVal = document.getElementById('gui-scale-val');
-
-function applyGuiScale(scale) {
-  document.documentElement.style.setProperty('--gui-scale', scale);
-  guiScaleVal.textContent = parseFloat(scale).toFixed(2) + 'x';
-}
-
-const savedScale = localStorage.getItem('miksi_gui_scale') || '1';
-guiScaleSlider.value = savedScale;
-applyGuiScale(savedScale);
-
-guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
-
-/* Settings Modal */
-const settingsBtn = document.getElementById('settings-btn');
+/* Sidebar Navigation Actions */
+const sbHome = document.getElementById('sb-home');
+const sbGames = document.getElementById('sb-games');
+const sbChat = document.getElementById('sb-chat');
+const sbSettings = document.getElementById('sb-settings');
+const gamesModal = document.getElementById('games-modal');
+const gamesClose = document.getElementById('games-close');
 const settingsModal = document.getElementById('settings-modal');
-const modalCloseBtn = document.getElementById('modal-close');
-const presetSelect = document.getElementById('preset-select');
-const customTitleInput = document.getElementById('custom-title-input');
-const customIconInput = document.getElementById('custom-icon-input');
-const saveSettingsBtn = document.getElementById('save-settings');
+const modalClose = document.getElementById('modal-close');
+const chatDrawer = document.getElementById('chat-drawer');
+const chatClose = document.getElementById('chat-close');
 
-settingsBtn.addEventListener('click', () => {
-  presetSelect.value = localStorage.getItem('miksi_disguise_preset') || 'canvas';
-  customTitleInput.value = localStorage.getItem('miksi_custom_title') || '';
-  customIconInput.value = localStorage.getItem('miksi_custom_icon') || '';
-  settingsModal.classList.add('active');
-});
+sbHome.addEventListener('click', () => { proxyInput.focus(); });
+sbGames.addEventListener('click', () => gamesModal.classList.add('active'));
+gamesClose.addEventListener('click', () => gamesModal.classList.remove('active'));
+sbSettings.addEventListener('click', () => settingsModal.classList.add('active'));
+modalClose.addEventListener('click', () => settingsModal.classList.remove('active'));
+sbChat.addEventListener('click', () => chatDrawer.classList.add('active'));
+chatClose.addEventListener('click', () => chatDrawer.classList.remove('active'));
 
-modalCloseBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
-
-presetSelect.addEventListener('change', (e) => {
-  const key = e.target.value;
-  if (key !== 'none' && EDUCATIONAL_PRESETS[key]) {
-    customTitleInput.value = EDUCATIONAL_PRESETS[key].title;
-    customIconInput.value = EDUCATIONAL_PRESETS[key].icon;
-  }
-});
-
-saveSettingsBtn.addEventListener('click', () => {
-  localStorage.setItem('miksi_gui_scale', guiScaleSlider.value);
-  const selectedPreset = presetSelect.value;
-  const titleVal = customTitleInput.value.trim();
-  const iconVal = customIconInput.value.trim();
-
-  if (selectedPreset !== 'none' && EDUCATIONAL_PRESETS[selectedPreset]) {
-    const preset = EDUCATIONAL_PRESETS[selectedPreset];
-    localStorage.setItem('miksi_disguise_preset', selectedPreset);
-    applyTabDisguise(preset.title, preset.icon);
-  } else if (titleVal && iconVal) {
-    localStorage.setItem('miksi_disguise_preset', 'custom');
-    localStorage.setItem('miksi_custom_title', titleVal);
-    localStorage.setItem('miksi_custom_icon', iconVal);
-    applyTabDisguise(titleVal, iconVal);
-  } else {
-    localStorage.setItem('miksi_disguise_preset', 'none');
-    applyTabDisguise(EDUCATIONAL_PRESETS.none.title, EDUCATIONAL_PRESETS.none.icon);
-  }
-  settingsModal.classList.remove('active');
-});
-
-/* Mode & Device Selectors */
-const modeToggleBtn = document.getElementById('mode-toggle-btn');
-const modeMenu = document.getElementById('mode-menu');
-const currentModeLabel = document.getElementById('current-mode-label');
-
-const deviceToggleBtn = document.getElementById('device-toggle-btn');
-const deviceMenu = document.getElementById('device-menu');
-const currentDeviceLabel = document.getElementById('current-device-label');
-const deviceWrapper = document.getElementById('device-wrapper');
-
-let currentMode = localStorage.getItem('miksi_proxy_mode') || 'strong';
-let currentDevice = localStorage.getItem('miksi_device_mode') || 'desktop';
-
-currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
-currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
-
-function updateDeviceView(device) {
-  deviceWrapper.className = 'device-viewport';
-  if (device === 'mobile') deviceWrapper.classList.add('mode-mobile');
-  if (device === 'tablet') deviceWrapper.classList.add('mode-tablet');
-}
-updateDeviceView(currentDevice);
-
-modeToggleBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  deviceMenu.classList.remove('active');
-  modeMenu.classList.toggle('active');
-});
-
-deviceToggleBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  modeMenu.classList.remove('active');
-  deviceMenu.classList.toggle('active');
-});
-
-document.addEventListener('click', () => {
-  modeMenu.classList.remove('active');
-  deviceMenu.classList.remove('active');
-});
-
-document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentMode = btn.getAttribute('data-mode');
-    localStorage.setItem('miksi_proxy_mode', currentMode);
-    currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
-    modeMenu.classList.remove('active');
-  });
-});
-
-document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentDevice = btn.getAttribute('data-device');
-    localStorage.setItem('miksi_device_mode', currentDevice);
-    currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
-    updateDeviceView(currentDevice);
-    deviceMenu.classList.remove('active');
-  });
-});
-
-/* Proxy Execution Engine (Fully Internal - No External APIs) */
-const proxyInput = document.getElementById('proxy-input');
+/* Proxy Navigation Engine */
 const proxyGoBtn = document.getElementById('proxy-go');
-const proxyViewer = document.getElementById('proxy-viewer');
-const proxyIframe = document.getElementById('proxy-iframe');
-const btnBack = document.getElementById('btn-back');
-const btnForward = document.getElementById('btn-forward');
-const btnReload = document.getElementById('btn-reload');
-const btnCloseViewer = document.getElementById('btn-close-viewer');
+let currentMode = 'strong';
 
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
-  if (/^https?:\/\//i.test(query)) {
-    return query;
-  }
+  if (/^https?:\/\//i.test(query)) return query;
   return 'https://' + query;
 }
 
@@ -184,12 +99,18 @@ function launchProxy(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
-  proxyInput.value = targetUrl;
-  proxyViewer.classList.add('active');
-  btnCloseViewer.classList.remove('hidden');
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
+  
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab) {
+    currentTab.url = targetUrl;
+    currentTab.src = proxyUrl;
+    currentTab.title = new URL(targetUrl).hostname;
+  }
 
-  // Uses internal repository API proxy route exclusively
-  proxyIframe.src = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
+  proxyInput.value = targetUrl;
+  proxyIframe.src = proxyUrl;
+  renderTabs();
 }
 
 proxyGoBtn.addEventListener('click', () => launchProxy(proxyInput.value));
@@ -200,78 +121,32 @@ proxyInput.addEventListener('keydown', (e) => {
   }
 });
 
-btnBack.addEventListener('click', () => { try { proxyIframe.contentWindow.history.back(); } catch(e) {} });
-btnForward.addEventListener('click', () => { try { proxyIframe.contentWindow.history.forward(); } catch(e) {} });
-btnReload.addEventListener('click', () => { if (proxyIframe.src) proxyIframe.src = proxyIframe.src; });
-btnCloseViewer.addEventListener('click', () => {
-  proxyViewer.classList.remove('active');
-  btnCloseViewer.classList.add('hidden');
-  proxyIframe.src = 'about:blank';
+/* Settings & Chat Script Hooks */
+const guiScaleSlider = document.getElementById('gui-scale-slider');
+guiScaleSlider.addEventListener('input', (e) => {
+  document.documentElement.style.setProperty('--gui-scale', e.target.value);
+  document.getElementById('gui-scale-val').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
 });
 
-/* Real-Time Local Chat Controller */
-const chatToggleBtn = document.getElementById('chat-toggle-btn');
-const chatDrawer = document.getElementById('chat-drawer');
-const chatCloseBtn = document.getElementById('chat-close');
-const chatAuthView = document.getElementById('chat-auth-view');
-const chatMessagesView = document.getElementById('chat-messages-view');
-const chatFooterView = document.getElementById('chat-footer-view');
-const usernameInput = document.getElementById('username-input');
-const signInBtn = document.getElementById('sign-in-btn');
-const chatMsgList = document.getElementById('chat-msg-list');
-const chatInput = document.getElementById('chat-input');
-const chatSendBtn = document.getElementById('chat-send-btn');
+document.getElementById('save-settings').addEventListener('click', () => settingsModal.classList.remove('active'));
 
-let currentUser = localStorage.getItem('miksi_chat_username') || '';
-
-function updateChatAuth() {
-  if (currentUser) {
-    chatAuthView.classList.add('hidden');
-    chatMessagesView.classList.remove('hidden');
-    chatFooterView.classList.remove('hidden');
-  } else {
-    chatAuthView.classList.remove('hidden');
-    chatMessagesView.classList.add('hidden');
-    chatFooterView.classList.add('hidden');
-  }
-}
-
-chatToggleBtn.addEventListener('click', () => {
-  updateChatAuth();
-  chatDrawer.classList.toggle('active');
-});
-
-chatCloseBtn.addEventListener('click', () => chatDrawer.classList.remove('active'));
-
-signInBtn.addEventListener('click', () => {
-  const name = usernameInput.value.trim();
+/* Chat Auth */
+let currentUser = '';
+document.getElementById('sign-in-btn').addEventListener('click', () => {
+  const name = document.getElementById('username-input').value.trim();
   if (name) {
     currentUser = name;
-    localStorage.setItem('miksi_chat_username', name);
-    updateChatAuth();
+    document.getElementById('chat-auth-view').classList.add('hidden');
+    document.getElementById('chat-messages-view').classList.remove('hidden');
+    document.getElementById('chat-footer-view').classList.remove('hidden');
   }
 });
 
-function appendMessage(user, text) {
-  const msgEl = document.createElement('div');
-  msgEl.className = 'chat-msg';
-  msgEl.innerHTML = `<strong>${user}</strong><span>${text}</span>`;
-  chatMsgList.appendChild(msgEl);
-  chatMessagesView.scrollTop = chatMessagesView.scrollHeight;
-}
-
-function sendMessage() {
-  const text = chatInput.value.trim();
+document.getElementById('chat-send-btn').addEventListener('click', () => {
+  const text = document.getElementById('chat-input').value.trim();
   if (text && currentUser) {
-    appendMessage(currentUser, text);
-    chatInput.value = '';
-  }
-}
-
-chatSendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    sendMessage();
+    const list = document.getElementById('chat-msg-list');
+    list.innerHTML += `<div class="chat-msg"><strong>${currentUser}</strong><span>${text}</span></div>`;
+    document.getElementById('chat-input').value = '';
   }
 });
