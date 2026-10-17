@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tab-title">Dashboard - Canvas</title>
   <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
 
@@ -24,6 +24,7 @@
       margin: 0;
       padding: 0;
       font-family: var(--font);
+      touch-action: manipulation;
     }
 
     body, html {
@@ -34,8 +35,8 @@
       color: var(--text);
     }
 
-    /* Background Stars Canvas */
-    canvas#bg-stars {
+    /* Background Stars & Game of Life Canvases */
+    canvas#bg-stars, canvas#life-canvas {
       position: fixed;
       top: 0;
       left: 0;
@@ -44,6 +45,8 @@
       z-index: 0;
       pointer-events: none;
     }
+
+    canvas#life-canvas { opacity: 0.18; }
 
     /* Left Sidebar Taskbar */
     .sidebar {
@@ -92,7 +95,7 @@
       stroke-linejoin: round;
     }
 
-    /* Top Tab Bar with Right-Sliding Animation */
+    /* Top Tab Bar */
     .tab-bar-container {
       position: fixed;
       top: 0;
@@ -127,7 +130,7 @@
     }
 
     @keyframes tabSlideRight {
-      from { opacity: 0; transform: translateX(40px); }
+      from { opacity: 0; transform: translateX(50px); }
       to { opacity: 1; transform: translateX(0); }
     }
 
@@ -163,7 +166,7 @@
 
     .add-tab-btn:hover { background: var(--hover); }
 
-    /* Home Empty State with Star Canvas */
+    /* Home Empty State with Enlarged Floating Star */
     .home-view {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -183,8 +186,8 @@
 
     .star-canvas-container {
       position: relative;
-      width: 400px;
-      height: 400px;
+      width: 520px;
+      height: 520px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -203,15 +206,16 @@
       z-index: 2;
       color: #ffffff;
       mix-blend-mode: difference;
-      font-size: 1.4rem;
+      font-size: 2.1rem;
       font-weight: bold;
-      letter-spacing: 2px;
+      letter-spacing: 2.5px;
       text-transform: lowercase;
       user-select: none;
       pointer-events: none;
+      text-align: center;
     }
 
-    /* Rotating Footer Text */
+    /* Footer Text */
     .footer-credit {
       position: fixed;
       bottom: calc(75px * var(--gui-scale));
@@ -352,7 +356,7 @@
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Proxy Viewer */
+    /* Proxy Viewer Container */
     .proxy-viewer {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -382,7 +386,7 @@
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
 
-    /* Draggable Modal / Settings */
+    /* Touch & Drag Modal */
     .draggable-modal {
       position: fixed;
       top: 15%;
@@ -396,6 +400,7 @@
       flex-direction: column;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
       user-select: none;
+      touch-action: none;
     }
 
     .draggable-modal.active { display: flex; }
@@ -453,7 +458,7 @@
     .setting-select, .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
     .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
 
-    /* Update Log / Welcome Modal */
+    /* Modals */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -466,13 +471,26 @@
     }
     .modal-overlay.hidden { display: none; }
 
+    .modal-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 450px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- Background Stars Canvas -->
+  <!-- Background Stars & Conway's Life Canvases -->
   <canvas id="bg-stars"></canvas>
+  <canvas id="life-canvas"></canvas>
 
   <!-- Left Sidebar Taskbar -->
   <div class="sidebar">
@@ -496,22 +514,22 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Empty Home View with Spinning Star Canvas -->
+  <!-- Empty Home View with Animated Star -->
   <div class="home-view" id="home-view">
     <div class="star-canvas-container">
-      <canvas id="star-canvas" width="400" height="400"></canvas>
+      <canvas id="star-canvas" width="520" height="520"></canvas>
       <div class="star-text">*welcome to verbos</div>
     </div>
   </div>
 
-  <!-- Rotating Footer Credit -->
+  <!-- Footer Credit -->
   <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
 
   <!-- Bottom Search Bar Pill -->
   <div class="bottom-nav-wrapper">
     <div class="mode-menu-table" id="mode-menu">
-      <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span><small>Optimized Relay</small></button>
-      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span><small>Cached SPA Interceptor</small></button>
+      <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span><small>Optimized Engine</small></button>
+      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span><small>SPA Interceptor</small></button>
     </div>
 
     <div class="device-menu-table" id="device-menu">
@@ -534,21 +552,21 @@
     </div>
   </div>
 
-  <!-- Ruffle Games Modal (WIP) -->
-  <div class="games-modal" id="games-modal">
+  <!-- Games Modal -->
+  <div class="modal-overlay hidden" id="games-modal">
     <div class="modal-box">
-      <div class="modal-header">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
         <span>Ruffle Flash Games (WIP)</span>
         <button class="nav-btn" id="games-close">×</button>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px;">
         <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox (WIP)</div>
         <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games (WIP)</div>
       </div>
     </div>
   </div>
 
-  <!-- Draggable Settings Modal with Tabs -->
+  <!-- Touch & Drag Modal -->
   <div class="draggable-modal" id="settings-modal">
     <div class="modal-header-drag" id="modal-drag-handle">
       <span>Settings</span>
@@ -561,7 +579,6 @@
         <button class="tab-btn" data-pane="pane-proxy">Proxy</button>
       </div>
 
-      <!-- GUI Pane -->
       <div class="settings-pane active" id="pane-gui">
         <div class="setting-row">
           <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.15x</span></label>
@@ -569,7 +586,6 @@
         </div>
       </div>
 
-      <!-- Color Pane -->
       <div class="settings-pane" id="pane-color">
         <div class="setting-row">
           <label for="bg-color-picker">Background Color</label>
@@ -581,7 +597,6 @@
         </div>
       </div>
 
-      <!-- Proxy Pane -->
       <div class="settings-pane" id="pane-proxy">
         <div class="setting-row">
           <label for="preset-select">Educational Tab Disguise</label>
@@ -598,27 +613,24 @@
     </div>
   </div>
 
-  <!-- Update Logs / Welcome Modal -->
-  <div class="modal-overlay" id="update-modal">
+  <!-- Update Logs Modal -->
+  <div class="modal-overlay hidden" id="update-modal">
     <div class="modal-box">
-      <div class="modal-header">
-        <span>*rebrand!!* - Update Logs</span>
-      </div>
+      <div style="font-weight:bold; font-size:1.1rem;">*rebrand!!* - Update Logs</div>
       <div style="font-size:0.95rem; line-height:1.5; color:var(--subtext);">
         <p>Welcome to the new version of <strong>miksi</strong>!</p>
         <ul style="margin-left:20px; margin-top:8px;">
-          <li>✨ Added background drifting stars & star canvas.</li>
-          <li>🎮 Interactive footer text & Ruffle Games (WIP).</li>
-          <li>🔍 Fixed YouTube search error routing.</li>
-          <li>🛡️ Added Incognito mode & session persistence.</li>
-          <li>🖱️ Draggable settings menu with GUI, Color, and Proxy tabs.</li>
+          <li>✨ Added background drifting stars & sine-floating star.</li>
+          <li>🎮 Touch & mobile drag support enabled.</li>
+          <li>🔍 YouTube search fix routing integrated.</li>
+          <li>💻 Hardware Device UA mapping enabled.</li>
         </ul>
       </div>
       <button class="save-btn" id="close-update-modal">Got it!</button>
     </div>
   </div>
 
-  <!-- Proxy Viewer -->
+  <!-- Proxy Viewer Container -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div id="device-wrapper" class="device-viewport">
       <iframe id="proxy-iframe" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
