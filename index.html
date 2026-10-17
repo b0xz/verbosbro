@@ -43,10 +43,13 @@
       padding: calc(20px * var(--gui-scale));
     }
 
+    /* Top Utility Actions */
     .top-bar {
       position: absolute;
       top: calc(16px * var(--gui-scale));
       right: calc(16px * var(--gui-scale));
+      display: flex;
+      gap: 10px;
       z-index: 10;
     }
 
@@ -79,18 +82,14 @@
       stroke-linejoin: round;
     }
 
-    .svg-icon.hidden {
-      display: none;
-    }
-
-    /* Floating Bottom Search Bar Pill */
+    /* Bottom Navigation Bar Pill */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: calc(16px * var(--gui-scale));
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
-      max-width: calc(560px * var(--gui-scale));
+      max-width: calc(680px * var(--gui-scale));
       z-index: 1001;
     }
 
@@ -103,7 +102,6 @@
       align-items: center;
       gap: calc(6px * var(--gui-scale));
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-      transition: all 0.2s ease;
     }
 
     .bottom-nav-pill:focus-within {
@@ -130,7 +128,7 @@
       color: var(--accent);
     }
 
-    .mode-toggle-btn {
+    .pill-btn-toggle {
       background: var(--hover);
       border: 1px solid var(--border);
       color: var(--text);
@@ -142,10 +140,9 @@
       align-items: center;
       gap: 4px;
       flex-shrink: 0;
-      transition: all 0.2s ease;
     }
 
-    .mode-toggle-btn:hover {
+    .pill-btn-toggle:hover {
       border-color: var(--accent);
     }
 
@@ -161,7 +158,6 @@
 
     .pill-input::placeholder {
       color: var(--subtext);
-      font-size: calc(0.95rem * var(--gui-scale));
     }
 
     .go-btn {
@@ -184,10 +180,10 @@
       transform: scale(1.05);
     }
 
-    /* Mode Selection Table Popup */
-    .mode-menu {
+    /* Strength Mode Table Menu */
+    .mode-menu-table {
       position: absolute;
-      bottom: calc(52px * var(--gui-scale));
+      bottom: calc(50px * var(--gui-scale));
       left: calc(100px * var(--gui-scale));
       background: var(--panel);
       border: 1px solid var(--border);
@@ -204,13 +200,13 @@
       z-index: 1002;
     }
 
-    .mode-menu.active {
+    .mode-menu-table.active {
       opacity: 1;
       pointer-events: all;
       transform: translateY(0);
     }
 
-    .mode-option-btn {
+    .mode-row-btn {
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
@@ -221,19 +217,96 @@
       cursor: pointer;
       display: flex;
       justify-content: space-between;
-      align-items: center;
       gap: 12px;
-      transition: all 0.2s ease;
     }
 
-    .mode-option-btn:hover, .mode-option-btn.selected {
+    .mode-row-btn:hover, .mode-row-btn.selected {
       background: var(--hover);
       border-color: var(--accent);
     }
 
-    .mode-option-btn small {
+    .mode-row-btn small {
       color: var(--subtext);
-      font-size: calc(0.75rem * var(--gui-scale));
+    }
+
+    /* Device View Selector Menu */
+    .device-menu-table {
+      position: absolute;
+      bottom: calc(50px * var(--gui-scale));
+      left: calc(180px * var(--gui-scale));
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: calc(12px * var(--gui-scale));
+      padding: calc(8px * var(--gui-scale));
+      display: flex;
+      flex-direction: column;
+      gap: calc(6px * var(--gui-scale));
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      z-index: 1002;
+    }
+
+    .device-menu-table.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    /* Proxy Frame & Device Wrapper */
+    .proxy-viewer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding-bottom: calc(65px * var(--gui-scale));
+    }
+
+    .proxy-viewer.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .device-viewport {
+      width: 100%;
+      height: 100%;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+      border: none;
+      background: #ffffff;
+    }
+
+    .device-viewport.mode-mobile {
+      width: 375px;
+      height: 667px;
+      border: 12px solid #2a2a2a;
+      border-radius: 36px;
+    }
+
+    .device-viewport.mode-tablet {
+      width: 768px;
+      height: 1024px;
+      border: 14px solid #2a2a2a;
+      border-radius: 24px;
+    }
+
+    .proxy-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+      border-radius: inherit;
     }
 
     /* Modal Popup */
@@ -264,7 +337,7 @@
       border: 1px solid var(--border);
       border-radius: calc(14px * var(--gui-scale));
       width: 90%;
-      max-width: calc(400px * var(--gui-scale));
+      max-width: calc(420px * var(--gui-scale));
       padding: calc(20px * var(--gui-scale));
       display: flex;
       flex-direction: column;
@@ -298,11 +371,6 @@
       justify-content: space-between;
     }
 
-    .setting-row label span {
-      color: var(--text);
-      font-weight: bold;
-    }
-
     .setting-select, .setting-input {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -313,14 +381,9 @@
       outline: none;
     }
 
-    .setting-select:focus, .setting-input:focus {
-      border-color: var(--accent);
-    }
-
     .slider-container input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
-      cursor: pointer;
     }
 
     .save-btn {
@@ -332,48 +395,82 @@
       font-weight: bold;
       color: var(--bg);
       cursor: pointer;
-      transition: background 0.2s ease;
     }
 
-    .save-btn:hover {
-      background: var(--accent);
-    }
-
-    /* Proxy Frame Viewer Overlay */
-    .proxy-viewer {
+    /* Chat Drawer Panel */
+    .chat-drawer {
       position: fixed;
       top: 0;
-      left: 0;
-      width: 100vw;
+      right: -340px;
+      width: 320px;
       height: 100vh;
-      background: var(--bg);
-      z-index: 999;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      z-index: 1500;
       display: flex;
       flex-direction: column;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      padding-bottom: calc(65px * var(--gui-scale));
+      transition: right 0.3s ease;
     }
 
-    .proxy-viewer.active {
-      opacity: 1;
-      pointer-events: all;
+    .chat-drawer.active {
+      right: 0;
     }
 
-    .proxy-frame {
+    .chat-header {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .chat-body {
       flex: 1;
-      width: 100%;
-      height: 100%;
-      border: none;
-      background: #ffffff;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
+
+    .chat-msg {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+
+    .chat-msg strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 2px;
+      font-size: 0.75rem;
+    }
+
+    .chat-footer {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="app-container">
     <div class="top-bar">
+      <!-- Chat Button -->
+      <button class="icon-btn" id="chat-toggle-btn" title="Live Chat">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </button>
+
+      <!-- Settings Button -->
       <button class="icon-btn" id="settings-btn" title="Settings">
         <svg class="svg-icon" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3"></circle>
@@ -383,34 +480,44 @@
     </div>
   </div>
 
+  <!-- Bottom Search Bar Pill -->
   <div class="bottom-nav-wrapper">
-    <!-- Mode Menu Popup -->
-    <div class="mode-menu" id="mode-menu">
-      <button class="mode-option-btn" data-mode="fast">
-        <span>Fast</span>
-        <small>Client CORS Engine</small>
+    <!-- Strength Mode Table -->
+    <div class="mode-menu-table" id="mode-menu">
+      <button class="mode-row-btn" data-mode="fast">
+        <span>Fast Mode</span>
+        <small>Client CORS Relay</small>
       </button>
-      <button class="mode-option-btn" data-mode="stealth">
-        <span>Stealth</span>
-        <small>HTML Rewriter</small>
+      <button class="mode-row-btn" data-mode="stealth">
+        <span>Stealth Mode</span>
+        <small>HTML Link Rewriter</small>
       </button>
-      <button class="mode-option-btn" data-mode="strong">
-        <span>Strong</span>
-        <small>Headers + Media Injection</small>
+      <button class="mode-row-btn" data-mode="strong">
+        <span>Strong Mode</span>
+        <small>Header Spoof + Media Injection</small>
+      </button>
+    </div>
+
+    <!-- Device Type Table -->
+    <div class="device-menu-table" id="device-menu">
+      <button class="mode-row-btn" data-device="desktop">
+        <span>Desktop View</span>
+      </button>
+      <button class="mode-row-btn" data-device="tablet">
+        <span>Tablet View</span>
+      </button>
+      <button class="mode-row-btn" data-device="mobile">
+        <span>Mobile View</span>
       </button>
     </div>
 
     <div class="bottom-nav-pill">
       <button class="nav-btn" id="btn-back" title="Go Back">
-        <svg class="svg-icon" viewBox="0 0 24 24">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
 
       <button class="nav-btn" id="btn-forward" title="Go Forward">
-        <svg class="svg-icon" viewBox="0 0 24 24">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
 
       <button class="nav-btn" id="btn-reload" title="Refresh">
@@ -421,19 +528,17 @@
         </svg>
       </button>
 
-      <!-- Mode Selector Pill Button -->
-      <button class="mode-toggle-btn" id="mode-toggle-btn">
+      <!-- Strength Opener Button -->
+      <button class="pill-btn-toggle" id="mode-toggle-btn">
         <span id="current-mode-label">Fast</span> ▾
       </button>
 
-      <input 
-        type="text" 
-        id="proxy-input" 
-        class="pill-input" 
-        placeholder="Enter URL..." 
-        autocomplete="off"
-        autofocus
-      />
+      <!-- Device View Opener Button -->
+      <button class="pill-btn-toggle" id="device-toggle-btn">
+        <span id="current-device-label">Desktop</span> ▾
+      </button>
+
+      <input type="text" id="proxy-input" class="pill-input" placeholder="Enter URL..." autocomplete="off" autofocus />
 
       <button class="go-btn" id="proxy-go" title="Go">
         <svg class="svg-icon" viewBox="0 0 24 24">
@@ -451,6 +556,7 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <div class="modal-header">
@@ -503,8 +609,43 @@
     </div>
   </div>
 
+  <!-- Live Chat Drawer -->
+  <div class="chat-drawer" id="chat-drawer">
+    <div class="chat-header">
+      <span>miksi Chat</span>
+      <button class="nav-btn" id="chat-close">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Auth View -->
+    <div id="chat-auth-view" class="chat-body" style="justify-content: center;">
+      <div class="setting-row">
+        <label>Display Name</label>
+        <input type="text" id="username-input" class="setting-input" placeholder="Enter handle..." />
+      </div>
+      <button class="save-btn" id="sign-in-btn">Sign In to Chat</button>
+    </div>
+
+    <!-- Chat Messages View -->
+    <div id="chat-messages-view" class="chat-body hidden">
+      <div id="chat-msg-list"></div>
+    </div>
+
+    <div id="chat-footer-view" class="chat-footer hidden">
+      <input type="text" id="chat-input" class="setting-input" style="flex:1;" placeholder="Message..." />
+      <button class="save-btn" id="chat-send-btn">Send</button>
+    </div>
+  </div>
+
+  <!-- Proxy Fullscreen Viewer -->
   <div class="proxy-viewer" id="proxy-viewer">
-    <iframe id="proxy-iframe" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+    <div id="device-wrapper" class="device-viewport">
+      <iframe id="proxy-iframe" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+    </div>
   </div>
 
   <script src="script.js"></script>
