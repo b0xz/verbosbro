@@ -37,6 +37,24 @@ function loadSavedDisguise() {
 }
 loadSavedDisguise();
 
+/* GUI Scale Settings Handler */
+const guiScaleSlider = document.getElementById('gui-scale-slider');
+const guiScaleVal = document.getElementById('gui-scale-val');
+
+function applyGuiScale(scale) {
+  document.documentElement.style.setProperty('--gui-scale', scale);
+  guiScaleVal.textContent = parseFloat(scale).toFixed(2) + 'x';
+}
+
+const savedScale = localStorage.getItem('miksi_gui_scale') || '1';
+guiScaleSlider.value = savedScale;
+applyGuiScale(savedScale);
+
+guiScaleSlider.addEventListener('input', (e) => {
+  applyGuiScale(e.target.value);
+});
+
+/* Settings Modal Elements */
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const modalCloseBtn = document.getElementById('modal-close');
@@ -63,6 +81,8 @@ presetSelect.addEventListener('change', (e) => {
 });
 
 saveSettingsBtn.addEventListener('click', () => {
+  localStorage.setItem('miksi_gui_scale', guiScaleSlider.value);
+
   const selectedPreset = presetSelect.value;
   const titleVal = customTitleInput.value.trim();
   const iconVal = customIconInput.value.trim();
@@ -83,6 +103,32 @@ saveSettingsBtn.addEventListener('click', () => {
   settingsModal.classList.remove('active');
 });
 
+/* Mode Menu Selector logic */
+const modeToggleBtn = document.getElementById('mode-toggle-btn');
+const modeMenu = document.getElementById('mode-menu');
+const currentModeLabel = document.getElementById('current-mode-label');
+
+let currentMode = localStorage.getItem('miksi_proxy_mode') || 'fast';
+currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+
+modeToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modeMenu.classList.toggle('active');
+});
+
+document.addEventListener('click', () => modeMenu.classList.remove('active'));
+
+document.querySelectorAll('.mode-option-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentMode = btn.getAttribute('data-mode');
+    localStorage.setItem('miksi_proxy_mode', currentMode);
+    currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+    modeMenu.classList.remove('active');
+  });
+});
+
+/* Proxy Navigation & Multi-Engine Fallback Execution */
 const proxyInput = document.getElementById('proxy-input');
 const proxyGoBtn = document.getElementById('proxy-go');
 const proxyViewer = document.getElementById('proxy-viewer');
@@ -96,26 +142,39 @@ function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
 
-  // Has explicit protocol
   if (/^https?:\/\//i.test(query)) {
     return query;
   }
-
-  // Prepend https:// to any provided URL/domain
   return 'https://' + query;
 }
 
+// Fallback Chain to prevent "Page Unavailable" errors if server API route is missing/500
 function buildProxyUrl(targetUrl) {
-  return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+  if (currentMode === 'fast') {
+    // Client-side direct public CORS proxies chain
+    return `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+  } else {
+    // Serverless route with query mode params
+    return `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}`;
+  }
 }
 
 function launchProxy(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
+
   proxyInput.value = targetUrl;
-  proxyIframe.src = buildProxyUrl(targetUrl);
+  const initialProxyUrl = buildProxyUrl(targetUrl);
+
+  proxyIframe.src = initialProxyUrl;
   proxyViewer.classList.add('active');
   btnCloseViewer.classList.remove('hidden');
+
+  // Backup fallback error listener
+  proxyIframe.onerror = () => {
+    console.warn('Primary proxy failed. Triggering backup fallback...');
+    proxyIframe.src = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+  };
 }
 
 proxyGoBtn.addEventListener('click', () => launchProxy(proxyInput.value));
