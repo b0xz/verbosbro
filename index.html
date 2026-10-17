@@ -43,7 +43,6 @@
       padding: calc(20px * var(--gui-scale));
     }
 
-    /* Top Utility Actions */
     .top-bar {
       position: absolute;
       top: calc(16px * var(--gui-scale));
@@ -82,7 +81,6 @@
       stroke-linejoin: round;
     }
 
-    /* Bottom Navigation Bar Pill */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: calc(16px * var(--gui-scale));
@@ -180,7 +178,6 @@
       transform: scale(1.05);
     }
 
-    /* Strength Mode Table Menu */
     .mode-menu-table {
       position: absolute;
       bottom: calc(50px * var(--gui-scale));
@@ -229,7 +226,6 @@
       color: var(--subtext);
     }
 
-    /* Device View Selector Menu */
     .device-menu-table {
       position: absolute;
       bottom: calc(50px * var(--gui-scale));
@@ -255,7 +251,6 @@
       transform: translateY(0);
     }
 
-    /* Proxy Frame & Device Wrapper */
     .proxy-viewer {
       position: fixed;
       top: 0;
@@ -309,7 +304,6 @@
       border-radius: inherit;
     }
 
-    /* Modal Popup */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -397,7 +391,6 @@
       cursor: pointer;
     }
 
-    /* Chat Drawer Panel */
     .chat-drawer {
       position: fixed;
       top: 0;
@@ -463,14 +456,12 @@
 
   <div class="app-container">
     <div class="top-bar">
-      <!-- Chat Button -->
       <button class="icon-btn" id="chat-toggle-btn" title="Live Chat">
         <svg class="svg-icon" viewBox="0 0 24 24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
       </button>
 
-      <!-- Settings Button -->
       <button class="icon-btn" id="settings-btn" title="Settings">
         <svg class="svg-icon" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3"></circle>
@@ -480,25 +471,22 @@
     </div>
   </div>
 
-  <!-- Bottom Search Bar Pill -->
   <div class="bottom-nav-wrapper">
-    <!-- Strength Mode Table -->
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast">
         <span>Fast Mode</span>
-        <small>Client CORS Relay</small>
+        <small>Quick Relay</small>
       </button>
       <button class="mode-row-btn" data-mode="stealth">
         <span>Stealth Mode</span>
-        <small>HTML Link Rewriter</small>
+        <small>HTML Rewriter</small>
       </button>
       <button class="mode-row-btn" data-mode="strong">
         <span>Strong Mode</span>
-        <small>Header Spoof + Media Injection</small>
+        <small>Full SPA Interceptor</small>
       </button>
     </div>
 
-    <!-- Device Type Table -->
     <div class="device-menu-table" id="device-menu">
       <button class="mode-row-btn" data-device="desktop">
         <span>Desktop View</span>
@@ -528,12 +516,10 @@
         </svg>
       </button>
 
-      <!-- Strength Opener Button -->
       <button class="pill-btn-toggle" id="mode-toggle-btn">
-        <span id="current-mode-label">Fast</span> ▾
+        <span id="current-mode-label">Strong</span> ▾
       </button>
 
-      <!-- Device View Opener Button -->
       <button class="pill-btn-toggle" id="device-toggle-btn">
         <span id="current-device-label">Desktop</span> ▾
       </button>
@@ -556,7 +542,6 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <div class="modal-header">
@@ -609,7 +594,6 @@
     </div>
   </div>
 
-  <!-- Live Chat Drawer -->
   <div class="chat-drawer" id="chat-drawer">
     <div class="chat-header">
       <span>miksi Chat</span>
@@ -621,7 +605,6 @@
       </button>
     </div>
 
-    <!-- Auth View -->
     <div id="chat-auth-view" class="chat-body" style="justify-content: center;">
       <div class="setting-row">
         <label>Display Name</label>
@@ -630,7 +613,6 @@
       <button class="save-btn" id="sign-in-btn">Sign In to Chat</button>
     </div>
 
-    <!-- Chat Messages View -->
     <div id="chat-messages-view" class="chat-body hidden">
       <div id="chat-msg-list"></div>
     </div>
@@ -641,7 +623,6 @@
     </div>
   </div>
 
-  <!-- Proxy Fullscreen Viewer -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div id="device-wrapper" class="device-viewport">
       <iframe id="proxy-iframe" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
