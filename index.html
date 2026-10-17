@@ -35,7 +35,8 @@
       color: var(--text);
     }
 
-    canvas#bg-stars, canvas#life-canvas {
+    /* Background Rotating Canvas Stars */
+    canvas#bg-stars {
       position: fixed;
       top: 0;
       left: 0;
@@ -45,9 +46,7 @@
       pointer-events: none;
     }
 
-    canvas#life-canvas { opacity: 0.18; }
-
-    /* Left Sidebar Taskbar */
+    /* Sidebar Taskbar */
     .sidebar {
       position: fixed;
       top: 0;
@@ -161,7 +160,7 @@
 
     .add-tab-btn:hover { background: var(--hover); }
 
-    /* Drag Ghost Preview */
+    /* Drag Ghost Preview & Snap Zones */
     .drag-tab-ghost {
       position: fixed;
       pointer-events: none;
@@ -177,7 +176,6 @@
       display: none;
     }
 
-    /* Screen Edge Snap Dropzone Overlays */
     .snap-overlay {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -194,6 +192,32 @@
     .snap-overlay.left { left: calc(64px * var(--gui-scale)); width: calc(50vw - 32px * var(--gui-scale)); }
     .snap-overlay.right { right: 0; }
     .snap-overlay.active { opacity: 1; }
+
+    /* Floating Tab Window */
+    .floating-tab-window {
+      position: fixed;
+      width: 380px;
+      height: 280px;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8);
+      z-index: 2200;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      resize: both;
+    }
+
+    .floating-window-header {
+      background: var(--hover);
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      font-size: 0.85rem;
+    }
 
     /* Home View */
     .home-view {
@@ -256,7 +280,7 @@
       user-select: none;
     }
 
-    /* Bottom Navigation Pill & Split-Screen Switcher Header */
+    /* Bottom Control Pill & Dual Screen Switcher */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: calc(20px * var(--gui-scale));
@@ -407,7 +431,7 @@
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Multi-Viewport Screen Split Container */
+    /* Split Viewports */
     .proxy-viewer {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -434,7 +458,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: flex 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: flex 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .screen-panel.hidden { display: none; }
@@ -450,32 +474,6 @@
     .device-viewport.mode-tablet { width: 768px; height: 1024px; border: 14px solid #2a2a2a; border-radius: 24px; }
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
-
-    /* Floating Detached Tab Window */
-    .floating-tab-window {
-      position: fixed;
-      width: 380px;
-      height: 280px;
-      background: var(--panel);
-      border: 1px solid var(--accent);
-      border-radius: 12px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8);
-      z-index: 2200;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      resize: both;
-    }
-
-    .floating-window-header {
-      background: var(--hover);
-      padding: 8px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: grab;
-      font-size: 0.85rem;
-    }
 
     .draggable-modal {
       position: fixed;
@@ -533,14 +531,14 @@
 </head>
 <body>
 
+  <!-- Dynamic Stars Background -->
   <canvas id="bg-stars"></canvas>
-  <canvas id="life-canvas"></canvas>
 
   <div class="drag-tab-ghost" id="tab-ghost">New Tab</div>
   <div class="snap-overlay left" id="snap-left"></div>
   <div class="snap-overlay right" id="snap-right"></div>
 
-  <!-- Left Sidebar Taskbar -->
+  <!-- Sidebar -->
   <div class="sidebar">
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -558,7 +556,7 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Empty Home View -->
+  <!-- Home View -->
   <div class="home-view" id="home-view">
     <div class="star-canvas-container">
       <canvas id="star-canvas" width="520" height="520"></canvas>
@@ -566,10 +564,10 @@
     </div>
   </div>
 
-  <!-- Footer Credit -->
+  <!-- Rotating Footer Credit -->
   <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
 
-  <!-- Bottom Search Bar Pill with Dual-Screen Switcher -->
+  <!-- Bottom Nav Pill -->
   <div class="bottom-nav-wrapper">
     <div class="split-switcher-bar" id="split-switcher-bar">
       <button class="split-btn active" id="btn-screen1">screen 1</button>
@@ -669,17 +667,16 @@
       <div style="font-size:0.95rem; line-height:1.5; color:var(--subtext);">
         <p>Welcome to the new version of <strong>miksi</strong>!</p>
         <ul style="margin-left:20px; margin-top:8px;">
-          <li>✨ Drag tabs anywhere or onto edges to split screens.</li>
-          <li>📱 Responsive lerp split screen with screen 1 & 2 toggles.</li>
-          <li>✨ Background drifting stars & sine-floating star.</li>
-          <li>🔍 YouTube search fix routing integrated.</li>
+          <li>✨ Advanced base-protocol rewriter engine.</li>
+          <li>📱 Split-screen viewports with lerp transitions.</li>
+          <li>✨ Background drifting stars & sine-floating central star.</li>
         </ul>
       </div>
       <button class="save-btn" id="close-update-modal">Got it!</button>
     </div>
   </div>
 
-  <!-- Proxy Viewports Split Container -->
+  <!-- Proxy Viewports Container -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div class="screen-panel" id="screen-panel-1">
       <div id="device-wrapper-1" class="device-viewport">
