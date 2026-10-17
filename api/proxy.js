@@ -8,22 +8,26 @@ export default async function handler(req, res) {
 
   const targetUrl = req.query.url || (req.body && req.body.url);
   const mode = req.query.mode || 'fast';
+  const device = req.query.device || 'desktop';
 
   if (!targetUrl) return res.status(400).send('Missing target URL.');
 
-  const UA_POOLS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15'
-  ];
-  const randomUA = UA_POOLS[Math.floor(Math.random() * UA_POOLS.length)];
+  // Hardware mapped UA Pools
+  const UA_MAP = {
+    desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+  };
+
+  const selectedUA = UA_MAP[device] || UA_MAP.desktop;
 
   try {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
     
     const headers = {
-      'user-agent': randomUA,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'user-agent': selectedUA,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
@@ -51,7 +55,7 @@ export default async function handler(req, res) {
     try { res.removeHeader('content-security-policy'); } catch (e) {}
     try { res.removeHeader('x-content-type-options'); } catch (e) {}
 
-    // Fast Mode: Streamlined direct relay
+    // Fast Mode & Binary Relay
     if (mode === 'fast' || !contentType.includes('text/html')) {
       if (response.body && typeof response.body.pipe === 'function') {
         return response.body.pipe(res);
@@ -59,7 +63,7 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(await response.arrayBuffer()));
     }
 
-    // Strong Mode: Cached & Optimized SPA Interceptor
+    // Strong Mode HTML & Resource Rewriter
     let body = await response.text();
     body = body.replace(/integrity="[^"]*"/gi, '').replace(/nonce="[^"]*"/gi, '').replace(/crossorigin="[^"]*"/gi, '');
 
@@ -68,7 +72,7 @@ export default async function handler(req, res) {
         if (!val || /^(data:|javascript:|#|mailto:|blob:)/i.test(val)) return val;
         if (val.includes('/api/proxy?url=')) return val;
         let absUrl = val.startsWith('//') ? parsedUrl.protocol + val : val.startsWith('/') ? `${baseUrl}${val}` : new URL(val, baseUrl).href;
-        return `/api/proxy?url=${encodeURIComponent(absUrl)}&mode=${mode}`;
+        return `/api/proxy?url=${encodeURIComponent(absUrl)}&mode=${mode}&device=${device}`;
       } catch (e) {
         return val;
       }
@@ -86,7 +90,7 @@ export default async function handler(req, res) {
             try {
               if (!url || url.startsWith('data:') || url.startsWith('blob:')) return url;
               if (url.includes('/api/proxy?url=')) return url;
-              return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href) + '&mode=${mode}';
+              return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href) + '&mode=${mode}&device=${device}';
             } catch(e) { return url; }
           }
           const originalFetch = window.fetch;
