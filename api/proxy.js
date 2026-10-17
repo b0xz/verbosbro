@@ -12,7 +12,6 @@ export default async function handler(req, res) {
 
   if (!targetUrl) return res.status(400).send('Missing target URL.');
 
-  // Hardware mapped UA Pools
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -54,16 +53,17 @@ export default async function handler(req, res) {
     try { res.removeHeader('x-frame-options'); } catch (e) {}
     try { res.removeHeader('content-security-policy'); } catch (e) {}
     try { res.removeHeader('x-content-type-options'); } catch (e) {}
+    try { res.removeHeader('cross-origin-opener-policy'); } catch (e) {}
 
-    // Fast Mode & Binary Relay
-    if (mode === 'fast' || !contentType.includes('text/html')) {
+    // Stream non-HTML or Fast mode assets directly
+    if (mode === 'fast' && !contentType.includes('text/html')) {
       if (response.body && typeof response.body.pipe === 'function') {
         return response.body.pipe(res);
       }
       return res.status(200).send(Buffer.from(await response.arrayBuffer()));
     }
 
-    // Strong Mode HTML & Resource Rewriter
+    // High-level Rewriter Engine
     let body = await response.text();
     body = body.replace(/integrity="[^"]*"/gi, '').replace(/nonce="[^"]*"/gi, '').replace(/crossorigin="[^"]*"/gi, '');
 
