@@ -8,6 +8,7 @@
 
   <style>
     :root {
+      --gui-scale: 1;
       --bg: #121212;
       --panel: #1e1e1e;
       --border: #2e2e2e;
@@ -39,13 +40,13 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: calc(20px * var(--gui-scale));
     }
 
     .top-bar {
       position: absolute;
-      top: 16px;
-      right: 16px;
+      top: calc(16px * var(--gui-scale));
+      right: calc(16px * var(--gui-scale));
       z-index: 10;
     }
 
@@ -53,8 +54,8 @@
       background: var(--panel);
       border: 1px solid var(--border);
       color: var(--text);
-      width: 32px;
-      height: 32px;
+      width: calc(36px * var(--gui-scale));
+      height: calc(36px * var(--gui-scale));
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -69,8 +70,8 @@
     }
 
     .svg-icon {
-      width: 14px;
-      height: 14px;
+      width: calc(16px * var(--gui-scale));
+      height: calc(16px * var(--gui-scale));
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -82,26 +83,26 @@
       display: none;
     }
 
-    /* Small Floating Bottom Search Pill */
+    /* Floating Bottom Search Bar Pill */
     .bottom-nav-wrapper {
       position: fixed;
-      bottom: 16px;
+      bottom: calc(16px * var(--gui-scale));
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
-      max-width: 480px;
+      max-width: calc(560px * var(--gui-scale));
       z-index: 1001;
     }
 
     .bottom-nav-pill {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 30px;
-      padding: 4px 8px;
+      border-radius: calc(30px * var(--gui-scale));
+      padding: calc(4px * var(--gui-scale)) calc(8px * var(--gui-scale));
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      gap: calc(6px * var(--gui-scale));
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       transition: all 0.2s ease;
     }
 
@@ -113,8 +114,8 @@
       background: transparent;
       border: none;
       color: var(--text);
-      width: 28px;
-      height: 28px;
+      width: calc(30px * var(--gui-scale));
+      height: calc(30px * var(--gui-scale));
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -129,26 +130,45 @@
       color: var(--accent);
     }
 
+    .mode-toggle-btn {
+      background: var(--hover);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: calc(15px * var(--gui-scale));
+      padding: calc(4px * var(--gui-scale)) calc(10px * var(--gui-scale));
+      font-size: calc(0.8rem * var(--gui-scale));
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .mode-toggle-btn:hover {
+      border-color: var(--accent);
+    }
+
     .pill-input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      padding: 4px 8px;
-      font-size: 0.85rem;
+      padding: calc(6px * var(--gui-scale)) calc(8px * var(--gui-scale));
+      font-size: calc(0.95rem * var(--gui-scale));
       color: var(--text);
     }
 
     .pill-input::placeholder {
       color: var(--subtext);
-      font-size: 0.85rem;
+      font-size: calc(0.95rem * var(--gui-scale));
     }
 
     .go-btn {
       background: var(--text);
       border: none;
-      width: 28px;
-      height: 28px;
+      width: calc(30px * var(--gui-scale));
+      height: calc(30px * var(--gui-scale));
       border-radius: 50%;
       color: var(--bg);
       display: flex;
@@ -164,7 +184,59 @@
       transform: scale(1.05);
     }
 
-    /* Modal Styling */
+    /* Mode Selection Table Popup */
+    .mode-menu {
+      position: absolute;
+      bottom: calc(52px * var(--gui-scale));
+      left: calc(100px * var(--gui-scale));
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: calc(12px * var(--gui-scale));
+      padding: calc(8px * var(--gui-scale));
+      display: flex;
+      flex-direction: column;
+      gap: calc(6px * var(--gui-scale));
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      z-index: 1002;
+    }
+
+    .mode-menu.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    .mode-option-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: calc(8px * var(--gui-scale)) calc(12px * var(--gui-scale));
+      border-radius: calc(8px * var(--gui-scale));
+      font-size: calc(0.85rem * var(--gui-scale));
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .mode-option-btn:hover, .mode-option-btn.selected {
+      background: var(--hover);
+      border-color: var(--accent);
+    }
+
+    .mode-option-btn small {
+      color: var(--subtext);
+      font-size: calc(0.75rem * var(--gui-scale));
+    }
+
+    /* Modal Popup */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -190,46 +262,53 @@
     .modal-box {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: calc(14px * var(--gui-scale));
       width: 90%;
-      max-width: 380px;
-      padding: 20px;
+      max-width: calc(400px * var(--gui-scale));
+      padding: calc(20px * var(--gui-scale));
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: calc(16px * var(--gui-scale));
     }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 1rem;
+      font-size: calc(1rem * var(--gui-scale));
       font-weight: bold;
     }
 
     .setting-table {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: calc(12px * var(--gui-scale));
     }
 
     .setting-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: calc(4px * var(--gui-scale));
     }
 
     .setting-row label {
-      font-size: 0.85rem;
+      font-size: calc(0.85rem * var(--gui-scale));
       color: var(--subtext);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .setting-row label span {
+      color: var(--text);
+      font-weight: bold;
     }
 
     .setting-select, .setting-input {
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 0.85rem;
+      border-radius: calc(6px * var(--gui-scale));
+      padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale));
+      font-size: calc(0.85rem * var(--gui-scale));
       color: var(--text);
       outline: none;
     }
@@ -238,12 +317,18 @@
       border-color: var(--accent);
     }
 
+    .slider-container input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
     .save-btn {
       background: var(--text);
       border: none;
-      border-radius: 6px;
-      padding: 10px;
-      font-size: 0.9rem;
+      border-radius: calc(6px * var(--gui-scale));
+      padding: calc(10px * var(--gui-scale));
+      font-size: calc(0.9rem * var(--gui-scale));
       font-weight: bold;
       color: var(--bg);
       cursor: pointer;
@@ -254,7 +339,7 @@
       background: var(--accent);
     }
 
-    /* Proxy Viewer */
+    /* Proxy Frame Viewer Overlay */
     .proxy-viewer {
       position: fixed;
       top: 0;
@@ -268,7 +353,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s ease;
-      padding-bottom: 60px;
+      padding-bottom: calc(65px * var(--gui-scale));
     }
 
     .proxy-viewer.active {
@@ -299,6 +384,22 @@
   </div>
 
   <div class="bottom-nav-wrapper">
+    <!-- Mode Menu Popup -->
+    <div class="mode-menu" id="mode-menu">
+      <button class="mode-option-btn" data-mode="fast">
+        <span>Fast</span>
+        <small>Client CORS Engine</small>
+      </button>
+      <button class="mode-option-btn" data-mode="stealth">
+        <span>Stealth</span>
+        <small>HTML Rewriter</small>
+      </button>
+      <button class="mode-option-btn" data-mode="strong">
+        <span>Strong</span>
+        <small>Headers + Media Injection</small>
+      </button>
+    </div>
+
     <div class="bottom-nav-pill">
       <button class="nav-btn" id="btn-back" title="Go Back">
         <svg class="svg-icon" viewBox="0 0 24 24">
@@ -318,6 +419,11 @@
           <path d="M1 20v-6h6"></path>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
         </svg>
+      </button>
+
+      <!-- Mode Selector Pill Button -->
+      <button class="mode-toggle-btn" id="mode-toggle-btn">
+        <span id="current-mode-label">Fast</span> ▾
       </button>
 
       <input 
@@ -358,6 +464,13 @@
       </div>
 
       <div class="setting-table">
+        <div class="setting-row">
+          <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.0x</span></label>
+          <div class="slider-container">
+            <input type="range" id="gui-scale-slider" min="0.8" max="1.5" step="0.05" value="1">
+          </div>
+        </div>
+
         <div class="setting-row">
           <label for="preset-select">Educational Tab Disguise</label>
           <select id="preset-select" class="setting-select">
