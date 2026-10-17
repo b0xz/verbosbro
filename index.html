@@ -34,6 +34,17 @@
       color: var(--text);
     }
 
+    /* Background Stars Canvas */
+    canvas#bg-stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     /* Left Sidebar Taskbar */
     .sidebar {
       position: fixed;
@@ -81,7 +92,7 @@
       stroke-linejoin: round;
     }
 
-    /* Top Tab Bar with Animation */
+    /* Top Tab Bar with Right-Sliding Animation */
     .tab-bar-container {
       position: fixed;
       top: 0;
@@ -111,13 +122,13 @@
       gap: 10px;
       max-width: 180px;
       white-space: nowrap;
-      animation: tabSlideIn 0.25s ease forwards;
+      animation: tabSlideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       transition: background 0.2s ease, color 0.2s ease;
     }
 
-    @keyframes tabSlideIn {
-      from { opacity: 0; transform: translateY(-10px); scale: 0.95; }
-      to { opacity: 1; transform: translateY(0); scale: 1; }
+    @keyframes tabSlideRight {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     .tab-item.active {
@@ -159,7 +170,7 @@
       left: calc(64px * var(--gui-scale));
       width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale));
-      background: var(--bg);
+      background: transparent;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -199,6 +210,22 @@
       user-select: none;
       pointer-events: none;
     }
+
+    /* Rotating Footer Text */
+    .footer-credit {
+      position: fixed;
+      bottom: calc(75px * var(--gui-scale));
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--subtext);
+      font-size: 0.85rem;
+      cursor: pointer;
+      z-index: 1300;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-credit:hover { color: var(--text); }
 
     /* Bottom Navigation Pill */
     .bottom-nav-wrapper {
@@ -355,43 +382,97 @@
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
 
-    /* Modals & Drawers */
-    .games-modal, .modal-overlay {
+    /* Draggable Modal / Settings */
+    .draggable-modal {
       position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
-      z-index: 2500;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .games-modal.active, .modal-overlay.active { display: flex; }
-
-    .modal-box {
+      top: 15%;
+      left: 30%;
+      width: calc(460px * var(--gui-scale));
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: calc(16px * var(--gui-scale));
-      width: 90%;
-      max-width: calc(450px * var(--gui-scale));
-      padding: calc(24px * var(--gui-scale));
-      display: flex;
+      z-index: 2500;
+      display: none;
       flex-direction: column;
-      gap: calc(18px * var(--gui-scale));
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+      user-select: none;
     }
 
-    .modal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; }
-    .setting-table { display: flex; flex-direction: column; gap: calc(14px * var(--gui-scale)); }
+    .draggable-modal.active { display: flex; }
+
+    .modal-header-drag {
+      padding: calc(14px * var(--gui-scale));
+      background: var(--hover);
+      border-bottom: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      font-weight: bold;
+    }
+
+    .modal-header-drag:active { cursor: grabbing; }
+
+    .modal-body {
+      padding: calc(20px * var(--gui-scale));
+      display: flex;
+      flex-direction: column;
+      gap: calc(16px * var(--gui-scale));
+    }
+
+    /* Settings Tabs */
+    .settings-tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--subtext);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .tab-btn.active {
+      background: var(--hover);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .settings-pane { display: none; flex-direction: column; gap: 12px; }
+    .settings-pane.active { display: flex; }
+
     .setting-row { display: flex; flex-direction: column; gap: 6px; }
     .setting-row label { font-size: calc(0.9rem * var(--gui-scale)); color: var(--subtext); }
     .setting-select, .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
     .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
 
+    /* Update Log / Welcome Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(3px);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
+
+  <!-- Background Stars Canvas -->
+  <canvas id="bg-stars"></canvas>
 
   <!-- Left Sidebar Taskbar -->
   <div class="sidebar">
@@ -423,11 +504,14 @@
     </div>
   </div>
 
+  <!-- Rotating Footer Credit -->
+  <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
+
   <!-- Bottom Search Bar Pill -->
   <div class="bottom-nav-wrapper">
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span><small>Optimized Relay</small></button>
-      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span><small>Deep SPA Interceptor</small></button>
+      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span><small>Cached SPA Interceptor</small></button>
     </div>
 
     <div class="device-menu-table" id="device-menu">
@@ -441,7 +525,7 @@
       <button class="nav-btn" id="btn-forward" title="Go Forward"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
       <button class="nav-btn" id="btn-reload" title="Refresh"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path></svg></button>
 
-      <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">Strong</span> ▾</button>
+      <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">Fast</span> ▾</button>
       <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">Desktop</span> ▾</button>
 
       <input type="text" id="proxy-input" class="pill-input" placeholder="Enter URL..." autocomplete="off" autofocus />
@@ -450,32 +534,55 @@
     </div>
   </div>
 
-  <!-- Ruffle Games Modal -->
+  <!-- Ruffle Games Modal (WIP) -->
   <div class="games-modal" id="games-modal">
     <div class="modal-box">
       <div class="modal-header">
-        <span>Ruffle Flash Games</span>
+        <span>Ruffle Flash Games (WIP)</span>
         <button class="nav-btn" id="games-close">×</button>
       </div>
       <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Demo Sandbox</div>
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games</div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox (WIP)</div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games (WIP)</div>
       </div>
     </div>
   </div>
 
-  <!-- Settings Modal -->
-  <div class="modal-overlay" id="settings-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span>Settings</span>
-        <button class="nav-btn" id="modal-close">×</button>
+  <!-- Draggable Settings Modal with Tabs -->
+  <div class="draggable-modal" id="settings-modal">
+    <div class="modal-header-drag" id="modal-drag-handle">
+      <span>Settings</span>
+      <button class="nav-btn" id="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-tabs">
+        <button class="tab-btn active" data-pane="pane-gui">GUI</button>
+        <button class="tab-btn" data-pane="pane-color">Color</button>
+        <button class="tab-btn" data-pane="pane-proxy">Proxy</button>
       </div>
-      <div class="setting-table">
+
+      <!-- GUI Pane -->
+      <div class="settings-pane active" id="pane-gui">
         <div class="setting-row">
           <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.15x</span></label>
           <input type="range" id="gui-scale-slider" min="0.9" max="1.6" step="0.05" value="1.15">
         </div>
+      </div>
+
+      <!-- Color Pane -->
+      <div class="settings-pane" id="pane-color">
+        <div class="setting-row">
+          <label for="bg-color-picker">Background Color</label>
+          <input type="color" id="bg-color-picker" class="setting-input" value="#121212" style="height:40px; padding:2px; cursor:pointer;">
+        </div>
+        <div class="setting-row">
+          <label for="accent-color-picker">Accent Color</label>
+          <input type="color" id="accent-color-picker" class="setting-input" value="#ffffff" style="height:40px; padding:2px; cursor:pointer;">
+        </div>
+      </div>
+
+      <!-- Proxy Pane -->
+      <div class="settings-pane" id="pane-proxy">
         <div class="setting-row">
           <label for="preset-select">Educational Tab Disguise</label>
           <select id="preset-select" class="setting-select">
@@ -486,7 +593,28 @@
           </select>
         </div>
       </div>
+
       <button class="save-btn" id="save-settings">Save Configurations</button>
+    </div>
+  </div>
+
+  <!-- Update Logs / Welcome Modal -->
+  <div class="modal-overlay" id="update-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>*rebrand!!* - Update Logs</span>
+      </div>
+      <div style="font-size:0.95rem; line-height:1.5; color:var(--subtext);">
+        <p>Welcome to the new version of <strong>miksi</strong>!</p>
+        <ul style="margin-left:20px; margin-top:8px;">
+          <li>✨ Added background drifting stars & star canvas.</li>
+          <li>🎮 Interactive footer text & Ruffle Games (WIP).</li>
+          <li>🔍 Fixed YouTube search error routing.</li>
+          <li>🛡️ Added Incognito mode & session persistence.</li>
+          <li>🖱️ Draggable settings menu with GUI, Color, and Proxy tabs.</li>
+        </ul>
+      </div>
+      <button class="save-btn" id="close-update-modal">Got it!</button>
     </div>
   </div>
 
