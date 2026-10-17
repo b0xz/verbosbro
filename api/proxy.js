@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(await response.arrayBuffer()));
     }
 
-    // x20 Strong HTML & Script Rewriter
+    // Supercharged HTML & Script Rewriter Engine
     let body = await response.text();
     body = body.replace(/integrity="[^"]*"/gi, '').replace(/nonce="[^"]*"/gi, '').replace(/crossorigin="[^"]*"/gi, '');
 
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     body = body.replace(/(<(?:a|area|link)[^>]*?\shref=)["']([^"']+)["']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
     body = body.replace(/url\((['"]?)([^'")]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
 
-    const x20Injector = `
+    const injector = `
       <base href="${baseUrl}/">
       <script>
         (function() {
@@ -107,13 +107,13 @@ export default async function handler(req, res) {
             }
           }, true);
         })();
-      <\/script>
+      </script>
     `;
 
-    body = body.includes('<head>') ? body.replace('<head>', `<head>${x20Injector}`) : x20Injector + body;
+    body = body.includes('<head>') ? body.replace('<head>', `<head>${injector}`) : injector + body;
     return res.status(200).send(body);
 
   } catch (error) {
-    return res.status(500).send(`<h3>x20 Proxy Error</h3><p>${error.message}</p>`);
+    return res.status(500).send(`<h3>Proxy Connection Error</h3><p>${error.message}</p>`);
   }
 }
