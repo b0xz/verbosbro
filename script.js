@@ -1,4 +1,3 @@
-
 /* ===================================================
    MIKSI CLIENT SCRIPT
    =================================================== */
@@ -102,14 +101,8 @@ function processUrl(rawInput) {
     return query;
   }
 
-  // Matches domain names like youtube.com, discord.com, github.com, sub.domain.org/path
-  const domainPattern = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?\$/;
-  if (domainPattern.test(query)) {
-    return 'https://' + query;
-  }
-
-  // Fallback to DuckDuckGo html search for standard search queries
-  return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+  // Prepend https:// to any provided URL/domain
+  return 'https://' + query;
 }
 
 function buildProxyUrl(targetUrl) {
