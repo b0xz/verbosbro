@@ -2,19 +2,18 @@ export default async function handler(req, res) {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('access-control-allow-headers', '*');
-  res.setHeader('cache-control', 'no-store');
+  res.setHeader('cache-control', 'public, max-age=60');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const targetUrl = req.query.url || (req.body && req.body.url);
-  const mode = req.query.mode || 'strong';
+  const mode = req.query.mode || 'fast';
 
   if (!targetUrl) return res.status(400).send('Missing target URL.');
 
   const UA_POOLS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
-    'Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0'
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15'
   ];
   const randomUA = UA_POOLS[Math.floor(Math.random() * UA_POOLS.length)];
 
@@ -52,6 +51,7 @@ export default async function handler(req, res) {
     try { res.removeHeader('content-security-policy'); } catch (e) {}
     try { res.removeHeader('x-content-type-options'); } catch (e) {}
 
+    // Fast Mode: Streamlined direct relay
     if (mode === 'fast' || !contentType.includes('text/html')) {
       if (response.body && typeof response.body.pipe === 'function') {
         return response.body.pipe(res);
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(await response.arrayBuffer()));
     }
 
-    // Supercharged HTML & Script Rewriter Engine
+    // Strong Mode: Cached & Optimized SPA Interceptor
     let body = await response.text();
     body = body.replace(/integrity="[^"]*"/gi, '').replace(/nonce="[^"]*"/gi, '').replace(/crossorigin="[^"]*"/gi, '');
 
@@ -114,6 +114,6 @@ export default async function handler(req, res) {
     return res.status(200).send(body);
 
   } catch (error) {
-    return res.status(500).send(`<h3>Proxy Connection Error</h3><p>${error.message}</p>`);
+    return res.status(500).send(`<h3>Proxy Error</h3><p>${error.message}</p>`);
   }
 }
