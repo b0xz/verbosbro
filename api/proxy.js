@@ -1,8 +1,10 @@
 export default async function handler(req, res) {
+  // Enhanced CORS Headers
   res.setHeader('access-control-allow-origin', '*');
-  res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
-  res.setHeader('cache-control', 'public, max-age=60');
+  res.setHeader('access-control-allow-credentials', 'true');
+  res.setHeader('cache-control', 'public, max-age=300, s-maxage=600');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -10,7 +12,7 @@ export default async function handler(req, res) {
   const mode = req.query.mode || 'fast';
   const device = req.query.device || 'desktop';
 
-  if (!targetUrl) return res.status(400).send('Missing target URL.');
+  if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
 
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -24,13 +26,22 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
     
+    // Comprehensive Request Header Configuration
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
-      'origin': baseUrl
+      'origin': baseUrl,
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': device === 'mobile' ? '?1' : '?0',
+      'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : '"Windows"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-user': '?1',
+      'upgrade-insecure-requests': '1'
     };
 
     if (req.headers.cookie) headers.cookie = req.headers.cookie;
@@ -43,19 +54,35 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    
+    // Set headers
     res.setHeader('content-type', contentType);
+    res.setHeader('x-proxied-by', 'miksi-engine');
+    res.setHeader('x-target-url', targetUrl);
 
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
-      res.setHeader('set-cookie', setCookie.replace(/;\s*Domain=[^;]+/gi, '').replace(/;\s*Secure/gi, ''));
+      res.setHeader('set-cookie', setCookie.replace(/;\s*Domain=[^;]+/gi, '').replace(/;\s*Secure/gi, '').replace(/;\s*SameSite=[^;]+/gi, '; SameSite=None'));
     }
 
-    try { res.removeHeader('x-frame-options'); } catch (e) {}
-    try { res.removeHeader('content-security-policy'); } catch (e) {}
-    try { res.removeHeader('x-content-type-options'); } catch (e) {}
-    try { res.removeHeader('cross-origin-opener-policy'); } catch (e) {}
+    // Extended Security Strip List
+    const headersToRemove = [
+      'x-frame-options',
+      'content-security-policy',
+      'content-security-policy-report-only',
+      'x-content-type-options',
+      'cross-origin-opener-policy',
+      'cross-origin-embedder-policy',
+      'cross-origin-resource-policy',
+      'permissions-policy',
+      'strict-transport-security'
+    ];
 
-    // Stream non-HTML or Fast mode assets directly
+    headersToRemove.forEach(h => {
+      try { res.removeHeader(h); } catch (e) {}
+    });
+
+    // Stream Non-HTML Files Immediately
     if (mode === 'fast' && !contentType.includes('text/html')) {
       if (response.body && typeof response.body.pipe === 'function') {
         return response.body.pipe(res);
@@ -63,9 +90,14 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(await response.arrayBuffer()));
     }
 
-    // High-level Rewriter Engine
     let body = await response.text();
-    body = body.replace(/integrity="[^"]*"/gi, '').replace(/nonce="[^"]*"/gi, '').replace(/crossorigin="[^"]*"/gi, '');
+
+    // Comprehensive DOM String Transformations
+    body = body
+      .replace(/integrity="[^"]*"/gi, '')
+      .replace(/nonce="[^"]*"/gi, '')
+      .replace(/crossorigin="[^"]*"/gi, '')
+      .replace(/http:\/\//gi, 'https://');
 
     function proxifyUrl(val) {
       try {
@@ -78,31 +110,49 @@ export default async function handler(req, res) {
       }
     }
 
-    body = body.replace(/(<(?:img|script|iframe|audio|video|source|track|embed)[^>]*?\s(?:src|poster)=)["']([^"']+)["']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
-    body = body.replace(/(<(?:a|area|link)[^>]*?\shref=)["']([^"']+)["']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
+    // Extended Tag & Attribute URL Proxification
+    body = body.replace(/(<(?:img|script|iframe|audio|video|source|track|embed|input|form|object)[^>]*?\s(?:src|poster|action|data)=)["']([^"']+)["']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
+    body = body.replace(/(<(?:a|area|link|base)[^>]*?\shref=)["']([^"']+)["']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
     body = body.replace(/url\((['"]?)([^'")]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
+    body = body.replace(/@import\s+(['"])([^'"]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
 
+    // Advanced Client Injector for SPAs, Fetch, XHR, and Dynamic Imports
     const injector = `
       <base href="${baseUrl}/">
       <script>
         (function() {
+          const proxyBase = '/api/proxy?mode=${mode}&device=${device}&url=';
+          const targetOrigin = '${baseUrl}';
+
           function proxify(url) {
             try {
-              if (!url || url.startsWith('data:') || url.startsWith('blob:')) return url;
+              if (!url || typeof url !== 'string') return url;
+              if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('javascript:')) return url;
               if (url.includes('/api/proxy?url=')) return url;
-              return '/api/proxy?url=' + encodeURIComponent(new URL(url, document.baseURI).href) + '&mode=${mode}&device=${device}';
+              const abs = new URL(url, document.baseURI).href;
+              return proxyBase + encodeURIComponent(abs);
             } catch(e) { return url; }
           }
-          const originalFetch = window.fetch;
+
+          // Fetch Interceptor
+          const origFetch = window.fetch;
           window.fetch = function(resource, init) {
             let url = resource instanceof Request ? resource.url : resource;
-            return originalFetch(resource instanceof Request ? new Request(proxify(url), resource) : proxify(url), init);
+            let pUrl = proxify(url);
+            if (resource instanceof Request) {
+              return origFetch(new Request(pUrl, resource), init);
+            }
+            return origFetch(pUrl, init);
           };
-          const originalOpen = XMLHttpRequest.prototype.open;
+
+          // XHR Interceptor
+          const origOpen = XMLHttpRequest.prototype.open;
           XMLHttpRequest.prototype.open = function(method, url) {
             arguments[1] = proxify(url);
-            return originalOpen.apply(this, arguments);
+            return origOpen.apply(this, arguments);
           };
+
+          // DOM Click Event Trap
           document.addEventListener('click', function(e) {
             const el = e.target.closest('a, area');
             if (el && el.href && !el.href.startsWith('javascript:') && !el.href.startsWith('#')) {
@@ -110,14 +160,32 @@ export default async function handler(req, res) {
               window.location.href = proxify(el.href);
             }
           }, true);
+
+          // Dynamic Element Src Trap
+          const origSetAttribute = Element.prototype.setAttribute;
+          Element.prototype.setAttribute = function(name, value) {
+            if ((name === 'src' || name === 'href') && value && typeof value === 'string') {
+              if (!value.startsWith('data:') && !value.startsWith('blob:')) {
+                value = proxify(value);
+              }
+            }
+            return origSetAttribute.call(this, name, value);
+          };
         })();
       </script>
     `;
 
-    body = body.includes('<head>') ? body.replace('<head>', `<head>${injector}`) : injector + body;
+    if (body.includes('<head>')) {
+      body = body.replace('<head>', `<head>${injector}`);
+    } else if (body.includes('<html>')) {
+      body = body.replace('<html>', `<html><head>${injector}</head>`);
+    } else {
+      body = injector + body;
+    }
+
     return res.status(200).send(body);
 
   } catch (error) {
-    return res.status(500).send(`<h3>Proxy Error</h3><p>${error.message}</p>`);
+    return res.status(500).send(`<h3>Proxy Pipeline Exception</h3><p>${error.message}</p>`);
   }
 }
