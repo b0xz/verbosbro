@@ -10,12 +10,13 @@
     :root {
       --gui-scale: 1.15;
       --bg: #121212;
-      --panel: #1e1e1e;
-      --border: #2e2e2e;
-      --text: #ffffff;
-      --subtext: #a0a0a0;
-      --accent: #e0e0e0;
-      --hover: #2a2a2a;
+      --panel: #18191c;
+      --card-bg: #1e1f24;
+      --border: #2b2d31;
+      --text: #f2f3f5;
+      --subtext: #949ba4;
+      --accent: #5865f2;
+      --hover: #2b2d31;
       --font: Arial, Helvetica, sans-serif;
     }
 
@@ -193,7 +194,7 @@
     .snap-overlay.right { right: 0; }
     .snap-overlay.active { opacity: 1; }
 
-    /* Floating Detached Tab Window */
+    /* Floating Tab Window */
     .floating-tab-window {
       position: fixed;
       width: 380px;
@@ -219,7 +220,7 @@
       font-size: 0.85rem;
     }
 
-    /* Home View with Central Star & Inversion */
+    /* Home View with Central Star & Color Inversion */
     .home-view {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -244,6 +245,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      mix-blend-mode: difference;
     }
 
     canvas#star-canvas {
@@ -258,7 +260,6 @@
       position: relative;
       z-index: 2;
       color: #ffffff;
-      mix-blend-mode: difference;
       font-size: 2.1rem;
       font-weight: bold;
       letter-spacing: 2.5px;
@@ -431,7 +432,7 @@
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Proxy Split Viewports Container */
+    /* Proxy Split Viewports */
     .proxy-viewer {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -475,48 +476,112 @@
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
 
+    /* Modern Settings Modal matching Reference Image */
     .draggable-modal {
       position: fixed;
-      top: 15%;
-      left: 30%;
-      width: calc(460px * var(--gui-scale));
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 620px;
+      max-height: 85vh;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: calc(16px * var(--gui-scale));
+      border-radius: 16px;
       z-index: 2500;
       display: none;
       flex-direction: column;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-      user-select: none;
-      touch-action: none;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
     }
 
     .draggable-modal.active { display: flex; }
 
     .modal-header-drag {
-      padding: calc(14px * var(--gui-scale));
-      background: var(--hover);
+      padding: 18px 24px;
+      background: var(--panel);
       border-bottom: 1px solid var(--border);
-      border-radius: 16px 16px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: grab;
+      font-size: 1.3rem;
       font-weight: bold;
     }
 
-    .modal-body { padding: calc(20px * var(--gui-scale)); display: flex; flex-direction: column; gap: calc(16px * var(--gui-scale)); }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-    .settings-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .tab-btn { background: var(--bg); border: 1px solid var(--border); color: var(--subtext); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-    .tab-btn.active { background: var(--hover); color: var(--text); border-color: var(--accent); }
-    .settings-pane { display: none; flex-direction: column; gap: 12px; }
-    .settings-pane.active { display: flex; }
+    .settings-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--subtext);
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
 
-    .setting-row { display: flex; flex-direction: column; gap: 6px; }
-    .setting-row label { font-size: calc(0.9rem * var(--gui-scale)); color: var(--subtext); }
-    .setting-select, .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
-    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
+    .settings-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .setting-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .setting-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .setting-desc { font-size: 0.8rem; color: var(--subtext); line-height: 1.4; }
+
+    /* Custom Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #313338; transition: .2s; border-radius: 24px; border: 1px solid var(--border);
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px;
+      background-color: white; transition: .2s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .setting-select, .setting-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      outline: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
 
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -546,6 +611,9 @@
     <button class="sidebar-btn" id="sb-games" title="Ruffle Games">
       <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4"></path></svg>
     </button>
+    <button class="sidebar-btn" id="sb-userscripts" title="Userscripts">
+      <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+    </button>
     <button class="sidebar-btn" id="sb-settings" title="Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
@@ -556,7 +624,7 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Home View with Central Star -->
+  <!-- Home View with Central Spinning Star -->
   <div class="home-view" id="home-view">
     <div class="star-canvas-container">
       <canvas id="star-canvas" width="520" height="520"></canvas>
@@ -603,60 +671,111 @@
   <div class="modal-overlay hidden" id="games-modal">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span>Ruffle Flash Games (WIP)</span>
+        <span style="font-weight:bold;">Ruffle Flash Games (WIP)</span>
         <button class="nav-btn" id="games-close">×</button>
       </div>
       <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px;">
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox (WIP)</div>
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games (WIP)</div>
+        <div style="background:var(--card-bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox</div>
+        <div style="background:var(--card-bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games</div>
       </div>
     </div>
   </div>
 
-  <!-- Settings Modal -->
+  <!-- Userscripts Modal -->
+  <div class="modal-overlay hidden" id="userscripts-modal">
+    <div class="modal-box" style="max-width:500px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:bold; font-size:1.1rem;">Userscripts Injector</span>
+        <button class="nav-btn" id="userscripts-close">×</button>
+      </div>
+      <div style="font-size:0.85rem; color:var(--subtext);">Inject custom JavaScript into visited proxy pages automatically.</div>
+      <textarea id="userscript-input" class="setting-input" rows="8" placeholder="// Write JS code here... e.g. console.log('Injected!');" style="resize:vertical; font-family:monospace;"></textarea>
+      <button class="save-btn" id="save-userscript" style="background:var(--accent); border:none; border-radius:8px; padding:10px; color:#fff; font-weight:bold; cursor:pointer;">Save Userscript</button>
+    </div>
+  </div>
+
+  <!-- Redesigned Settings Modal matching Reference Image -->
   <div class="draggable-modal" id="settings-modal">
     <div class="modal-header-drag" id="modal-drag-handle">
       <span>Settings</span>
-      <button class="nav-btn" id="modal-close">×</button>
+      <button class="nav-btn" id="settings-close-btn">×</button>
     </div>
     <div class="modal-body">
-      <div class="settings-tabs">
-        <button class="tab-btn active" data-pane="pane-gui">GUI</button>
-        <button class="tab-btn" data-pane="pane-color">Color</button>
-        <button class="tab-btn" data-pane="pane-proxy">Proxy</button>
-      </div>
-
-      <div class="settings-pane active" id="pane-gui">
-        <div class="setting-row">
-          <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.15x</span></label>
-          <input type="range" id="gui-scale-slider" min="0.9" max="1.6" step="0.05" value="1.15">
+      
+      <!-- APPEARANCE -->
+      <div class="settings-section-title">Appearance</div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Auto Darkmode</div>
+            <div class="setting-desc">Automatically force dark mode styling on supported proxy pages.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="setting-autodark" checked><span class="slider"></span></label>
         </div>
-      </div>
-
-      <div class="settings-pane" id="pane-color">
-        <div class="setting-row">
-          <label for="bg-color-picker">Background Color</label>
-          <input type="color" id="bg-color-picker" class="setting-input" value="#121212" style="height:40px; padding:2px; cursor:pointer;">
-        </div>
-        <div class="setting-row">
-          <label for="accent-color-picker">Accent Color</label>
-          <input type="color" id="accent-color-picker" class="setting-input" value="#ffffff" style="height:40px; padding:2px; cursor:pointer;">
-        </div>
-      </div>
-
-      <div class="settings-pane" id="pane-proxy">
-        <div class="setting-row">
-          <label for="preset-select">Educational Tab Disguise</label>
-          <select id="preset-select" class="setting-select">
-            <option value="canvas">Canvas LMS</option>
-            <option value="none">default</option>
-            <option value="classroom">Google Classroom</option>
-            <option value="drive">Google Drive</option>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">GUI Scale</div>
+            <div class="setting-desc">Adjust interface sizing across windows.</div>
+          </div>
+          <select id="setting-scale" class="setting-select">
+            <option value="1.0">Normal (1.0x)</option>
+            <option value="1.15" selected>Default (1.15x)</option>
+            <option value="1.3">Large (1.3x)</option>
           </select>
         </div>
       </div>
 
-      <button class="save-btn" id="save-settings">Save Configurations</button>
+      <!-- SEARCH ENGINE -->
+      <div class="settings-section-title">Search Engine</div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Default Search Engine</div>
+            <div class="setting-desc">Used by the address bar and quick searches.</div>
+          </div>
+          <select id="setting-search" class="setting-select">
+            <option value="google">Google</option>
+            <option value="duckduckgo">DuckDuckGo</option>
+            <option value="bing">Bing</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- NETWORK -->
+      <div class="settings-section-title">Network</div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Proxy Transport</div>
+            <div class="setting-desc">High-performance Rust-backed TLS tunnel or fast SPA interceptor.</div>
+          </div>
+          <select id="setting-transport" class="setting-select">
+            <option value="fast">Fast Engine (Default)</option>
+            <option value="strong">Strong Epoxy (Rust TLS)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- CLOAKING -->
+      <div class="settings-section-title">Cloaking</div>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Focus Cloak</div>
+            <div class="setting-desc">Disguise tab title and icon when the page loses focus.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="setting-focuscloak"><span class="slider"></span></label>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Panic Key</div>
+            <div class="setting-desc">Press '\' instantly to hide window contents.</div>
+          </div>
+          <input type="text" class="setting-input" value="\" readonly style="width: 50px; text-align: center;">
+        </div>
+      </div>
+
+      <button class="save-btn" id="save-settings-btn" style="background:var(--accent); border:none; border-radius:10px; padding:12px; color:#fff; font-weight:bold; cursor:pointer; margin-top:8px;">Save Settings</button>
     </div>
   </div>
 
@@ -667,12 +786,12 @@
       <div style="font-size:0.95rem; line-height:1.5; color:var(--subtext);">
         <p>Welcome to the new version of <strong>miksi</strong>!</p>
         <ul style="margin-left:20px; margin-top:8px;">
-          <li>✨ Advanced base-protocol rewriter engine.</li>
-          <li>📱 Split-screen viewports with lerp transitions.</li>
-          <li>✨ Background drifting stars & sine-floating central star.</li>
+          <li>✨ Star color inversion inside the spinning star canvas.</li>
+          <li>📝 Userscripts injection engine added to sidebar.</li>
+          <li>⚙️ Settings redesigned to match modern card UI.</li>
         </ul>
       </div>
-      <button class="save-btn" id="close-update-modal">Got it!</button>
+      <button class="save-btn" id="close-update-modal" style="background:var(--accent); border:none; border-radius:8px; padding:10px; color:#fff; font-weight:bold; cursor:pointer;">Got it!</button>
     </div>
   </div>
 
