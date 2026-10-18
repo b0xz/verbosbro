@@ -35,8 +35,8 @@
       color: var(--text);
     }
 
-    /* Combined Star Container for Inversion */
-    .star-blend-layer {
+    /* Unified Blend Layer for True Text & Star Color Inversion */
+    .star-blend-container {
       position: fixed;
       top: 0;
       left: 0;
@@ -44,6 +44,9 @@
       height: 100vh;
       z-index: 0;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     canvas#bg-stars {
@@ -55,15 +58,43 @@
       z-index: 1;
     }
 
-    /* The difference blend mode inverts white stars to black on top of the big star */
+    canvas#wavy-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    .home-view {
+      position: absolute;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .home-view.hidden { display: none; }
+
+    .star-text {
+      color: #ffffff;
+      font-size: 2.3rem;
+      font-weight: bold;
+      letter-spacing: 2.5px;
+      text-transform: lowercase;
+      user-select: none;
+      text-align: center;
+    }
+
+    /* Big White Star with Difference Blend Mode for Inversion */
     canvas#star-canvas {
       position: absolute;
-      top: 50%;
-      left: 50%;
       width: 650px;
       height: 650px;
-      transform: translate(-50%, -50%);
-      z-index: 2;
+      z-index: 4;
       mix-blend-mode: difference;
     }
 
@@ -214,36 +245,6 @@
     .snap-overlay.right { right: 0; }
     .snap-overlay.active { opacity: 1; }
 
-    /* Home View Center Text */
-    .home-view {
-      position: fixed;
-      top: calc(46px * var(--gui-scale));
-      left: calc(64px * var(--gui-scale));
-      width: calc(100vw - 64px * var(--gui-scale));
-      height: calc(100vh - 46px * var(--gui-scale));
-      background: transparent;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 950;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .home-view.hidden { display: none; }
-
-    .star-text {
-      color: #ffffff;
-      font-size: 2.3rem;
-      font-weight: bold;
-      letter-spacing: 2.5px;
-      text-transform: lowercase;
-      user-select: none;
-      text-align: center;
-      mix-blend-mode: difference;
-    }
-
     .footer-credit {
       position: fixed;
       bottom: calc(85px * var(--gui-scale));
@@ -278,6 +279,7 @@
       padding: 4px 10px;
       border-radius: 20px;
       border: 1px solid var(--border);
+      align-items: center;
     }
 
     .split-switcher-bar.active { display: flex; }
@@ -298,6 +300,18 @@
       color: var(--text);
       border-color: var(--accent);
     }
+
+    .split-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--subtext);
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-left: 6px;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .split-close-btn:hover { background: #ff5555; color: #fff; }
 
     .bottom-nav-pill {
       background: var(--panel);
@@ -508,9 +522,13 @@
 </head>
 <body>
 
-  <!-- Starfield Layering Container for Blend Mode Inversion -->
-  <div class="star-blend-layer">
+  <!-- Unified Blend Container for True Inversion of Text and Stars -->
+  <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
+    <canvas id="wavy-canvas"></canvas>
+    <div class="home-view" id="home-view">
+      <div class="star-text">*welcome to verbos</div>
+    </div>
     <canvas id="star-canvas" width="650" height="650"></canvas>
   </div>
 
@@ -539,11 +557,6 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Home View Text -->
-  <div class="home-view" id="home-view">
-    <div class="star-text">*welcome to verbos</div>
-  </div>
-
   <!-- Rotating Footer Credit -->
   <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
 
@@ -552,6 +565,7 @@
     <div class="split-switcher-bar" id="split-switcher-bar">
       <button class="split-btn active" id="btn-screen1">screen 1</button>
       <button class="split-btn" id="btn-screen2">screen 2</button>
+      <button class="split-close-btn" id="btn-close-split" title="Close Split Screen">×</button>
     </div>
 
     <div class="mode-menu-table" id="mode-menu">
