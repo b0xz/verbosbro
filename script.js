@@ -87,6 +87,7 @@ function setupTabDrag(tabEl, tabId) {
     snapLeft.classList.remove('active');
     snapRight.classList.remove('active');
 
+    // Edge Drop triggers Split Screen
     if (e.clientX < 120 || e.clientX > window.innerWidth - 120) {
       enableSplitScreen();
     } else if (e.clientY > 100) {
@@ -441,7 +442,7 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Floating Central Star Canvas */
+/* Floating Central Star Canvas with Trails & Sine Animation */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
