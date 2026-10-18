@@ -1,9 +1,9 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER (SPLIT SCREEN & TAB DRAG)
+   MIKSI CLIENT CONTROLLER
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let activeScreenIndex = 1; // 1 or 2
+let activeScreenIndex = 1;
 let isSplitScreen = false;
 
 const tabBar = document.getElementById('tab-bar');
@@ -25,16 +25,8 @@ const btnScreen2 = document.getElementById('btn-screen2');
 function loadSettings() {
   const scale = localStorage.getItem('miksi_scale') || '1.15';
   document.documentElement.style.setProperty('--gui-scale', scale);
-  document.getElementById('gui-scale-slider').value = scale;
-  document.getElementById('gui-scale-val').textContent = parseFloat(scale).toFixed(2) + 'x';
-
-  const bgColor = localStorage.getItem('miksi_bg') || '#121212';
-  document.documentElement.style.setProperty('--bg', bgColor);
-  document.getElementById('bg-color-picker').value = bgColor;
-
-  const accentColor = localStorage.getItem('miksi_accent') || '#ffffff';
-  document.documentElement.style.setProperty('--accent', accentColor);
-  document.getElementById('accent-color-picker').value = accentColor;
+  const scaleSelect = document.getElementById('setting-scale');
+  if (scaleSelect) scaleSelect.value = scale;
 }
 loadSettings();
 
@@ -46,7 +38,7 @@ document.getElementById('close-update-modal').addEventListener('click', () => {
   document.getElementById('update-modal').classList.add('hidden');
 });
 
-/* Tab Dragging and Detachment Logic */
+/* Tab Dragging Logic */
 const ghost = document.getElementById('tab-ghost');
 const snapLeft = document.getElementById('snap-left');
 const snapRight = document.getElementById('snap-right');
@@ -68,17 +60,11 @@ function setupTabDrag(tabEl, tabId) {
     ghost.style.left = e.clientX + 'px';
     ghost.style.top = e.clientY + 'px';
 
-    if (e.clientX < 120) {
-      snapLeft.classList.add('active');
-    } else {
-      snapLeft.classList.remove('active');
-    }
+    if (e.clientX < 120) snapLeft.classList.add('active');
+    else snapLeft.classList.remove('active');
 
-    if (e.clientX > window.innerWidth - 120) {
-      snapRight.classList.add('active');
-    } else {
-      snapRight.classList.remove('active');
-    }
+    if (e.clientX > window.innerWidth - 120) snapRight.classList.add('active');
+    else snapRight.classList.remove('active');
   });
 
   tabEl.addEventListener('pointerup', (e) => {
@@ -87,13 +73,9 @@ function setupTabDrag(tabEl, tabId) {
     snapLeft.classList.remove('active');
     snapRight.classList.remove('active');
 
-    // Edge Drop triggers Split Screen
     if (e.clientX < 120 || e.clientX > window.innerWidth - 120) {
       enableSplitScreen();
-    } else if (e.clientY > 100) {
-      spawnFloatingTabWindow(draggedTabId, e.clientX, e.clientY);
     }
-
     draggedTabId = null;
   });
 }
@@ -102,10 +84,6 @@ function enableSplitScreen() {
   isSplitScreen = true;
   screenPanel2.classList.remove('hidden');
   splitSwitcherBar.classList.add('active');
-  
-  if (tabs.length < 2) {
-    addTab('https://youtube.com', '/api/proxy?url=' + encodeURIComponent('https://youtube.com') + '&mode=fast', 'YouTube');
-  }
 }
 
 btnScreen1.addEventListener('click', () => {
@@ -119,40 +97,6 @@ btnScreen2.addEventListener('click', () => {
   btnScreen2.classList.add('active');
   btnScreen1.classList.remove('active');
 });
-
-function spawnFloatingTabWindow(tabId, x, y) {
-  const tab = tabs.find(t => t.id === tabId);
-  if (!tab) return;
-
-  const win = document.createElement('div');
-  win.className = 'floating-tab-window';
-  win.style.left = x + 'px';
-  win.style.top = y + 'px';
-  win.innerHTML = `
-    <div class="floating-window-header">
-      <span>${tab.title}</span>
-      <button class="nav-btn" style="width:20px;height:20px;" onclick="this.parentElement.parentElement.remove()">×</button>
-    </div>
-    <iframe src="${tab.src}" class="proxy-frame" style="flex:1;"></iframe>
-  `;
-
-  let fDrag = false, fSX, fSY, fLX, fLY;
-  const header = win.querySelector('.floating-window-header');
-  header.addEventListener('mousedown', (e) => {
-    fDrag = true;
-    fSX = e.clientX; fSY = e.clientY;
-    const r = win.getBoundingClientRect();
-    fLX = r.left; fLY = r.top;
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!fDrag) return;
-    win.style.left = (fLX + e.clientX - fSX) + 'px';
-    win.style.top = (fLY + e.clientY - fSY) + 'px';
-  });
-  document.addEventListener('mouseup', () => fDrag = false);
-
-  document.body.appendChild(win);
-}
 
 function renderTabs() {
   tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
@@ -221,14 +165,18 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-/* Sidebar Actions */
+/* Sidebar Navigation & Modals */
 const sbHome = document.getElementById('sb-home');
 const sbGames = document.getElementById('sb-games');
+const sbUserscripts = document.getElementById('sb-userscripts');
 const sbSettings = document.getElementById('sb-settings');
+
 const gamesModal = document.getElementById('games-modal');
 const gamesClose = document.getElementById('games-close');
+const userscriptsModal = document.getElementById('userscripts-modal');
+const userscriptsClose = document.getElementById('userscripts-close');
 const settingsModal = document.getElementById('settings-modal');
-const modalClose = document.getElementById('modal-close');
+const settingsCloseBtn = document.getElementById('settings-close-btn');
 
 sbHome.addEventListener('click', () => {
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -242,57 +190,52 @@ sbHome.addEventListener('click', () => {
 
 sbGames.addEventListener('click', () => gamesModal.classList.remove('hidden'));
 gamesClose.addEventListener('click', () => gamesModal.classList.add('hidden'));
-sbSettings.addEventListener('click', () => settingsModal.classList.add('active'));
-modalClose.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-/* Mobile & Mouse Dragging */
-const modal = document.getElementById('settings-modal');
+sbUserscripts.addEventListener('click', () => userscriptsModal.classList.remove('hidden'));
+userscriptsClose.addEventListener('click', () => userscriptsModal.classList.add('hidden'));
+
+document.getElementById('save-userscript').addEventListener('click', () => {
+  localStorage.setItem('miksi_userscript', document.getElementById('userscript-input').value);
+  userscriptsModal.classList.add('hidden');
+});
+
+sbSettings.addEventListener('click', () => settingsModal.classList.add('active'));
+settingsCloseBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
+
+document.getElementById('save-settings-btn').addEventListener('click', () => {
+  const scale = document.getElementById('setting-scale').value;
+  localStorage.setItem('miksi_scale', scale);
+  document.documentElement.style.setProperty('--gui-scale', scale);
+  settingsModal.classList.remove('active');
+});
+
+/* Draggable Settings Modal */
 const dragHandle = document.getElementById('modal-drag-handle');
 let isDragging = false, startX, startY, initialX, initialY;
 
-function startDrag(e) {
+dragHandle.addEventListener('mousedown', (e) => {
   isDragging = true;
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  startX = clientX; startY = clientY;
-  const rect = modal.getBoundingClientRect();
+  startX = e.clientX; startY = e.clientY;
+  const rect = settingsModal.getBoundingClientRect();
   initialX = rect.left; initialY = rect.top;
-}
-
-function moveDrag(e) {
-  if (!isDragging) return;
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  modal.style.left = (initialX + clientX - startX) + 'px';
-  modal.style.top = (initialY + clientY - startY) + 'px';
-}
-
-function stopDrag() { isDragging = false; }
-
-dragHandle.addEventListener('mousedown', startDrag);
-document.addEventListener('mousemove', moveDrag);
-document.addEventListener('mouseup', stopDrag);
-dragHandle.addEventListener('touchstart', startDrag, { passive: true });
-document.addEventListener('touchmove', moveDrag, { passive: true });
-document.addEventListener('touchend', stopDrag);
-
-/* Settings Tabs */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.settings-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.getAttribute('data-pane')).classList.add('active');
-  });
+  settingsModal.style.transform = 'none';
 });
 
-/* Rotating Footer Text */
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  settingsModal.style.left = (initialX + e.clientX - startX) + 'px';
+  settingsModal.style.top = (initialY + e.clientY - startY) + 'px';
+});
+
+document.addEventListener('mouseup', () => isDragging = false);
+
+/* Rotating Footer Quotes */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
   "Made with vercel the goat",
-  "kamran made this, whos that?",
-  "why is fast better than strong ???"
+  "leak to anybody you can dont snitch tho",
+  "kamran made this, whos that?"
 ];
 let quoteIndex = 0;
 const footerCredit = document.getElementById('footer-credit');
@@ -301,7 +244,7 @@ footerCredit.addEventListener('click', () => {
   footerCredit.textContent = footerQuotes[quoteIndex];
 });
 
-/* Bottom Dropdown Menus */
+/* Dropdown Navigation */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
@@ -413,7 +356,7 @@ function resizeBg() {
 window.addEventListener('resize', resizeBg);
 resizeBg();
 
-for (let i = 0; i < 80; i++) {
+for (let i = 0; i < 90; i++) {
   stars.push({
     x: Math.random() * bgCanvas.width,
     y: Math.random() * bgCanvas.height,
@@ -442,7 +385,7 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Floating Central Star Canvas with Trails & Sine Animation */
+/* Floating Central Star Canvas with Color Inversion & Trails */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -458,6 +401,8 @@ function drawStarCanvas() {
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
 
+  // Drawing the big white spinning star. Because of mix-blend-mode: difference
+  // on the parent container, any background stars passing through will invert their color!
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
@@ -491,24 +436,5 @@ function drawStarCanvas() {
   requestAnimationFrame(drawStarCanvas);
 }
 drawStarCanvas();
-
-/* Settings Saving */
-document.getElementById('gui-scale-slider').addEventListener('input', (e) => {
-  document.documentElement.style.setProperty('--gui-scale', e.target.value);
-  document.getElementById('gui-scale-val').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
-});
-
-document.getElementById('save-settings').addEventListener('click', () => {
-  const scale = document.getElementById('gui-scale-slider').value;
-  const bg = document.getElementById('bg-color-picker').value;
-  const accent = document.getElementById('accent-color-picker').value;
-
-  localStorage.setItem('miksi_scale', scale);
-  localStorage.setItem('miksi_bg', bg);
-  localStorage.setItem('miksi_accent', accent);
-
-  loadSettings();
-  settingsModal.classList.remove('active');
-});
 
 renderTabs();
