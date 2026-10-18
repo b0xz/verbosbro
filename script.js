@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER
+   MIKSI CLIENT CONTROLLER (BLACK & WHITE / SLOW BIG STAR)
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
@@ -25,18 +25,10 @@ const btnScreen2 = document.getElementById('btn-screen2');
 function loadSettings() {
   const scale = localStorage.getItem('miksi_scale') || '1.15';
   document.documentElement.style.setProperty('--gui-scale', scale);
-  const scaleSelect = document.getElementById('setting-scale');
-  if (scaleSelect) scaleSelect.value = scale;
+  document.getElementById('gui-scale-slider').value = scale;
+  document.getElementById('gui-scale-val').textContent = parseFloat(scale).toFixed(2) + 'x';
 }
 loadSettings();
-
-if (!localStorage.getItem('miksi_welcomed')) {
-  document.getElementById('update-modal').classList.remove('hidden');
-}
-document.getElementById('close-update-modal').addEventListener('click', () => {
-  localStorage.setItem('miksi_welcomed', 'true');
-  document.getElementById('update-modal').classList.add('hidden');
-});
 
 /* Tab Dragging Logic */
 const ghost = document.getElementById('tab-ghost');
@@ -176,7 +168,7 @@ const gamesClose = document.getElementById('games-close');
 const userscriptsModal = document.getElementById('userscripts-modal');
 const userscriptsClose = document.getElementById('userscripts-close');
 const settingsModal = document.getElementById('settings-modal');
-const settingsCloseBtn = document.getElementById('settings-close-btn');
+const modalClose = document.getElementById('modal-close');
 
 sbHome.addEventListener('click', () => {
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -200,36 +192,50 @@ document.getElementById('save-userscript').addEventListener('click', () => {
 });
 
 sbSettings.addEventListener('click', () => settingsModal.classList.add('active'));
-settingsCloseBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
-
-document.getElementById('save-settings-btn').addEventListener('click', () => {
-  const scale = document.getElementById('setting-scale').value;
-  localStorage.setItem('miksi_scale', scale);
-  document.documentElement.style.setProperty('--gui-scale', scale);
-  settingsModal.classList.remove('active');
-});
+modalClose.addEventListener('click', () => settingsModal.classList.remove('active'));
 
 /* Draggable Settings Modal */
+const modal = document.getElementById('settings-modal');
 const dragHandle = document.getElementById('modal-drag-handle');
 let isDragging = false, startX, startY, initialX, initialY;
 
-dragHandle.addEventListener('mousedown', (e) => {
+function startDrag(e) {
   isDragging = true;
-  startX = e.clientX; startY = e.clientY;
-  const rect = settingsModal.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  startX = clientX; startY = clientY;
+  const rect = modal.getBoundingClientRect();
   initialX = rect.left; initialY = rect.top;
-  settingsModal.style.transform = 'none';
-});
+}
 
-document.addEventListener('mousemove', (e) => {
+function moveDrag(e) {
   if (!isDragging) return;
-  settingsModal.style.left = (initialX + e.clientX - startX) + 'px';
-  settingsModal.style.top = (initialY + e.clientY - startY) + 'px';
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  modal.style.left = (initialX + clientX - startX) + 'px';
+  modal.style.top = (initialY + clientY - startY) + 'px';
+}
+
+function stopDrag() { isDragging = false; }
+
+dragHandle.addEventListener('mousedown', startDrag);
+document.addEventListener('mousemove', moveDrag);
+document.addEventListener('mouseup', stopDrag);
+dragHandle.addEventListener('touchstart', startDrag, { passive: true });
+document.addEventListener('touchmove', moveDrag, { passive: true });
+document.addEventListener('touchend', stopDrag);
+
+/* Settings Tabs */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.settings-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.getAttribute('data-pane')).classList.add('active');
+  });
 });
 
-document.addEventListener('mouseup', () => isDragging = false);
-
-/* Rotating Footer Quotes */
+/* Rotating Footer Quotes with requested quote added */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
@@ -244,7 +250,7 @@ footerCredit.addEventListener('click', () => {
   footerCredit.textContent = footerQuotes[quoteIndex];
 });
 
-/* Dropdown Navigation */
+/* Bottom Dropdown Menus */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
@@ -314,6 +320,7 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
+  const userscript = localStorage.getItem('miksi_userscript') || '';
   const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -385,7 +392,7 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Floating Central Star Canvas with Color Inversion & Trails */
+/* Bigger & Slower Spinning Central Star Canvas with Inversion */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -394,36 +401,36 @@ function drawStarCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   
-  floatTime += 0.03;
-  const floatX = Math.sin(floatTime) * 12;
-  const floatY = Math.cos(floatTime * 0.8) * 12;
+  floatTime += 0.02;
+  const floatX = Math.sin(floatTime) * 10;
+  const floatY = Math.cos(floatTime * 0.8) * 10;
 
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
 
-  // Drawing the big white spinning star. Because of mix-blend-mode: difference
-  // on the parent container, any background stars passing through will invert their color!
+  // Big white star. Due to mix-blend-mode: difference on the parent container,
+  // background stars passing inside will invert into black stars.
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
-    ctx.lineTo(0, -90);
+    ctx.lineTo(0, -140);
     ctx.rotate(Math.PI / 4);
-    ctx.lineTo(0, -30);
+    ctx.lineTo(0, -50);
     ctx.rotate(Math.PI / 4);
   }
   ctx.closePath();
   ctx.fill();
 
-  const trailSegments = 10;
+  const trailSegments = 12;
   for (let t = 1; t <= trailSegments; t++) {
     ctx.save();
-    ctx.rotate(-t * 0.025);
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.18 * (1 - t / trailSegments)})`;
+    ctx.rotate(-t * 0.015);
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.15 * (1 - t / trailSegments)})`;
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
-      ctx.lineTo(0, -96);
+      ctx.lineTo(0, -148);
       ctx.rotate(Math.PI / 4);
-      ctx.lineTo(0, -32);
+      ctx.lineTo(0, -54);
       ctx.rotate(Math.PI / 4);
     }
     ctx.closePath();
@@ -432,9 +439,22 @@ function drawStarCanvas() {
   }
 
   ctx.restore();
-  angle += 0.008;
+  angle += 0.0025; // Slower spin speed
   requestAnimationFrame(drawStarCanvas);
 }
 drawStarCanvas();
+
+/* Settings Saving */
+document.getElementById('gui-scale-slider').addEventListener('input', (e) => {
+  document.documentElement.style.setProperty('--gui-scale', e.target.value);
+  document.getElementById('gui-scale-val').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
+});
+
+document.getElementById('save-settings').addEventListener('click', () => {
+  const scale = document.getElementById('gui-scale-slider').value;
+  localStorage.setItem('miksi_scale', scale);
+  loadSettings();
+  settingsModal.classList.remove('active');
+});
 
 renderTabs();
