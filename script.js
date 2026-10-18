@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER (SLOW SLOW SPIN & COLOR INVERSION)
+   MIKSI CLIENT CONTROLLER (SLOW SPIN & FULL TEXT/STAR COLOR INVERSION)
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
@@ -391,7 +391,7 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Bigger & Slower Spinning Central Star Canvas with True Difference Inversion */
+/* Big White Star Canvas (Difference Blend inverts underlying white text & stars) */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -407,8 +407,7 @@ function drawStarCanvas() {
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
 
-  // Big white star. Renders over bg-stars inside .star-blend-layer (mix-blend-mode: difference),
-  // causing background white pixels to invert to black where covered.
+  // Solid white star shape that causes underlying text & bg stars to invert
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
@@ -438,7 +437,7 @@ function drawStarCanvas() {
   }
 
   ctx.restore();
-  angle += 0.0015; // Very slow rotation
+  angle += 0.0015; // Slow spin speed
   requestAnimationFrame(drawStarCanvas);
 }
 drawStarCanvas();
