@@ -9,14 +9,13 @@
   <style>
     :root {
       --gui-scale: 1.15;
-      --bg: #121212;
-      --panel: #18191c;
-      --card-bg: #1e1f24;
-      --border: #2b2d31;
-      --text: #f2f3f5;
-      --subtext: #949ba4;
-      --accent: #5865f2;
-      --hover: #2b2d31;
+      --bg: #000000;
+      --panel: #0a0a0a;
+      --border: #262626;
+      --text: #ffffff;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --hover: #1a1a1a;
       --font: Arial, Helvetica, sans-serif;
     }
 
@@ -144,7 +143,7 @@
       font-size: 1rem;
     }
 
-    .tab-close:hover { color: #ff5555; }
+    .tab-close:hover { color: #ffffff; }
 
     .add-tab-btn {
       background: transparent;
@@ -172,7 +171,7 @@
       border-radius: 8px;
       font-size: 0.85rem;
       color: var(--text);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
       transform: translate(-50%, -50%);
       display: none;
     }
@@ -202,7 +201,7 @@
       background: var(--panel);
       border: 1px solid var(--accent);
       border-radius: 12px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9);
       z-index: 2200;
       display: flex;
       flex-direction: column;
@@ -240,8 +239,8 @@
 
     .star-canvas-container {
       position: relative;
-      width: 520px;
-      height: 520px;
+      width: 650px;
+      height: 650px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -260,7 +259,7 @@
       position: relative;
       z-index: 2;
       color: #ffffff;
-      font-size: 2.1rem;
+      font-size: 2.3rem;
       font-weight: bold;
       letter-spacing: 2.5px;
       text-transform: lowercase;
@@ -332,7 +331,7 @@
       display: flex;
       align-items: center;
       gap: calc(8px * var(--gui-scale));
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
       width: 100%;
     }
 
@@ -406,7 +405,7 @@
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--gui-scale));
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
       opacity: 0;
       pointer-events: none;
       transform: translateY(10px);
@@ -471,121 +470,58 @@
       border: none;
     }
 
-    .device-viewport.mode-mobile { width: 375px; height: 667px; border: 12px solid #2a2a2a; border-radius: 36px; }
-    .device-viewport.mode-tablet { width: 768px; height: 1024px; border: 14px solid #2a2a2a; border-radius: 24px; }
+    .device-viewport.mode-mobile { width: 375px; height: 667px; border: 12px solid #262626; border-radius: 36px; }
+    .device-viewport.mode-tablet { width: 768px; height: 1024px; border: 14px solid #262626; border-radius: 24px; }
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
 
-    /* Modern Settings Modal matching Reference Image */
+    /* Tabbed Settings Modal */
     .draggable-modal {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 620px;
-      max-height: 85vh;
+      top: 15%;
+      left: 30%;
+      width: calc(480px * var(--gui-scale));
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: calc(16px * var(--gui-scale));
       z-index: 2500;
       display: none;
       flex-direction: column;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
-      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
+      user-select: none;
+      touch-action: none;
     }
 
     .draggable-modal.active { display: flex; }
 
     .modal-header-drag {
-      padding: 18px 24px;
-      background: var(--panel);
+      padding: calc(14px * var(--gui-scale));
+      background: var(--hover);
       border-bottom: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: grab;
-      font-size: 1.3rem;
       font-weight: bold;
     }
 
-    .modal-body {
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .modal-body { padding: calc(20px * var(--gui-scale)); display: flex; flex-direction: column; gap: calc(16px * var(--gui-scale)); }
 
-    .settings-section-title {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--subtext);
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
+    .settings-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .tab-btn { background: var(--bg); border: 1px solid var(--border); color: var(--subtext); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .tab-btn.active { background: var(--hover); color: var(--text); border-color: var(--accent); }
+    .settings-pane { display: none; flex-direction: column; gap: 12px; }
+    .settings-pane.active { display: flex; }
 
-    .settings-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .setting-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .setting-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-    }
-
-    .setting-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-    .setting-desc { font-size: 0.8rem; color: var(--subtext); line-height: 1.4; }
-
-    /* Custom Toggle Switch */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #313338; transition: .2s; border-radius: 24px; border: 1px solid var(--border);
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px;
-      background-color: white; transition: .2s; border-radius: 50%;
-    }
-    input:checked + .slider { background-color: var(--accent); }
-    input:checked + .slider:before { transform: translateX(20px); }
-
-    .setting-select, .setting-input {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: var(--text);
-      outline: none;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
+    .setting-row { display: flex; flex-direction: column; gap: 6px; }
+    .setting-row label { font-size: calc(0.9rem * var(--gui-scale)); color: var(--subtext); }
+    .setting-select, .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
+    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
 
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px);
+      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(3px);
       z-index: 3000; display: flex; align-items: center; justify-content: center;
     }
     .modal-overlay.hidden { display: none; }
@@ -603,7 +539,7 @@
   <div class="snap-overlay left" id="snap-left"></div>
   <div class="snap-overlay right" id="snap-right"></div>
 
-  <!-- Sidebar -->
+  <!-- Sidebar Taskbar -->
   <div class="sidebar">
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -624,10 +560,10 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Home View with Central Spinning Star -->
+  <!-- Home View with Bigger, Slower Spinning Star & Inversion -->
   <div class="home-view" id="home-view">
     <div class="star-canvas-container">
-      <canvas id="star-canvas" width="520" height="520"></canvas>
+      <canvas id="star-canvas" width="650" height="650"></canvas>
       <div class="star-text">*welcome to verbos</div>
     </div>
   </div>
@@ -675,8 +611,8 @@
         <button class="nav-btn" id="games-close">×</button>
       </div>
       <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px;">
-        <div style="background:var(--card-bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox</div>
-        <div style="background:var(--card-bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games</div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox</div>
+        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games</div>
       </div>
     </div>
   </div>
@@ -690,108 +626,53 @@
       </div>
       <div style="font-size:0.85rem; color:var(--subtext);">Inject custom JavaScript into visited proxy pages automatically.</div>
       <textarea id="userscript-input" class="setting-input" rows="8" placeholder="// Write JS code here... e.g. console.log('Injected!');" style="resize:vertical; font-family:monospace;"></textarea>
-      <button class="save-btn" id="save-userscript" style="background:var(--accent); border:none; border-radius:8px; padding:10px; color:#fff; font-weight:bold; cursor:pointer;">Save Userscript</button>
+      <button class="save-btn" id="save-userscript">Save Userscript</button>
     </div>
   </div>
 
-  <!-- Redesigned Settings Modal matching Reference Image -->
+  <!-- Tabbed Settings Modal -->
   <div class="draggable-modal" id="settings-modal">
     <div class="modal-header-drag" id="modal-drag-handle">
       <span>Settings</span>
-      <button class="nav-btn" id="settings-close-btn">×</button>
+      <button class="nav-btn" id="modal-close">×</button>
     </div>
     <div class="modal-body">
-      
-      <!-- APPEARANCE -->
-      <div class="settings-section-title">Appearance</div>
-      <div class="settings-card">
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">Auto Darkmode</div>
-            <div class="setting-desc">Automatically force dark mode styling on supported proxy pages.</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="setting-autodark" checked><span class="slider"></span></label>
+      <div class="settings-tabs">
+        <button class="tab-btn active" data-pane="pane-gui">GUI</button>
+        <button class="tab-btn" data-pane="pane-appearance">Appearance</button>
+        <button class="tab-btn" data-pane="pane-proxy">Proxy</button>
+      </div>
+
+      <div class="settings-pane active" id="pane-gui">
+        <div class="setting-row">
+          <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.15x</span></label>
+          <input type="range" id="gui-scale-slider" min="0.9" max="1.6" step="0.05" value="1.15">
         </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">GUI Scale</div>
-            <div class="setting-desc">Adjust interface sizing across windows.</div>
-          </div>
-          <select id="setting-scale" class="setting-select">
-            <option value="1.0">Normal (1.0x)</option>
-            <option value="1.15" selected>Default (1.15x)</option>
-            <option value="1.3">Large (1.3x)</option>
+      </div>
+
+      <div class="settings-pane" id="pane-appearance">
+        <div class="setting-row">
+          <label>Auto Dark Mode</label>
+          <select id="setting-autodark" class="setting-select">
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
           </select>
         </div>
       </div>
 
-      <!-- SEARCH ENGINE -->
-      <div class="settings-section-title">Search Engine</div>
-      <div class="settings-card">
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">Default Search Engine</div>
-            <div class="setting-desc">Used by the address bar and quick searches.</div>
-          </div>
-          <select id="setting-search" class="setting-select">
-            <option value="google">Google</option>
-            <option value="duckduckgo">DuckDuckGo</option>
-            <option value="bing">Bing</option>
+      <div class="settings-pane" id="pane-proxy">
+        <div class="setting-row">
+          <label for="preset-select">Educational Tab Disguise</label>
+          <select id="preset-select" class="setting-select">
+            <option value="canvas">Canvas LMS</option>
+            <option value="none">default</option>
+            <option value="classroom">Google Classroom</option>
+            <option value="drive">Google Drive</option>
           </select>
         </div>
       </div>
 
-      <!-- NETWORK -->
-      <div class="settings-section-title">Network</div>
-      <div class="settings-card">
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">Proxy Transport</div>
-            <div class="setting-desc">High-performance Rust-backed TLS tunnel or fast SPA interceptor.</div>
-          </div>
-          <select id="setting-transport" class="setting-select">
-            <option value="fast">Fast Engine (Default)</option>
-            <option value="strong">Strong Epoxy (Rust TLS)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- CLOAKING -->
-      <div class="settings-section-title">Cloaking</div>
-      <div class="settings-card">
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">Focus Cloak</div>
-            <div class="setting-desc">Disguise tab title and icon when the page loses focus.</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="setting-focuscloak"><span class="slider"></span></label>
-        </div>
-        <div class="setting-item">
-          <div class="setting-info">
-            <div class="setting-title">Panic Key</div>
-            <div class="setting-desc">Press '\' instantly to hide window contents.</div>
-          </div>
-          <input type="text" class="setting-input" value="\" readonly style="width: 50px; text-align: center;">
-        </div>
-      </div>
-
-      <button class="save-btn" id="save-settings-btn" style="background:var(--accent); border:none; border-radius:10px; padding:12px; color:#fff; font-weight:bold; cursor:pointer; margin-top:8px;">Save Settings</button>
-    </div>
-  </div>
-
-  <!-- Update Logs Modal -->
-  <div class="modal-overlay hidden" id="update-modal">
-    <div class="modal-box">
-      <div style="font-weight:bold; font-size:1.1rem;">*rebrand!!* - Update Logs</div>
-      <div style="font-size:0.95rem; line-height:1.5; color:var(--subtext);">
-        <p>Welcome to the new version of <strong>miksi</strong>!</p>
-        <ul style="margin-left:20px; margin-top:8px;">
-          <li>✨ Star color inversion inside the spinning star canvas.</li>
-          <li>📝 Userscripts injection engine added to sidebar.</li>
-          <li>⚙️ Settings redesigned to match modern card UI.</li>
-        </ul>
-      </div>
-      <button class="save-btn" id="close-update-modal" style="background:var(--accent); border:none; border-radius:8px; padding:10px; color:#fff; font-weight:bold; cursor:pointer;">Got it!</button>
+      <button class="save-btn" id="save-settings">Save Configurations</button>
     </div>
   </div>
 
