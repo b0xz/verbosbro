@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER (BLACK & WHITE / SLOW BIG STAR)
+   MIKSI CLIENT CONTROLLER (SLOW SLOW SPIN & COLOR INVERSION)
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
@@ -235,7 +235,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* Rotating Footer Quotes with requested quote added */
+/* Rotating Footer Quotes */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
@@ -320,7 +320,6 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
-  const userscript = localStorage.getItem('miksi_userscript') || '';
   const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -363,14 +362,14 @@ function resizeBg() {
 window.addEventListener('resize', resizeBg);
 resizeBg();
 
-for (let i = 0; i < 90; i++) {
+for (let i = 0; i < 110; i++) {
   stars.push({
     x: Math.random() * bgCanvas.width,
     y: Math.random() * bgCanvas.height,
-    size: Math.random() * 2.5 + 0.5,
-    speed: Math.random() * 0.8 + 0.2,
+    size: Math.random() * 3 + 1,
+    speed: Math.random() * 0.4 + 0.1,
     rot: Math.random() * Math.PI,
-    rotSpeed: (Math.random() - 0.5) * 0.05
+    rotSpeed: (Math.random() - 0.5) * 0.02
   });
 }
 
@@ -392,7 +391,7 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Bigger & Slower Spinning Central Star Canvas with Inversion */
+/* Bigger & Slower Spinning Central Star Canvas with True Difference Inversion */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -401,21 +400,21 @@ function drawStarCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   
-  floatTime += 0.02;
-  const floatX = Math.sin(floatTime) * 10;
-  const floatY = Math.cos(floatTime * 0.8) * 10;
+  floatTime += 0.01;
+  const floatX = Math.sin(floatTime) * 6;
+  const floatY = Math.cos(floatTime * 0.8) * 6;
 
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
 
-  // Big white star. Due to mix-blend-mode: difference on the parent container,
-  // background stars passing inside will invert into black stars.
+  // Big white star. Renders over bg-stars inside .star-blend-layer (mix-blend-mode: difference),
+  // causing background white pixels to invert to black where covered.
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
-    ctx.lineTo(0, -140);
+    ctx.lineTo(0, -180);
     ctx.rotate(Math.PI / 4);
-    ctx.lineTo(0, -50);
+    ctx.lineTo(0, -65);
     ctx.rotate(Math.PI / 4);
   }
   ctx.closePath();
@@ -424,13 +423,13 @@ function drawStarCanvas() {
   const trailSegments = 12;
   for (let t = 1; t <= trailSegments; t++) {
     ctx.save();
-    ctx.rotate(-t * 0.015);
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.15 * (1 - t / trailSegments)})`;
+    ctx.rotate(-t * 0.012);
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.12 * (1 - t / trailSegments)})`;
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
-      ctx.lineTo(0, -148);
+      ctx.lineTo(0, -186);
       ctx.rotate(Math.PI / 4);
-      ctx.lineTo(0, -54);
+      ctx.lineTo(0, -68);
       ctx.rotate(Math.PI / 4);
     }
     ctx.closePath();
@@ -439,7 +438,7 @@ function drawStarCanvas() {
   }
 
   ctx.restore();
-  angle += 0.0025; // Slower spin speed
+  angle += 0.0015; // Very slow rotation
   requestAnimationFrame(drawStarCanvas);
 }
 drawStarCanvas();
