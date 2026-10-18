@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER (SLOW SPIN & FULL TEXT/STAR COLOR INVERSION)
+   MIKSI CLIENT CONTROLLER (WAVY TRAILS & SPLIT CLOSE)
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
@@ -20,6 +20,7 @@ const proxyIframe2 = document.getElementById('proxy-iframe-2');
 const splitSwitcherBar = document.getElementById('split-switcher-bar');
 const btnScreen1 = document.getElementById('btn-screen1');
 const btnScreen2 = document.getElementById('btn-screen2');
+const btnCloseSplit = document.getElementById('btn-close-split');
 
 // Load saved settings
 function loadSettings() {
@@ -77,6 +78,18 @@ function enableSplitScreen() {
   screenPanel2.classList.remove('hidden');
   splitSwitcherBar.classList.add('active');
 }
+
+function disableSplitScreen() {
+  isSplitScreen = false;
+  screenPanel2.classList.add('hidden');
+  splitSwitcherBar.classList.remove('active');
+  activeScreenIndex = 1;
+  btnScreen1.classList.add('active');
+  btnScreen2.classList.remove('active');
+  proxyIframe2.src = 'about:blank';
+}
+
+btnCloseSplit.addEventListener('click', disableSplitScreen);
 
 btnScreen1.addEventListener('click', () => {
   activeScreenIndex = 1;
@@ -235,7 +248,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* Rotating Footer Quotes */
+/* Rotating Footer Quotes (Including requested quote) */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
@@ -320,7 +333,8 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}`;
+  const userscript = encodeURIComponent(localStorage.getItem('miksi_userscript') || '');
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&us=${userscript}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab) {
@@ -355,18 +369,19 @@ const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let stars = [];
 
-function resizeBg() {
+function resizeCanvas() {
   bgCanvas.width = window.innerWidth;
   bgCanvas.height = window.innerHeight;
+  wavyCanvas.width = window.innerWidth;
+  wavyCanvas.height = window.innerHeight;
 }
-window.addEventListener('resize', resizeBg);
-resizeBg();
+window.addEventListener('resize', resizeCanvas);
 
-for (let i = 0; i < 110; i++) {
+for (let i = 0; i < 90; i++) {
   stars.push({
-    x: Math.random() * bgCanvas.width,
-    y: Math.random() * bgCanvas.height,
-    size: Math.random() * 3 + 1,
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: Math.random() * 2.5 + 1,
     speed: Math.random() * 0.4 + 0.1,
     rot: Math.random() * Math.PI,
     rotSpeed: (Math.random() - 0.5) * 0.02
@@ -391,7 +406,50 @@ function drawBgStars() {
 }
 drawBgStars();
 
-/* Big White Star Canvas (Difference Blend inverts underlying white text & stars) */
+/* Wavy Upward Trails Canvas */
+const wavyCanvas = document.getElementById('wavy-canvas');
+const wavyCtx = wavyCanvas.getContext('2d');
+let wavyLines = [];
+
+for (let i = 0; i < 18; i++) {
+  wavyLines.push({
+    x: Math.random() * window.innerWidth,
+    y: window.innerHeight + Math.random() * 200,
+    speed: Math.random() * 1.2 + 0.5,
+    amplitude: Math.random() * 30 + 15,
+    frequency: Math.random() * 0.015 + 0.005,
+    size: Math.random() * 1.5 + 0.8
+  });
+}
+
+function drawWavyTrails() {
+  wavyCtx.clearRect(0, 0, wavyCanvas.width, wavyCanvas.height);
+  wavyCtx.fillStyle = '#ffffff';
+  wavyCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  wavyCtx.lineWidth = 1.2;
+
+  wavyLines.forEach(w => {
+    w.y -= w.speed;
+    if (w.y < -50) {
+      w.y = window.innerHeight + 50;
+      w.x = Math.random() * window.innerWidth;
+    }
+
+    wavyCtx.beginPath();
+    for (let py = 0; py < 100; py += 5) {
+      let currentY = w.y + py;
+      let currentX = w.x + Math.sin(currentY * w.frequency) * w.amplitude;
+      if (py === 0) wavyCtx.moveTo(currentX, currentY);
+      else wavyCtx.lineTo(currentX, currentY);
+    }
+    wavyCtx.stroke();
+  });
+  requestAnimationFrame(drawWavyTrails);
+}
+drawWavyTrails();
+resizeCanvas();
+
+/* Big White Star Canvas (Difference Blend Inverts Text & Stars) */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -407,7 +465,6 @@ function drawStarCanvas() {
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
 
-  // Solid white star shape that causes underlying text & bg stars to invert
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
@@ -437,7 +494,7 @@ function drawStarCanvas() {
   }
 
   ctx.restore();
-  angle += 0.0015; // Slow spin speed
+  angle += 0.0015;
   requestAnimationFrame(drawStarCanvas);
 }
 drawStarCanvas();
