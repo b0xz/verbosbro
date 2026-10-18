@@ -1,10 +1,12 @@
 export default async function handler(req, res) {
-  // Enhanced CORS Headers
+  // Enhanced CORS & Security Bypass Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('access-control-allow-credentials', 'true');
+  res.setHeader('access-control-expose-headers', '*');
   res.setHeader('cache-control', 'public, max-age=300, s-maxage=600');
+  res.setHeader('timing-allow-origin', '*');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -26,28 +28,37 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // Comprehensive Request Header Configuration
+    // Extended Request Headers setup
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
-      // Let the remote server decide compression; node-fetch will handle decoding
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
       'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
       'sec-ch-ua-mobile': device === 'mobile' ? '?1' : '?0',
-      'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : '"Windows"',
+      'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : device === 'tablet' ? '"iPadOS"' : '"Windows"',
       'sec-fetch-dest': 'document',
       'sec-fetch-mode': 'navigate',
       'sec-fetch-site': 'same-origin',
       'sec-fetch-user': '?1',
-      'upgrade-insecure-requests': '1'
+      'upgrade-insecure-requests': '1',
+      'dnt': '1',
+      'pragma': 'no-cache',
+      'cache-control': 'no-cache'
     };
 
     if (req.headers.cookie) headers.cookie = req.headers.cookie;
+    if (req.headers['authorization']) headers.authorization = req.headers['authorization'];
 
-    const fetchOptions = { method: req.method, headers, redirect: 'follow' };
+    const fetchOptions = { 
+      method: req.method, 
+      headers, 
+      redirect: 'follow',
+      compress: true
+    };
+
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
       if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
       if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
@@ -57,20 +68,24 @@ export default async function handler(req, res) {
     const rawContentType = response.headers.get('content-type') || 'application/octet-stream';
     const contentType = rawContentType.toLowerCase();
 
-    // Forward selected response headers (but sanitize where necessary)
-    // Do not forward content-length (we may change body size)
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
-    res.setHeader('x-proxied-by', 'miksi-engine');
+    res.setHeader('x-proxied-by', 'miksi-super-engine');
     res.setHeader('x-target-url', targetUrl);
+    res.setHeader('x-target-origin', baseUrl);
 
+    // Advanced Cookie Sanitization
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
       try {
-        res.setHeader('set-cookie', setCookie.replace(/;\s*Domain=[^;]+/gi, '').replace(/;\s*Secure/gi, '').replace(/;\s*SameSite=[^;]+/gi, '; SameSite=None'));
+        const sanitizedCookie = setCookie
+          .replace(/;\s*Domain=[^;]+/gi, '')
+          .replace(/;\s*Secure/gi, '')
+          .replace(/;\s*SameSite=[^;]+/gi, '; SameSite=None');
+        res.setHeader('set-cookie', sanitizedCookie);
       } catch (e) {}
     }
 
-    // Extended Security Strip List
+    // Extended Security Strip & Bypass List
     const headersToRemove = [
       'x-frame-options',
       'content-security-policy',
@@ -80,23 +95,24 @@ export default async function handler(req, res) {
       'cross-origin-embedder-policy',
       'cross-origin-resource-policy',
       'permissions-policy',
-      'strict-transport-security'
+      'strict-transport-security',
+      'expect-ct',
+      'x-download-options',
+      'x-permitted-cross-domain-policies'
     ];
 
     headersToRemove.forEach(h => {
       try { res.removeHeader(h); } catch (e) {}
     });
 
-    // Helper: proxify absolute/relative urls so browser requests them back through this proxy
+    // Helper to rewrite URLs into proxied URLs
     function proxifyUrl(val) {
       try {
-        if (!val || /^(data:|javascript:|#|mailto:|blob:)/i.test(val)) return val;
+        if (!val || typeof val !== 'string') return val;
+        if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(val.trim())) return val;
         if (val.includes('/api/proxy?url=')) return val;
-        // handle protocol-relative //example.com/path
         if (val.startsWith('//')) return `/api/proxy?url=${encodeURIComponent(parsedUrl.protocol + val)}&mode=${mode}&device=${device}`;
-        // handle root-relative /path
         if (val.startsWith('/')) return `/api/proxy?url=${encodeURIComponent(baseUrl + val)}&mode=${mode}&device=${device}`;
-        // handle absolute and relative
         const absUrl = new URL(val, parsedUrl.href).href;
         return `/api/proxy?url=${encodeURIComponent(absUrl)}&mode=${mode}&device=${device}`;
       } catch (e) {
@@ -104,18 +120,14 @@ export default async function handler(req, res) {
       }
     }
 
-    // Decide how to handle body based on content type
-    // If binary (images, fonts, videos) => stream/pipe immediately
     const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml+xml');
     const isCSS = contentType.includes('text/css') || contentType.includes('css');
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
     const isText = contentType.startsWith('text/') || isHTML || isCSS || isJS || contentType.includes('json') || contentType.includes('xml') || contentType.includes('svg');
 
-    // Fast-path: stream truly binary data (images, fonts) without converting to text to avoid corruption
+    // Streaming for non-text / media assets
     if (mode === 'fast' && !isText) {
-      // try to pipe Node stream if available
       if (response.body && typeof response.body.pipe === 'function') {
-        // remove content-length to avoid mismatch
         try { res.removeHeader('content-length'); } catch (e) {}
         return response.body.pipe(res);
       }
@@ -124,51 +136,121 @@ export default async function handler(req, res) {
       return res.status(200).send(buffer);
     }
 
-    // For HTML, CSS, and JS we fetch as text and perform rewriting so assets load correctly
     const originalText = await response.text();
     let body = originalText;
 
+    // CSS Processing
     if (isCSS) {
-      // Rewrite url(...) and @import in CSS
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
-
-      // respond with transformed CSS
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
+    // JavaScript Processing
     if (isJS) {
-      // Rewrite static imports: import ... from '...'; and dynamic import('...')
-      // This is a best-effort regex and won't cover every valid JS syntax case.
-      body = body.replace(/(import\s+[^'\"]+?from\s+)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => {
-        return `${p1}${q}${proxifyUrl(val)}${q}`;
-      });
-      // dynamic import('...')
+      body = body.replace(/(import\s+[^'\"]+?from\s+)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       body = body.replace(/(import\(\s*)(['"])([^'\"]+)\2(\s*\))/gi, (m, p1, q, val, p4) => `${p1}${q}${proxifyUrl(val)}${q}${p4}`);
-      // fetch('...') calls are caught by HTML injector but transforming here helps when JS is loaded standalone
       body = body.replace(/(fetch\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
-
+      body = body.replace(/(location\.href\s*=\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
+    // HTML DOM String Processing & Extended Attribute Rewriting
     if (isHTML) {
-      // Comprehensive DOM String Transformations for HTML
       body = body
         .replace(/integrity="[^"]*"/gi, '')
         .replace(/nonce="[^"]*"/gi, '')
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
-      // Replace common attributes that point to resources
-      body = body.replace(/(<(?:img|script|iframe|audio|video|source|track|embed|input|form|object)[^>]*?\s(?:src|poster|action|data)=)[\"']([^\"']+)[\"']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
+      // Comprehensive HTML Attributes Replacements
+      body = body.replace(/(<(?:img|script|iframe|audio|video|source|track|embed|input|form|object|embed|param|track)[^>]*?\s(?:src|poster|action|data|srcset|icon)=)[\"']([^\"']+)[\"']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
       body = body.replace(/(<(?:a|area|link|base)[^>]*?\shref=)[\"']([^\"']+)[\"']/gi, (m, p1, p2) => `${p1}"${proxifyUrl(p2)}"`);
       body = body.replace(/url\((['"]?)([^'\")]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'\"]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
 
-      // Ensure <base> exists (so relative urls in the page resolve correctly). We inject base at top of <head>.
-      const injector = `\n      <base href="${baseUrl}/">\n      <script>\n        (function() {\n          const proxyBase = '/api/proxy?mode=${mode}&device=${device}&url=';\n          function proxify(url) {\n            try {\n              if (!url || typeof url !== 'string') return url;\n              if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('javascript:')) return url;\n              if (url.includes('/api/proxy?url=')) return url;\n              const abs = new URL(url, document.baseURI).href;\n              return proxyBase + encodeURIComponent(abs);\n            } catch(e) { return url; }\n          }\n\n          // Fetch interceptor\n          const origFetch = window.fetch;\n          window.fetch = function(resource, init) {\n            try {\n              let url = resource instanceof Request ? resource.url : resource;\n              let pUrl = proxify(url);\n              if (resource instanceof Request) {\n                return origFetch(new Request(pUrl, resource), init);\n              }\n              return origFetch(pUrl, init);\n            } catch(e) { return origFetch(resource, init); }\n          };\n\n          // XHR interceptor\n          try {\n            const origOpen = XMLHttpRequest.prototype.open;\n            XMLHttpRequest.prototype.open = function(method, url) {\n              try { arguments[1] = proxify(url); } catch(e) {}\n              return origOpen.apply(this, arguments);\n            };\n          } catch(e) {}\n\n          // DOM click handler for SPA links\n          document.addEventListener('click', function(e) {\n            const el = e.target.closest('a, area');\n            if (el && el.href && !el.href.startsWith('javascript:') && !el.href.startsWith('#')) {\n              e.preventDefault();\n              window.location.href = proxify(el.href);\n            }\n          }, true);\n\n          // SetAttribute trap for dynamic src/href changes\n          try {\n            const origSetAttribute = Element.prototype.setAttribute;\n            Element.prototype.setAttribute = function(name, value) {\n              if ((name === 'src' || name === 'href') && value && typeof value === 'string') {\n                if (!value.startsWith('data:') && !value.startsWith('blob:')) {\n                  value = proxify(value);\n                }\n              }\n              return origSetAttribute.call(this, name, value);\n            };\n          } catch(e) {}\n        })();\n      <\/script>\n    `;
+      // Advanced Client Interceptor Script Injection
+      const injector = `
+      <base href="${baseUrl}/">
+      <script>
+        (function() {
+          const proxyBase = '/api/proxy?mode=${mode}&device=${device}&url=';
+          const targetOrigin = '${baseUrl}';
+
+          function proxify(url) {
+            try {
+              if (!url || typeof url !== 'string') return url;
+              if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('javascript:') || url.startsWith('about:')) return url;
+              if (url.includes('/api/proxy?url=')) return url;
+              const abs = new URL(url, document.baseURI).href;
+              return proxyBase + encodeURIComponent(abs);
+            } catch(e) { return url; }
+          }
+
+          // Override fetch
+          const origFetch = window.fetch;
+          window.fetch = function(resource, init) {
+            try {
+              let url = resource instanceof Request ? resource.url : resource;
+              let pUrl = proxify(url);
+              if (resource instanceof Request) {
+                return origFetch(new Request(pUrl, resource), init);
+              }
+              return origFetch(pUrl, init);
+            } catch(e) { return origFetch(resource, init); }
+          };
+
+          // Override XMLHttpRequest
+          try {
+            const origOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+              try { arguments[1] = proxify(url); } catch(e) {}
+              return origOpen.apply(this, arguments);
+            };
+          } catch(e) {}
+
+          // Override Worker
+          try {
+            const origWorker = window.Worker;
+            window.Worker = function(scriptURL, options) {
+              return new origWorker(proxify(scriptURL), options);
+            };
+          } catch(e) {}
+
+          // Intercept dynamic setAttribute calls
+          try {
+            const origSetAttribute = Element.prototype.setAttribute;
+            Element.prototype.setAttribute = function(name, value) {
+              if ((name === 'src' || name === 'href' || name === 'action' || name === 'poster') && value && typeof value === 'string') {
+                if (!value.startsWith('data:') && !value.startsWith('blob:') && !value.startsWith('javascript:')) {
+                  value = proxify(value);
+                }
+              }
+              return origSetAttribute.call(this, name, value);
+            };
+          } catch(e) {}
+
+          // Intercept link clicks
+          document.addEventListener('click', function(e) {
+            const el = e.target.closest('a, area');
+            if (el && el.href && !el.href.startsWith('javascript:') && !el.href.startsWith('#')) {
+              e.preventDefault();
+              window.location.href = proxify(el.href);
+            }
+          }, true);
+
+          // Intercept form submissions
+          document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.action) {
+              form.action = proxify(form.action);
+            }
+          }, true);
+        })();
+      </script>
+    `;
 
       if (body.includes('<head')) {
         body = body.replace(/<head(.*?)>/i, (m, attrs) => `<head${attrs}>${injector}`);
@@ -182,7 +264,7 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Fallback: stream raw body if not handled above
+    // Fallback streaming
     if (response.body && typeof response.body.pipe === 'function') {
       try { res.removeHeader('content-length'); } catch (e) {}
       return response.body.pipe(res);
