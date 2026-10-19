@@ -1,34 +1,26 @@
 export default async function handler(req, res) {
-  // Global CORS and Cross-Origin Bypass Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('access-control-allow-credentials', 'true');
-  res.setHeader('access-control-expose-headers', '*');
   res.setHeader('timing-allow-origin', '*');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Extract and decode target URL (Ultraviolet style parameter handling)
   let targetUrl = req.query.url || (req.body && req.body.url);
-  
-  if (!targetUrl) {
-    return res.status(400).send('Missing target URL parameter.');
-  }
-
-  // Handle Base64/XOR encoded paths if passed from service worker
-  if (targetUrl.startsWith('uv/')) {
-    try {
-      const encodedPart = targetUrl.replace('uv/', '');
-      targetUrl = decodeURIComponent(atob(encodedPart));
-    } catch (e) {
-      // Fallback if raw
-    }
-  }
-
   const mode = req.query.mode || 'fast';
   const device = req.query.device || 'desktop';
   const customScript = req.query.us ? decodeURIComponent(req.query.us) : '';
+
+  if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
+
+  // Clean up any nested or bugged proxy prefixes
+  if (targetUrl.includes('/api/proxy?url=')) {
+    try {
+      const parts = targetUrl.split('/api/proxy?url=');
+      targetUrl = decodeURIComponent(parts[parts.length - 1]);
+    } catch (e) {}
+  }
 
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -42,7 +34,6 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // Professional browser emulation headers for maximum site compatibility
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -53,10 +44,6 @@ export default async function handler(req, res) {
       'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
       'sec-ch-ua-mobile': device === 'mobile' ? '?1' : '?0',
       'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : device === 'tablet' ? '"iPadOS"' : '"Windows"',
-      'sec-fetch-dest': 'document',
-      'sec-fetch-mode': 'navigate',
-      'sec-fetch-site': 'cross-site',
-      'sec-fetch-user': '?1',
       'upgrade-insecure-requests': '1',
       'dnt': '1'
     };
@@ -64,7 +51,6 @@ export default async function handler(req, res) {
     if (req.headers.cookie) headers.cookie = req.headers.cookie;
     if (req.headers['authorization']) headers.authorization = req.headers['authorization'];
     if (req.headers['range']) headers.range = req.headers['range'];
-    if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
 
     const fetchOptions = {
       method: req.method,
@@ -74,9 +60,8 @@ export default async function handler(req, res) {
     };
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
-      if (req.body) {
-        fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
-      }
+      if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+      if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
     }
 
     const response = await fetch(targetUrl, fetchOptions);
@@ -87,11 +72,10 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'miksi-ultraviolet-core');
+    res.setHeader('x-proxied-by', 'miksi-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
 
-    // Sanitize and adapt Set-Cookie directives for cross-origin tracking persistence
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
       try {
@@ -103,7 +87,6 @@ export default async function handler(req, res) {
       } catch (e) {}
     }
 
-    // Strip restrictive security headers that block framing or execution
     const headersToRemove = [
       'x-frame-options',
       'content-security-policy',
@@ -113,26 +96,34 @@ export default async function handler(req, res) {
       'cross-origin-embedder-policy',
       'cross-origin-resource-policy',
       'permissions-policy',
-      'strict-transport-security',
-      'expect-ct',
-      'x-download-options',
-      'x-permitted-cross-domain-policies'
+      'strict-transport-security'
     ];
 
     headersToRemove.forEach(h => {
       try { res.removeHeader(h); } catch (e) {}
     });
 
+    // Robust URL rewriting function
     function proxifyUrl(val) {
       try {
         if (!val || typeof val !== 'string') return val;
-        const trimmed = val.trim();
+        let trimmed = val.trim();
         if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
-        if (trimmed.includes('/api/proxy?url=')) return val;
-        if (trimmed.startsWith('//')) return `/api/proxy?url=${encodeURIComponent(parsedUrl.protocol + trimmed)}&mode=${mode}&device=${device}&us=${encodeURIComponent(customScript)}`;
-        if (trimmed.startsWith('/')) return `/api/proxy?url=${encodeURIComponent(baseUrl + trimmed)}&mode=${mode}&device=${device}&us=${encodeURIComponent(customScript)}`;
-        const absUrl = new URL(trimmed, parsedUrl.href).href;
-        return `/api/proxy?url=${encodeURIComponent(absUrl)}&mode=${mode}&device=${device}&us=${encodeURIComponent(customScript)}`;
+        
+        if (trimmed.includes('/api/proxy?url=')) {
+          const parts = trimmed.split('/api/proxy?url=');
+          trimmed = decodeURIComponent(parts[parts.length - 1]);
+        }
+
+        if (trimmed.startsWith('//')) {
+          trimmed = parsedUrl.protocol + trimmed;
+        } else if (trimmed.startsWith('/')) {
+          trimmed = baseUrl + trimmed;
+        } else if (!/^https?:\/\//i.test(trimmed)) {
+          trimmed = new URL(trimmed, parsedUrl.href).href;
+        }
+
+        return `/api/proxy?url=${encodeURIComponent(trimmed)}&mode=${mode}&device=${device}&us=${encodeURIComponent(customScript)}`;
       } catch (e) {
         return val;
       }
@@ -143,7 +134,6 @@ export default async function handler(req, res) {
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
     const isText = contentType.startsWith('text/') || isHTML || isCSS || isJS || contentType.includes('json') || contentType.includes('xml') || contentType.includes('svg');
 
-    // Stream non-text assets (images, videos, WebAssembly, fonts) directly
     if (!isText) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
@@ -191,9 +181,13 @@ export default async function handler(req, res) {
           function proxify(url) {
             try {
               if (!url || typeof url !== 'string') return url;
-              if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('javascript:') || url.startsWith('about:')) return url;
-              if (url.includes('/api/proxy?url=')) return url;
-              const abs = new URL(url, document.baseURI).href;
+              let trimmed = url.trim();
+              if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
+              if (trimmed.includes('/api/proxy?url=')) {
+                const parts = trimmed.split('/api/proxy?url=');
+                trimmed = decodeURIComponent(parts[parts.length - 1]);
+              }
+              const abs = new URL(trimmed, document.baseURI).href;
               return proxyBase + encodeURIComponent(abs);
             } catch(e) { return url; }
           }
@@ -215,13 +209,6 @@ export default async function handler(req, res) {
             XMLHttpRequest.prototype.open = function(method, url) {
               try { arguments[1] = proxify(url); } catch(e) {}
               return origOpen.apply(this, arguments);
-            };
-          } catch(e) {}
-
-          try {
-            const origWorker = window.Worker;
-            window.Worker = function(scriptURL, options) {
-              return new origWorker(proxify(scriptURL), options);
             };
           } catch(e) {}
 
