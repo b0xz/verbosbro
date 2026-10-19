@@ -35,7 +35,7 @@
       color: var(--text);
     }
 
-    /* Unified Blend Layer for True Text & Star Color Inversion */
+    /* Unified Blend Container for True Inversion of Text and Stars */
     .star-blend-container {
       position: fixed;
       top: 0;
@@ -58,15 +58,6 @@
       z-index: 1;
     }
 
-    canvas#wavy-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-    }
-
     .home-view {
       position: absolute;
       z-index: 3;
@@ -81,7 +72,7 @@
 
     .star-text {
       color: #ffffff;
-      font-size: 2.3rem;
+      font-size: 2rem;
       font-weight: bold;
       letter-spacing: 2.5px;
       text-transform: lowercase;
@@ -89,11 +80,11 @@
       text-align: center;
     }
 
-    /* Big White Star with Difference Blend Mode for Inversion */
+    /* Smaller Central Star with Difference Blend Mode for Inversion */
     canvas#star-canvas {
       position: absolute;
-      width: 650px;
-      height: 650px;
+      width: 380px;
+      height: 380px;
       z-index: 4;
       mix-blend-mode: difference;
     }
@@ -421,7 +412,7 @@
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Proxy Split Viewports */
+    /* Proxy Split Viewports (Full screen view layout) */
     .proxy-viewer {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -459,9 +450,6 @@
       background: #ffffff;
       border: none;
     }
-
-    .device-viewport.mode-mobile { width: 375px; height: 667px; border: 12px solid #262626; border-radius: 36px; }
-    .device-viewport.mode-tablet { width: 768px; height: 1024px; border: 14px solid #262626; border-radius: 24px; }
 
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
 
@@ -525,11 +513,10 @@
   <!-- Unified Blend Container for True Inversion of Text and Stars -->
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
-    <canvas id="wavy-canvas"></canvas>
     <div class="home-view" id="home-view">
       <div class="star-text">*welcome to verbos</div>
     </div>
-    <canvas id="star-canvas" width="650" height="650"></canvas>
+    <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
   <div class="drag-tab-ghost" id="tab-ghost">New Tab</div>
