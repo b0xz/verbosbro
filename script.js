@@ -1,5 +1,5 @@
 /* ===================================================
-   MIKSI CLIENT CONTROLLER (WAVY TRAILS & SPLIT CLOSE)
+   MIKSI CLIENT CONTROLLER (RANDOM STARS, SMALL STAR, FULL VIEW)
    =================================================== */
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
@@ -248,7 +248,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* Rotating Footer Quotes (Including requested quote) */
+/* Rotating Footer Quotes */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
@@ -306,11 +306,6 @@ document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
     e.stopPropagation();
     currentDevice = btn.getAttribute('data-device');
     currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
-    
-    const wrapper = activeScreenIndex === 1 ? document.getElementById('device-wrapper-1') : document.getElementById('device-wrapper-2');
-    wrapper.className = 'device-viewport';
-    if (currentDevice === 'mobile') wrapper.classList.add('mode-mobile');
-    if (currentDevice === 'tablet') wrapper.classList.add('mode-tablet');
     deviceMenu.classList.remove('active');
   });
 });
@@ -364,7 +359,7 @@ proxyInput.addEventListener('keydown', (e) => {
   }
 });
 
-/* Drifting Background Stars Canvas */
+/* Background Stars Canvas with Full Random Positions */
 const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let stars = [];
@@ -372,17 +367,15 @@ let stars = [];
 function resizeCanvas() {
   bgCanvas.width = window.innerWidth;
   bgCanvas.height = window.innerHeight;
-  wavyCanvas.width = window.innerWidth;
-  wavyCanvas.height = window.innerHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 
-for (let i = 0; i < 90; i++) {
+for (let i = 0; i < 120; i++) {
   stars.push({
     x: Math.random() * window.innerWidth,
     y: Math.random() * window.innerHeight,
-    size: Math.random() * 2.5 + 1,
-    speed: Math.random() * 0.4 + 0.1,
+    size: Math.random() * 2.5 + 0.8,
+    speed: Math.random() * 0.3 + 0.05,
     rot: Math.random() * Math.PI,
     rotSpeed: (Math.random() - 0.5) * 0.02
   });
@@ -405,51 +398,9 @@ function drawBgStars() {
   requestAnimationFrame(drawBgStars);
 }
 drawBgStars();
-
-/* Wavy Upward Trails Canvas */
-const wavyCanvas = document.getElementById('wavy-canvas');
-const wavyCtx = wavyCanvas.getContext('2d');
-let wavyLines = [];
-
-for (let i = 0; i < 18; i++) {
-  wavyLines.push({
-    x: Math.random() * window.innerWidth,
-    y: window.innerHeight + Math.random() * 200,
-    speed: Math.random() * 1.2 + 0.5,
-    amplitude: Math.random() * 30 + 15,
-    frequency: Math.random() * 0.015 + 0.005,
-    size: Math.random() * 1.5 + 0.8
-  });
-}
-
-function drawWavyTrails() {
-  wavyCtx.clearRect(0, 0, wavyCanvas.width, wavyCanvas.height);
-  wavyCtx.fillStyle = '#ffffff';
-  wavyCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  wavyCtx.lineWidth = 1.2;
-
-  wavyLines.forEach(w => {
-    w.y -= w.speed;
-    if (w.y < -50) {
-      w.y = window.innerHeight + 50;
-      w.x = Math.random() * window.innerWidth;
-    }
-
-    wavyCtx.beginPath();
-    for (let py = 0; py < 100; py += 5) {
-      let currentY = w.y + py;
-      let currentX = w.x + Math.sin(currentY * w.frequency) * w.amplitude;
-      if (py === 0) wavyCtx.moveTo(currentX, currentY);
-      else wavyCtx.lineTo(currentX, currentY);
-    }
-    wavyCtx.stroke();
-  });
-  requestAnimationFrame(drawWavyTrails);
-}
-drawWavyTrails();
 resizeCanvas();
 
-/* Big White Star Canvas (Difference Blend Inverts Text & Stars) */
+/* Smaller Central Star Canvas */
 const canvas = document.getElementById('star-canvas');
 const ctx = canvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -459,8 +410,8 @@ function drawStarCanvas() {
   ctx.save();
   
   floatTime += 0.01;
-  const floatX = Math.sin(floatTime) * 6;
-  const floatY = Math.cos(floatTime * 0.8) * 6;
+  const floatX = Math.sin(floatTime) * 5;
+  const floatY = Math.cos(floatTime * 0.8) * 5;
 
   ctx.translate(canvas.width / 2 + floatX, canvas.height / 2 + floatY);
   ctx.rotate(angle);
@@ -468,24 +419,24 @@ function drawStarCanvas() {
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   for (let i = 0; i < 4; i++) {
-    ctx.lineTo(0, -180);
+    ctx.lineTo(0, -95);
     ctx.rotate(Math.PI / 4);
-    ctx.lineTo(0, -65);
+    ctx.lineTo(0, -35);
     ctx.rotate(Math.PI / 4);
   }
   ctx.closePath();
   ctx.fill();
 
-  const trailSegments = 12;
+  const trailSegments = 10;
   for (let t = 1; t <= trailSegments; t++) {
     ctx.save();
-    ctx.rotate(-t * 0.012);
+    ctx.rotate(-t * 0.015);
     ctx.fillStyle = `rgba(255, 255, 255, ${0.12 * (1 - t / trailSegments)})`;
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
-      ctx.lineTo(0, -186);
+      ctx.lineTo(0, -100);
       ctx.rotate(Math.PI / 4);
-      ctx.lineTo(0, -68);
+      ctx.lineTo(0, -38);
       ctx.rotate(Math.PI / 4);
     }
     ctx.closePath();
