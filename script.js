@@ -1,6 +1,16 @@
-/* ===================================================
-   MIKSI CLIENT CONTROLLER (RANDOM STARS, SMALL STAR, FULL VIEW)
-   =================================================== */
+/* Register Scramjet / Ultraviolet Interceptor Service Worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => {
+        console.log('Miksi Interceptor SW active:', reg.scope);
+      })
+      .catch(err => {
+        console.error('SW registration failed:', err);
+      });
+  });
+}
+
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
 let activeScreenIndex = 1;
@@ -22,7 +32,6 @@ const btnScreen1 = document.getElementById('btn-screen1');
 const btnScreen2 = document.getElementById('btn-screen2');
 const btnCloseSplit = document.getElementById('btn-close-split');
 
-// Load saved settings
 function loadSettings() {
   const scale = localStorage.getItem('miksi_scale') || '1.15';
   document.documentElement.style.setProperty('--gui-scale', scale);
@@ -238,7 +247,6 @@ dragHandle.addEventListener('touchstart', startDrag, { passive: true });
 document.addEventListener('touchmove', moveDrag, { passive: true });
 document.addEventListener('touchend', stopDrag);
 
-/* Settings Tabs */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -248,7 +256,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* Rotating Footer Quotes */
 const footerQuotes = [
   "man i love fern",
   "boii this so tuff",
@@ -263,7 +270,6 @@ footerCredit.addEventListener('click', () => {
   footerCredit.textContent = footerQuotes[quoteIndex];
 });
 
-/* Bottom Dropdown Menus */
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
@@ -310,7 +316,6 @@ document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
   });
 });
 
-/* URL Processing */
 const proxyGoBtn = document.getElementById('proxy-go');
 
 function processUrl(rawInput) {
@@ -359,7 +364,7 @@ proxyInput.addEventListener('keydown', (e) => {
   }
 });
 
-/* Background Stars Canvas with Full Random Positions */
+/* Randomized Background Stars */
 const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let stars = [];
@@ -450,7 +455,6 @@ function drawStarCanvas() {
 }
 drawStarCanvas();
 
-/* Settings Saving */
 document.getElementById('gui-scale-slider').addEventListener('input', (e) => {
   document.documentElement.style.setProperty('--gui-scale', e.target.value);
   document.getElementById('gui-scale-val').textContent = parseFloat(e.target.value).toFixed(2) + 'x';
