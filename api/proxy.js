@@ -38,6 +38,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch {}
 
+  // Clean up nested proxy URLs to prevent redirection loop bugs
   if (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
     if (h.endsWith('.local') || h.endsWith('.internal')) return true;
     if (h === 'metadata.google.internal' || h === '169.254.169.254') return true;
 
-    const ip = h.match(/^\d+\.\d+\.\d+\.\d+$/);
+    const ip = h.match(/^\d+\.\d+\.\d+\.\d+\$/);
     if (ip) {
       const parts = h.split('.').map(Number);
       if (parts[0] === 10) return true;
@@ -243,7 +244,7 @@ export default async function handler(req, res) {
         .map((part) => part.trim())
         .filter(Boolean)
         .map((part) => {
-          const match = part.match(/^([^\s]+)(\s+.*)?$/);
+          const match = part.match(/^([^\s]+)(\s+.*)?\$/);
           if (!match) return part;
           const url = match[1];
           const suffix = match[2] || '';
@@ -313,9 +314,9 @@ export default async function handler(req, res) {
                 if (!trimmed || trimmed.startsWith('#') || blocked.test(trimmed)) return url;
                 if (trimmed.startsWith('//')) return new URL(trimmed, document.baseURI).href;
                 if (trimmed.startsWith('/')) return new URL(trimmed, document.baseURI).href;
-                if (!/^https?:\\/\\//i.test(trimmed)) return new URL(trimmed, document.baseURI).href;
+                if (!/^https?:\/\//i.test(trimmed)) return new URL(trimmed, document.baseURI).href;
                 const next = new URL(trimmed);
-                if (/^(localhost|127\\.0\\.0\\.1|::1|0\\.0\\.0\\.0|\\[::\\]|.*\\.localhost|.*\\.local|.*\\.internal)$/i.test(next.hostname)) return url;
+                if (/^(localhost|127\.0\.0\.1|::1|0\.0\.0\.0|\[::\]|.*\.localhost|.*\.local|.*\.internal)$/i.test(next.hostname)) return url;
                 return next.href;
               } catch {
                 return url;
@@ -354,7 +355,7 @@ export default async function handler(req, res) {
                       const rewritten = value.split(',').map((part) => {
                         const trim = part.trim();
                         if (!trim) return part;
-                        const match = trim.match(/^([^\\s]+)(\\s+.*)?$/);
+                        const match = trim.match(/^([^\s]+)(\s+.*)?$/);
                         if (!match) return part;
                         return `${proxify(match[1])}${match[2] || ''}`;
                       }).join(', ');
@@ -447,6 +448,7 @@ export default async function handler(req, res) {
       <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
         <h2>Proxy Pipeline Exception</h2>
         <p>${(error && error.message) || 'Unknown proxy error'}</p>
+        <p><em>ill fix this after school maybe</em></p>
       </body>
       </html>
     `);
