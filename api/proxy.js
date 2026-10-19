@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('access-control-allow-credentials', 'true');
   res.setHeader('access-control-expose-headers', '*');
-  res.setHeader('cache-control', 'public, max-age=300, s-maxage=600');
   res.setHeader('timing-allow-origin', '*');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -28,6 +27,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
+    // Expanded professional browser header simulation for high site compatibility (e.g., bing, youtube, coolmathgames)
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -38,16 +38,19 @@ export default async function handler(req, res) {
       'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
       'sec-ch-ua-mobile': device === 'mobile' ? '?1' : '?0',
       'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : device === 'tablet' ? '"iPadOS"' : '"Windows"',
+      'sec-ch-ua-platform-version': '"15.0.0"',
       'sec-fetch-dest': 'document',
       'sec-fetch-mode': 'navigate',
-      'sec-fetch-site': 'same-origin',
+      'sec-fetch-site': 'cross-site',
       'sec-fetch-user': '?1',
       'upgrade-insecure-requests': '1',
-      'dnt': '1'
+      'dnt': '1',
+      'cache-control': 'max-age=0'
     };
 
     if (req.headers.cookie) headers.cookie = req.headers.cookie;
     if (req.headers['authorization']) headers.authorization = req.headers['authorization'];
+    if (req.headers['range']) headers.range = req.headers['range'];
 
     const fetchOptions = {
       method: req.method,
@@ -66,7 +69,10 @@ export default async function handler(req, res) {
     const contentType = rawContentType.toLowerCase();
 
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
-    res.setHeader('x-proxied-by', 'miksi-quantum-engine');
+    if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
+    if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
+
+    res.setHeader('x-proxied-by', 'miksi-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
 
@@ -120,7 +126,7 @@ export default async function handler(req, res) {
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
     const isText = contentType.startsWith('text/') || isHTML || isCSS || isJS || contentType.includes('json') || contentType.includes('xml') || contentType.includes('svg');
 
-    if (mode === 'fast' && !isText) {
+    if (!isText) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
         return response.body.pipe(res);
@@ -218,9 +224,7 @@ export default async function handler(req, res) {
 
           try {
             ${customScript}
-          } catch(err) {
-            console.error('Userscript execution error:', err);
-          }
+          } catch(err) {}
         })();
       </script>
     `;
@@ -247,6 +251,6 @@ export default async function handler(req, res) {
     return res.status(200).send(buf);
 
   } catch (error) {
-    return res.status(500).send(`<h3>Proxy Pipeline Exception</h3><p>${error.message}</p>`);
+    return res.status(500).send(`<h3>Proxy Pipeline Exception</h3><p>${error.message}</p><p><em>ill fix this after school maybe</em></p>`);
   }
 }
