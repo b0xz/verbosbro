@@ -3,7 +3,6 @@ export default async function handler(req, res) {
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('access-control-allow-credentials', 'true');
-  res.setHeader('access-control-expose-headers', '*');
   res.setHeader('timing-allow-origin', '*');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // Expanded professional browser header simulation for high site compatibility (e.g., bing, youtube, coolmathgames)
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -38,14 +36,12 @@ export default async function handler(req, res) {
       'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
       'sec-ch-ua-mobile': device === 'mobile' ? '?1' : '?0',
       'sec-ch-ua-platform': device === 'mobile' ? '"iOS"' : device === 'tablet' ? '"iPadOS"' : '"Windows"',
-      'sec-ch-ua-platform-version': '"15.0.0"',
       'sec-fetch-dest': 'document',
       'sec-fetch-mode': 'navigate',
       'sec-fetch-site': 'cross-site',
       'sec-fetch-user': '?1',
       'upgrade-insecure-requests': '1',
-      'dnt': '1',
-      'cache-control': 'max-age=0'
+      'dnt': '1'
     };
 
     if (req.headers.cookie) headers.cookie = req.headers.cookie;
@@ -251,6 +247,15 @@ export default async function handler(req, res) {
     return res.status(200).send(buf);
 
   } catch (error) {
-    return res.status(500).send(`<h3>Proxy Pipeline Exception</h3><p>${error.message}</p><p><em>ill fix this after school maybe</em></p>`);
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
+        <h2>Proxy Pipeline Exception</h2>
+        <p>${error.message}</p>
+        <p><em>ill fix this after school maybe</em></p>
+      </body>
+      </html>
+    `);
   }
 }
