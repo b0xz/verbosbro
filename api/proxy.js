@@ -111,8 +111,25 @@ export default async function handler(req, res) {
     });
 
     const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml+xml');
+    const isCSS = contentType.includes('text/css') || contentType.includes('css');
+    const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
 
-    if (!isHTML) {
+    // Helper for URL rewriting inside CSS/JS assets
+    function proxifyUrl(val) {
+      try {
+        if (!val || typeof val !== 'string') return val;
+        let trimmed = val.trim();
+        if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
+        if (trimmed.includes('/api/proxy?url=')) return val;
+        
+        const absUrl = new URL(trimmed, baseUrl).href;
+        return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}`;
+      } catch (e) {
+        return val;
+      }
+    }
+
+    if (!isHTML && !isCSS && !isJS) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
         return response.body.pipe(res);
@@ -124,6 +141,22 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
+    // Lightweight CSS Asset Rewriting
+    if (isCSS) {
+      body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
+      body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
+      try { res.removeHeader('content-length'); } catch (e) {}
+      return res.status(200).send(body);
+    }
+
+    // Lightweight JS Asset Rewriting
+    if (isJS) {
+      body = body.replace(/(fetch\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
+      try { res.removeHeader('content-length'); } catch (e) {}
+      return res.status(200).send(body);
+    }
+
+    // Full HTML Document Rewriting & Click/Form Interception
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
