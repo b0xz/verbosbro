@@ -114,7 +114,6 @@ export default async function handler(req, res) {
     const isCSS = contentType.includes('text/css') || contentType.includes('css');
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
 
-    // Helper for URL rewriting inside CSS/JS assets
     function proxifyUrl(val) {
       try {
         if (!val || typeof val !== 'string') return val;
@@ -129,6 +128,7 @@ export default async function handler(req, res) {
       }
     }
 
+    // Stream non-text assets directly
     if (!isHTML && !isCSS && !isJS) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
-    // Lightweight CSS Asset Rewriting
+    // Full CSS Asset Rewriting
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
@@ -149,14 +149,14 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Lightweight JS Asset Rewriting
+    // Full JavaScript Asset Rewriting
     if (isJS) {
       body = body.replace(/(fetch\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
-    // Full HTML Document Rewriting & Click/Form Interception
+    // Full HTML Document Rewriting & Advanced Redirect Interception
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -167,27 +167,49 @@ export default async function handler(req, res) {
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
-          document.addEventListener('click', function(e) {
-            const anchor = e.target.closest('a, area');
-            if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
-              e.preventDefault();
+          (function() {
+            const proxyBase = '/api/proxy?mode=${mode}&device=${device}&url=';
+            function proxify(url) {
               try {
-                const absUrl = new URL(anchor.href, document.baseURI).href;
-                window.location.href = '/api/proxy?url=' + encodeURIComponent(absUrl) + '&mode=${mode}&device=${device}';
-              } catch(err) {
-                window.location.href = '/api/proxy?url=' + encodeURIComponent(anchor.href) + '&mode=${mode}&device=${device}';
-              }
+                if (!url || typeof url !== 'string') return url;
+                let trimmed = url.trim();
+                if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
+                if (trimmed.includes('/api/proxy?url=')) return url;
+                const abs = new URL(trimmed, document.baseURI).href;
+                return proxyBase + encodeURIComponent(abs);
+              } catch(e) { return url; }
             }
-          }, true);
 
-          document.addEventListener('submit', function(e) {
-            const form = e.target;
-            if (form && form.action) {
-              try {
-                form.action = '/api/proxy?url=' + encodeURIComponent(new URL(form.action, document.baseURI).href) + '&mode=${mode}&device=${device}';
-              } catch(err) {}
-            }
-          }, true);
+            // Intercept standard anchor clicks & dynamic navigation links
+            document.addEventListener('click', function(e) {
+              const anchor = e.target.closest('a, area');
+              if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
+                e.preventDefault();
+                window.location.href = proxify(anchor.href);
+              }
+            }, true);
+
+            // Intercept form submissions
+            document.addEventListener('submit', function(e) {
+              const form = e.target;
+              if (form && form.action) {
+                form.action = proxify(form.action);
+              }
+            }, true);
+
+            // Intercept programmatic redirects (window.location / location.replace)
+            try {
+              const originalAssign = window.location.assign;
+              window.location.assign = function(url) {
+                return originalAssign.call(window.location, proxify(url));
+              };
+
+              const originalReplace = window.location.replace;
+              window.location.replace = function(url) {
+                return originalReplace.call(window.location, proxify(url));
+              };
+            } catch(err) {}
+          })();
         </script>
       `;
 
