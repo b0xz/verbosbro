@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'miksi-lightweight-core');
+    res.setHeader('x-proxied-by', 'miksi-optimized-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
 
@@ -111,7 +111,7 @@ export default async function handler(req, res) {
     });
 
     const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml+xml');
-    
+
     if (!isHTML) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
@@ -138,15 +138,21 @@ export default async function handler(req, res) {
             const anchor = e.target.closest('a, area');
             if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
               e.preventDefault();
-              const absUrl = new URL(anchor.href, document.baseURI).href;
-              window.location.href = '/api/proxy?url=' + encodeURIComponent(absUrl) + '&mode=${mode}&device=${device}';
+              try {
+                const absUrl = new URL(anchor.href, document.baseURI).href;
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(absUrl) + '&mode=${mode}&device=${device}';
+              } catch(err) {
+                window.location.href = '/api/proxy?url=' + encodeURIComponent(anchor.href) + '&mode=${mode}&device=${device}';
+              }
             }
           }, true);
 
           document.addEventListener('submit', function(e) {
             const form = e.target;
             if (form && form.action) {
-              form.action = '/api/proxy?url=' + encodeURIComponent(new URL(form.action, document.baseURI).href) + '&mode=${mode}&device=${device}';
+              try {
+                form.action = '/api/proxy?url=' + encodeURIComponent(new URL(form.action, document.baseURI).href) + '&mode=${mode}&device=${device}';
+              } catch(err) {}
             }
           }, true);
         </script>
@@ -169,8 +175,8 @@ export default async function handler(req, res) {
       <!DOCTYPE html>
       <html>
       <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
-        <h2>Proxy Connection Error</h2>
-        <p>Failed to retrieve resource: ${error.message}</p>
+        <h2>proxy connection error</h2>
+        <p>failed to retrieve resource: ${error.message}</p>
         <p><em>ill fix this after school maybe</em></p>
       </body>
       </html>
