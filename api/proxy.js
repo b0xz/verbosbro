@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Clean up nested proxy URLs to prevent loop bugs
   if (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
@@ -32,10 +33,10 @@ export default async function handler(req, res) {
     }
   }
 
-  // Stable UA map that doesn't trigger strict mobile domain redirects/blocks
+  // Stable UA map optimized to avoid backend blocks on mobile/tablet views
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    tablet: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
     mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
   };
 
@@ -149,7 +150,7 @@ export default async function handler(req, res) {
     }
 
     if (isJS) {
-      body = body.replace(/(fetch\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
+      body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
@@ -161,6 +162,7 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
+      // Comprehensive client-side interceptor injected into every proxied HTML page
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
@@ -177,6 +179,7 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
+            // Intercept link clicks
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -185,6 +188,7 @@ export default async function handler(req, res) {
               }
             }, true);
 
+            // Intercept form submissions
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
@@ -192,6 +196,7 @@ export default async function handler(req, res) {
               }
             }, true);
 
+            // Intercept programmatic redirects (window.location / location.replace / location.assign)
             try {
               const originalAssign = window.location.assign;
               window.location.assign = function(url) {
@@ -202,6 +207,19 @@ export default async function handler(req, res) {
               window.location.replace = function(url) {
                 return originalReplace.call(window.location, proxify(url));
               };
+
+              // Hook into location property setter if configurable
+              const loc = window.location;
+              if (loc) {
+                let currentHref = loc.href;
+                Object.defineProperty(window, 'location', {
+                  get: function() { return loc; },
+                  set: function(val) {
+                    loc.href = proxify(val);
+                  },
+                  configurable: true
+                });
+              }
             } catch(err) {}
           })();
         </script>
