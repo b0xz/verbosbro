@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Clean up nested proxy URLs to prevent loop bugs
   if (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
@@ -32,9 +33,10 @@ export default async function handler(req, res) {
     }
   }
 
+  // Stable UA map optimized to avoid backend blocks on mobile/tablet views
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    tablet: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
   };
 
@@ -79,7 +81,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'miksi-quantum-core');
+    res.setHeader('x-proxied-by', 'miksi-optimized-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
 
@@ -140,7 +142,6 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
-    // Deep CSS Asset Rewriting
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
@@ -148,7 +149,6 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Deep JavaScript Asset Rewriting
     if (isJS) {
       body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
@@ -162,7 +162,7 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
-      // Enhanced High-Strength Client-Side Interceptor
+      // Comprehensive client-side interceptor injected into every proxied HTML page
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
@@ -178,33 +178,6 @@ export default async function handler(req, res) {
                 return proxyBase + encodeURIComponent(abs);
               } catch(e) { return url; }
             }
-
-            // Intercept Fetch API calls dynamically
-            const origFetch = window.fetch;
-            window.fetch = function(resource, init) {
-              try {
-                if (resource instanceof Request) {
-                  return origFetch(new Request(proxify(resource.url), resource), init);
-                }
-                if (typeof resource === 'string') {
-                  return origFetch(proxify(resource), init);
-                }
-              } catch(e) {}
-              return origFetch.apply(this, arguments);
-            };
-
-            // Intercept XMLHttpRequest dynamically
-            try {
-              const origOpen = XMLHttpRequest.prototype.open;
-              XMLHttpRequest.prototype.open = function(method, url) {
-                try {
-                  if (typeof url === 'string') {
-                    arguments[1] = proxify(url);
-                  }
-                } catch(e) {}
-                return origOpen.apply(this, arguments);
-              };
-            } catch(e) {}
 
             // Intercept link clicks
             document.addEventListener('click', function(e) {
@@ -223,7 +196,7 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept programmatic redirects and location changes
+            // Intercept programmatic redirects (window.location / location.replace / location.assign)
             try {
               const originalAssign = window.location.assign;
               window.location.assign = function(url) {
@@ -235,8 +208,10 @@ export default async function handler(req, res) {
                 return originalReplace.call(window.location, proxify(url));
               };
 
+              // Hook into location property setter if configurable
               const loc = window.location;
               if (loc) {
+                let currentHref = loc.href;
                 Object.defineProperty(window, 'location', {
                   get: function() { return loc; },
                   set: function(val) {
@@ -246,26 +221,6 @@ export default async function handler(req, res) {
                 });
               }
             } catch(err) {}
-
-            // MutationObserver to rewrite dynamically injected elements instantly
-            try {
-              const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                  mutation.addedNodes.forEach(function(node) {
-                    if (node.nodeType === 1) {
-                      ['src', 'href', 'action', 'poster'].forEach(attr => {
-                        if (node.hasAttribute && node.hasAttribute(attr)) {
-                          const val = node.getAttribute(attr);
-                          const proxied = proxify(val);
-                          if (proxied && proxied !== val) node.setAttribute(attr, proxied);
-                        }
-                      });
-                    }
-                  });
-                });
-              });
-              observer.observe(document.documentElement, { childList: true, subtree: true });
-            } catch(e) {}
           })();
         </script>
       `;
