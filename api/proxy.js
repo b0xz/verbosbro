@@ -32,9 +32,10 @@ export default async function handler(req, res) {
     }
   }
 
+  // Stable UA map that doesn't trigger strict mobile domain redirects/blocks
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    tablet: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
   };
 
@@ -128,7 +129,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Stream non-text assets directly
     if (!isHTML && !isCSS && !isJS) {
       if (response.body && typeof response.body.pipe === 'function') {
         try { res.removeHeader('content-length'); } catch (e) {}
@@ -141,7 +141,6 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
-    // Full CSS Asset Rewriting
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
@@ -149,14 +148,12 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Full JavaScript Asset Rewriting
     if (isJS) {
       body = body.replace(/(fetch\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
-    // Full HTML Document Rewriting & Advanced Redirect Interception
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -180,7 +177,6 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Intercept standard anchor clicks & dynamic navigation links
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -189,7 +185,6 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept form submissions
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
@@ -197,7 +192,6 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept programmatic redirects (window.location / location.replace)
             try {
               const originalAssign = window.location.assign;
               window.location.assign = function(url) {
