@@ -1,5 +1,5 @@
 let globalMessages = [
-  { user: 'verbos-bot', text: 'chat dont work yet im still fixing it', pfp: '⭐', color: '#ffffff', time: 'N/A / start of chat' }
+  { user: 'pryra-bot', text: 'Welcome to Pryra Chat!', pfp: '⭐', color: '#3b82f6', time: '12:00 PM' }
 ];
 
 export default async function handler(req, res) {
@@ -16,11 +16,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     let body = req.body;
     if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch (e) {
-        body = {};
-      }
+      try { body = JSON.parse(body); } catch (e) { body = {}; }
     }
 
     const { user, text, pfp, color } = body || {};
@@ -31,7 +27,7 @@ export default async function handler(req, res) {
     const cleanUser = (user && typeof user === 'string' ? user.trim() : 'Anonymous').slice(0, 20);
     const cleanText = text.trim().slice(0, 400);
     const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 500);
-    const cleanColor = color || '#ffffff';
+    const cleanColor = color || '#3b82f6';
 
     if (!cleanText) return res.status(400).json({ error: 'Empty message.' });
 
