@@ -85,89 +85,54 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Global Chat Modal Logic
-const sbChat = document.getElementById('sb-chat');
-const chatModal = document.getElementById('chat-modal');
-const chatClose = document.getElementById('chat-close');
-const chatMessagesContainer = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const chatUsername = document.getElementById('chat-username');
-const chatSend = document.getElementById('chat-send');
-let chatPollInterval = null;
-
-chatUsername.value = localStorage.getItem('miksi_chat_user') || 'User_' + Math.floor(Math.random() * 1000);
-chatUsername.addEventListener('input', () => {
-  localStorage.setItem('miksi_chat_user', chatUsername.value);
+// Sidebar Chat Button link to chat.html
+document.getElementById('sb-chat').addEventListener('click', () => {
+  window.location.href = '/chat.html';
 });
 
-sbChat.addEventListener('click', () => {
-  chatModal.classList.remove('hidden');
-  fetchChatMessages();
-  if (!chatPollInterval) chatPollInterval = setInterval(fetchChatMessages, 3000);
-});
-
-chatClose.addEventListener('click', () => {
-  chatModal.classList.add('hidden');
-  if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
-});
-
-async function fetchChatMessages() {
-  try {
-    const res = await fetch('/api/chat');
-    if (!res.ok) return;
-    const messages = await res.json();
-    chatMessagesContainer.innerHTML = messages.map(m => `
-      <div style="background:var(--hover); padding:6px 10px; border-radius:6px; font-size:0.85rem;">
-        <div style="display:flex; justify-content:space-between; color:var(--subtext); font-size:0.75rem;">
-          <span style="color:var(--text); font-weight:bold;">${escapeHtml(m.user)}</span>
-          <span>${m.time}</span>
-        </div>
-        <div style="margin-top:2px; word-break:break-word;">${escapeHtml(m.text)}</div>
-      </div>
-    `).join('');
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-  } catch (err) {}
-}
-
-async function sendChatMessage() {
-  const text = chatInput.value.trim();
-  const user = chatUsername.value.trim() || 'Anonymous';
-  if (!text) return;
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text })
-    });
-    if (res.ok) {
-      chatInput.value = '';
-      fetchChatMessages();
-    }
-  } catch (err) {}
-}
-
-chatSend.addEventListener('click', sendChatMessage);
-chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
-});
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// Mode & Device toggles
+// Mode, Device & VPN Toggles
 let currentMode = 'fast';
 let currentDevice = 'desktop';
+let currentVpn = 'us-east';
+
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
 const currentModeLabel = document.getElementById('current-mode-label');
+
 const deviceToggleBtn = document.getElementById('device-toggle-btn');
 const deviceMenu = document.getElementById('device-menu');
 const currentDeviceLabel = document.getElementById('current-device-label');
 
-modeToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); deviceMenu.classList.remove('active'); modeMenu.classList.toggle('active'); });
-deviceToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); deviceMenu.classList.toggle('active'); });
-document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); });
+const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
+const vpnMenu = document.getElementById('vpn-menu');
+const currentVpnLabel = document.getElementById('current-vpn-label');
+
+modeToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  deviceMenu.classList.remove('active');
+  vpnMenu.classList.remove('active');
+  modeMenu.classList.toggle('active');
+});
+
+deviceToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modeMenu.classList.remove('active');
+  vpnMenu.classList.remove('active');
+  deviceMenu.classList.toggle('active');
+});
+
+vpnToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  modeMenu.classList.remove('active');
+  deviceMenu.classList.remove('active');
+  vpnMenu.classList.toggle('active');
+});
+
+document.addEventListener('click', () => {
+  modeMenu.classList.remove('active');
+  deviceMenu.classList.remove('active');
+  vpnMenu.classList.remove('active');
+});
 
 document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -182,8 +147,17 @@ document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
     currentDevice = btn.getAttribute('data-device');
-    currentDeviceLabel.textContent = currentDevice.charAt(0).toUpperCase() + currentDevice.slice(1);
+    currentDeviceLabel.textContent = btn.querySelector('span').textContent.split(' ')[0];
     deviceMenu.classList.remove('active');
+  });
+});
+
+document.querySelectorAll('#vpn-menu .mode-row-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentVpn = btn.getAttribute('data-vpn');
+    currentVpnLabel.textContent = btn.querySelector('span').textContent.split(' ')[0];
+    vpnMenu.classList.remove('active');
   });
 });
 
@@ -200,7 +174,7 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   showSpinner();
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}`;
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab) {
