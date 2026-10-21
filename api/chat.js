@@ -1,5 +1,5 @@
 let globalMessages = [
-  { user: 'verbos-bot', text: 'Welcome to Verbo Chat!', pfp: '⭐', color: '#ffffff', time: '12:00 PM' }
+  { user: 'verbos-bot', text: 'chat dont work yet im still fixing it', pfp: '⭐', color: '#ffffff', time: 'N/A / start of chat' }
 ];
 
 export default async function handler(req, res) {
