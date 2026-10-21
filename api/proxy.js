@@ -184,6 +184,7 @@ export default async function handler(req, res) {
         <base href="${baseUrl}/">
         <script>
           (function() {
+            const targetBase = "${baseUrl}";
             const proxyBase = '/api/proxy?mode=${mode}&device=${device}&vpn=${vpn}&url=';
             function proxify(url) {
               try {
@@ -191,9 +192,10 @@ export default async function handler(req, res) {
                 let trimmed = url.trim();
                 if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
                 if (trimmed.includes('/api/proxy?url=')) return url;
-                const abs = new URL(trimmed, document.baseURI).href;
                 
-                // Notify parent dashboard to update link bar
+                // Explicitly resolve against targetBase to prevent relative path breakage
+                const abs = new URL(trimmed, targetBase).href;
+
                 if (window.parent && window.parent !== window) {
                   window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
                 }
@@ -206,14 +208,14 @@ export default async function handler(req, res) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
                 e.preventDefault();
-                window.location.href = proxify(anchor.href);
+                window.location.href = proxify(anchor.getAttribute('href') || anchor.href);
               }
             }, true);
 
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
-                form.action = proxify(form.action);
+                form.action = proxify(form.getAttribute('action') || form.action);
               }
             }, true);
 
