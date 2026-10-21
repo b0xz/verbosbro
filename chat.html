@@ -78,6 +78,26 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Toast Notification Container */
+    .toast-container {
+      position: fixed; bottom: 20px; right: 20px; z-index: 5000;
+      display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .toast {
+      background: var(--panel); border: 1px solid var(--border); color: var(--text);
+      padding: 12px 18px; border-radius: 10px; font-size: 0.85rem; box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+      position: relative; overflow: hidden; min-width: 250px; pointer-events: auto;
+      animation: slideIn 0.2s ease forwards;
+    }
+    .toast.fade-out { animation: slideOut 0.2s ease forwards; }
+    .toast-line {
+      position: absolute; bottom: 0; left: 0; height: 3px; background: #ff5555; width: 100%;
+      animation: shrinkLine 3s linear forwards;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    @keyframes shrinkLine { from { width: 100%; } to { width: 0%; } }
+
     /* Settings Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 3000; display: flex; align-items: center; justify-content: center; }
     .modal-overlay.hidden { display: none; }
@@ -111,11 +131,13 @@
     <div class="pill-input-box">
       <input type="text" id="chat-input" class="pill-input" placeholder="Type a message..." autocomplete="off" />
       <button class="spin-star-btn" id="chat-send" title="Send">
-        <!-- Spinning Star SVG -->
         <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6.2 4.8 2.4 7.2-6.2-4.8-6.2 4.8 2.4-7.2-6.2-4.8h7.6z"/></svg>
       </button>
     </div>
   </div>
+
+  <!-- Toast Container for Notifications -->
+  <div class="toast-container" id="toast-container"></div>
 
   <!-- Settings Modal -->
   <div class="modal-overlay hidden" id="settings-modal">
@@ -144,6 +166,7 @@
     const settingsModal = document.getElementById('settings-modal');
     const openSettings = document.getElementById('open-settings');
     const closeSettings = document.getElementById('close-settings');
+    const toastContainer = document.getElementById('toast-container');
 
     const setUsername = document.getElementById('set-username');
     const setPfp = document.getElementById('set-pfp');
@@ -164,6 +187,20 @@
 
     openSettings.addEventListener('click', () => settingsModal.classList.remove('hidden'));
     closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <div>${escapeHtml(message)}</div>
+        <div class="toast-line"></div>
+      `;
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 200);
+      }, 3000);
+    }
 
     async function fetchMessages() {
       try {
@@ -207,8 +244,12 @@
         if (res.ok) {
           chatInput.value = '';
           fetchMessages();
+        } else {
+          showToast('Failed to send message. Try again.');
         }
-      } catch (err) {}
+      } catch (err) {
+        showToast('Network error while sending message.');
+      }
     }
 
     chatSend.addEventListener('click', sendMessage);
