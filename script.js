@@ -6,7 +6,6 @@ if ('serviceWorker' in navigator) {
 
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let activeScreenIndex = 1;
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -14,14 +13,12 @@ const proxyInput = document.getElementById('proxy-input');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
-const proxyIframe2 = document.getElementById('proxy-iframe-2');
 const loadingSpinner = document.getElementById('loading-spinner');
 
 function showSpinner() { loadingSpinner.classList.remove('hidden'); }
 function hideSpinner() { loadingSpinner.classList.add('hidden'); }
 
 proxyIframe1.addEventListener('load', hideSpinner);
-proxyIframe2.addEventListener('load', hideSpinner);
 
 function renderTabs() {
   tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
@@ -42,15 +39,14 @@ function switchTab(id) {
   const tab = tabs.find(t => t.id === id);
   if (tab) {
     proxyInput.value = tab.url;
-    const activeIframe = activeScreenIndex === 1 ? proxyIframe1 : proxyIframe2;
     if (tab.src === 'about:blank' || !tab.url) {
       proxyViewer.classList.remove('active');
       homeView.classList.remove('hidden');
-      activeIframe.src = 'about:blank';
+      proxyIframe1.src = 'about:blank';
     } else {
       homeView.classList.add('hidden');
       proxyViewer.classList.add('active');
-      activeIframe.src = tab.src;
+      proxyIframe1.src = tab.src;
     }
   }
   renderTabs();
@@ -83,11 +79,6 @@ document.addEventListener('keydown', (e) => {
     isHidden = !isHidden;
     document.body.style.display = isHidden ? 'none' : 'block';
   }
-});
-
-// Sidebar Chat Button link to chat.html
-document.getElementById('sb-chat').addEventListener('click', () => {
-  window.location.href = '/chat.html';
 });
 
 // Mode, Device & VPN Toggles
@@ -187,8 +178,7 @@ window.launchProxy = function(rawInput) {
   homeView.classList.add('hidden');
   proxyViewer.classList.add('active');
 
-  const activeIframe = activeScreenIndex === 1 ? proxyIframe1 : proxyIframe2;
-  activeIframe.src = proxyUrl;
+  proxyIframe1.src = proxyUrl;
   renderTabs();
 };
 
@@ -197,7 +187,98 @@ proxyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); }
 });
 
-// Canvas Background Stars
+/* --- Dark Color Preset Themes --- */
+const DARK_THEMES = {
+  obsidian: { bg: '#000000', panel: '#0a0a0a', border: '#262626', accent: '#3b82f6', hover: '#1a1a1a' },
+  cyber: { bg: '#050b14', panel: '#0c1524', border: '#1e293b', accent: '#06b6d4', hover: '#111e36' },
+  emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
+  amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' }
+};
+
+function applyTheme(themeKey) {
+  const theme = DARK_THEMES[themeKey] || DARK_THEMES.obsidian;
+  const root = document.documentElement;
+  root.style.setProperty('--bg', theme.bg);
+  root.style.setProperty('--panel', theme.panel);
+  root.style.setProperty('--border', theme.border);
+  root.style.setProperty('--accent', theme.accent);
+  root.style.setProperty('--hover', theme.hover);
+
+  document.querySelectorAll('.theme-card').forEach(card => {
+    card.classList.toggle('active', card.getAttribute('data-theme') === themeKey);
+  });
+  localStorage.setItem('verbos_theme', themeKey);
+}
+
+document.querySelectorAll('.theme-card').forEach(card => {
+  card.addEventListener('click', () => applyTheme(card.getAttribute('data-theme')));
+});
+
+const savedTheme = localStorage.getItem('verbos_theme') || 'obsidian';
+applyTheme(savedTheme);
+
+/* --- Modals Handling --- */
+const settingsModal = document.getElementById('settings-modal');
+const bookmarksModal = document.getElementById('bookmarks-modal');
+const profileModal = document.getElementById('profile-modal');
+
+document.getElementById('sb-settings').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+document.getElementById('close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
+document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+document.getElementById('sb-bookmarks').addEventListener('click', () => bookmarksModal.classList.remove('hidden'));
+document.getElementById('close-bookmarks').addEventListener('click', () => bookmarksModal.classList.add('hidden'));
+
+document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
+document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
+
+/* --- Profile & Custom PFP Sign-In Logic --- */
+const profileNameInput = document.getElementById('profile-name');
+const profilePfpInput = document.getElementById('profile-pfp');
+const pfpInitial = document.getElementById('pfp-initial');
+const pfpImg = document.getElementById('pfp-img');
+
+function loadProfile() {
+  const savedName = localStorage.getItem('verbos_user_name') || '';
+  const savedPfp = localStorage.getItem('verbos_user_pfp') || '';
+
+  profileNameInput.value = savedName;
+  profilePfpInput.value = savedPfp;
+
+  if (savedPfp && (savedPfp.startsWith('http://') || savedPfp.startsWith('https://'))) {
+    pfpImg.src = savedPfp;
+    pfpImg.classList.remove('hidden');
+    pfpInitial.classList.add('hidden');
+  } else if (savedName) {
+    pfpInitial.textContent = savedName.charAt(0).toUpperCase();
+    pfpImg.classList.add('hidden');
+    pfpInitial.classList.remove('hidden');
+  } else {
+    pfpInitial.textContent = '?';
+    pfpImg.classList.add('hidden');
+    pfpInitial.classList.remove('hidden');
+  }
+}
+
+document.getElementById('save-profile').addEventListener('click', () => {
+  localStorage.setItem('verbos_user_name', profileNameInput.value.trim());
+  localStorage.setItem('verbos_user_pfp', profilePfpInput.value.trim());
+  loadProfile();
+  profileModal.classList.add('hidden');
+});
+
+loadProfile();
+
+/* --- Notes Scratchpad --- */
+const notesArea = document.getElementById('notes-textarea');
+notesArea.value = localStorage.getItem('verbos_notes') || '';
+document.getElementById('save-notes').addEventListener('click', () => {
+  localStorage.setItem('verbos_notes', notesArea.value);
+  bookmarksModal.classList.add('hidden');
+});
+
+/* --- Star Background Canvas --- */
 const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let stars = [];
