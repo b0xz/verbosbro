@@ -18,12 +18,14 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Clean up nested proxy URLs to prevent loop bugs
-  if (targetUrl.includes('/api/proxy?url=')) {
+  // Prevent nested proxy loops
+  while (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
       targetUrl = decodeURIComponent(parts[parts.length - 1]);
-    } catch (e) {}
+    } catch (e) {
+      break;
+    }
   }
 
   if (!/^https?:\/\//i.test(targetUrl)) {
@@ -34,7 +36,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Stable UA map optimized to avoid backend blocks on mobile/tablet/console views
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -50,7 +51,6 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // VPN IP Node Changer header simulation
     const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
 
     const headers = {
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     const fetchOptions = {
       method: req.method,
       headers,
-      redirect: 'follow',
+      redirect: 'manual', // Manually handle redirects to prevent loop/filter drop issues
       compress: true
     };
 
@@ -83,6 +83,17 @@ export default async function handler(req, res) {
     }
 
     const response = await fetch(targetUrl, fetchOptions);
+
+    // Handle server-side redirects cleanly
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const locationHeader = response.headers.get('location');
+      if (locationHeader) {
+        const absoluteRedirectUrl = new URL(locationHeader, baseUrl).href;
+        const proxiedRedirect = `/api/proxy?url=${encodeURIComponent(absoluteRedirectUrl)}&mode=${mode}&device=${device}&vpn=${vpn}`;
+        return res.redirect(302, proxiedRedirect);
+      }
+    }
+
     const rawContentType = response.headers.get('content-type') || 'application/octet-stream';
     const contentType = rawContentType.toLowerCase();
 
@@ -90,7 +101,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-og-core');
+    res.setHeader('x-proxied-by', 'verbo-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -172,7 +183,6 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
-      // OG Reliable Click & Redirect Interceptor
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
