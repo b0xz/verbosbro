@@ -10,6 +10,7 @@ export default async function handler(req, res) {
   let targetUrl = req.query.url || (req.body && req.body.url);
   const mode = req.query.mode || 'fast';
   const device = req.query.device || 'desktop';
+  const vpn = req.query.vpn || 'us-east';
 
   if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
 
@@ -17,11 +18,14 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  if (targetUrl.includes('/api/proxy?url=')) {
+  // Prevent nested proxy loops
+  while (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
       targetUrl = decodeURIComponent(parts[parts.length - 1]);
-    } catch (e) {}
+    } catch (e) {
+      break;
+    }
   }
 
   if (!/^https?:\/\//i.test(targetUrl)) {
@@ -34,8 +38,11 @@ export default async function handler(req, res) {
 
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    tablet: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    xbox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edge/110.0.1587.57',
+    playstation: 'Mozilla/5.0 (PlayStation 5 3.20) AppleWebKit/605.1.15 (KHTML, like Gecko)',
+    smarttv: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.100 TV Safari/537.36'
   };
 
   const selectedUA = UA_MAP[device] || UA_MAP.desktop;
@@ -44,6 +51,9 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
+    // Custom VPN / IP Rotation simulation headers
+    const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
+
     const headers = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -51,6 +61,8 @@ export default async function handler(req, res) {
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
+      'x-forwarded-for': vpnXForwarded,
+      'x-real-ip': vpnXForwarded,
       'upgrade-insecure-requests': '1',
       'dnt': '1'
     };
@@ -79,9 +91,10 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'miksi-optimized-core');
+    res.setHeader('x-proxied-by', 'verbo-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
+    res.setHeader('x-vpn-node', vpn);
 
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
@@ -122,7 +135,7 @@ export default async function handler(req, res) {
         if (trimmed.includes('/api/proxy?url=')) return val;
         
         const absUrl = new URL(trimmed, baseUrl).href;
-        return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}`;
+        return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}&vpn=${vpn}`;
       } catch (e) {
         return val;
       }
@@ -140,6 +153,7 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
+    // Strong CSS Rewriting
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
@@ -147,12 +161,14 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
+    // Strong JS Rewriting
     if (isJS) {
       body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
+    // Ultimate HTML Rewriting & Redirect Fixing Interceptor
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -164,7 +180,7 @@ export default async function handler(req, res) {
         <base href="${baseUrl}/">
         <script>
           (function() {
-            const proxyBase = '/api/proxy?mode=${mode}&device=${device}&url=';
+            const proxyBase = '/api/proxy?mode=${mode}&device=${device}&vpn=${vpn}&url=';
             function proxify(url) {
               try {
                 if (!url || typeof url !== 'string') return url;
@@ -176,6 +192,7 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
+            // Intercept Clicks & Form Actions
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -191,6 +208,7 @@ export default async function handler(req, res) {
               }
             }, true);
 
+            // Intercept Programmatic Redirects & Location Changes
             try {
               const originalAssign = window.location.assign;
               window.location.assign = function(url) {
@@ -213,6 +231,26 @@ export default async function handler(req, res) {
                 });
               }
             } catch(err) {}
+
+            // MutationObserver to catch dynamically injected links and media
+            try {
+              const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                  mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                      ['src', 'href', 'action'].forEach(attr => {
+                        if (node.hasAttribute && node.hasAttribute(attr)) {
+                          const val = node.getAttribute(attr);
+                          const proxied = proxify(val);
+                          if (proxied && proxied !== val) node.setAttribute(attr, proxied);
+                        }
+                      });
+                    }
+                  });
+                });
+              });
+              observer.observe(document.documentElement, { childList: true, subtree: true });
+            } catch(e) {}
           })();
         </script>
       `;
