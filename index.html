@@ -14,7 +14,7 @@
       --border: #262626;
       --text: #ffffff;
       --subtext: #888888;
-      --accent: #ffffff;
+      --accent: #3b82f6;
       --hover: #1a1a1a;
       --font: Arial, Helvetica, sans-serif;
     }
@@ -70,7 +70,7 @@
     .home-view.hidden { display: none; }
 
     .star-text {
-      color: #ffffff;
+      color: var(--text);
       font-size: 2rem;
       font-weight: bold;
       letter-spacing: 2.5px;
@@ -100,6 +100,7 @@
       flex-direction: column;
       align-items: center;
       padding-top: calc(18px * var(--gui-scale));
+      padding-bottom: calc(18px * var(--gui-scale));
       gap: calc(14px * var(--gui-scale));
       z-index: 1200;
     }
@@ -116,12 +117,33 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
+      position: relative;
     }
 
     .sidebar-btn:hover, .sidebar-btn.active {
       background: var(--hover);
       border-color: var(--border);
       color: var(--accent);
+    }
+
+    .profile-avatar-btn {
+      margin-top: auto;
+      width: calc(40px * var(--gui-scale));
+      height: calc(40px * var(--gui-scale));
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .profile-avatar-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .svg-icon {
@@ -184,7 +206,7 @@
       font-size: 1rem;
     }
 
-    .tab-close:hover { color: #ffffff; }
+    .tab-close:hover { color: var(--text); }
 
     .add-tab-btn {
       background: transparent;
@@ -227,47 +249,6 @@
       gap: 6px;
       align-items: center;
     }
-
-    .split-switcher-bar {
-      display: none;
-      gap: 8px;
-      background: var(--panel);
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      align-items: center;
-    }
-
-    .split-switcher-bar.active { display: flex; }
-
-    .split-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--subtext);
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .split-btn.active {
-      background: var(--hover);
-      color: var(--text);
-      border-color: var(--accent);
-    }
-
-    .split-close-btn {
-      background: transparent;
-      border: none;
-      color: var(--subtext);
-      font-size: 0.85rem;
-      cursor: pointer;
-      margin-left: 6px;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-    .split-close-btn:hover { background: #ff5555; color: #fff; }
 
     .bottom-nav-pill {
       background: var(--panel);
@@ -408,7 +389,6 @@
       justify-content: center;
     }
 
-    .screen-panel.hidden { display: none; }
     .device-viewport { width: 100%; height: 100%; background: #ffffff; }
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
 
@@ -440,6 +420,46 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Modal System */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
+      z-index: 3000; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      width: 90%; max-width: 440px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: bold;
+    }
+    .setting-group { display: flex; flex-direction: column; gap: 8px; }
+    .setting-group label { font-size: 0.82rem; color: var(--subtext); }
+    .setting-input {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; color: var(--text); outline: none; width: 100%;
+    }
+    .setting-input:focus { border-color: var(--accent); }
+
+    /* Dark Theme Preset Cards */
+    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .theme-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      transition: all 0.2s ease;
+    }
+    .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
+    .theme-color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); }
+
+    .action-btn {
+      background: var(--text); border: none; border-radius: 8px; padding: 12px;
+      font-weight: bold; color: var(--bg); cursor: pointer; transition: opacity 0.2s ease;
+    }
+    .action-btn:hover { opacity: 0.9; }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -463,12 +483,16 @@
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
-    <button class="sidebar-btn" id="sb-chat" title="Verbo Chat">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    <button class="sidebar-btn" id="sb-bookmarks" title="Bookmarks & Notes">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
     </button>
-    <button class="sidebar-btn" id="sb-settings" title="Settings">
+    <button class="sidebar-btn" id="sb-settings" title="Theme & Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
+    <div class="profile-avatar-btn" id="sb-profile" title="Sign In / Profile">
+      <span id="pfp-initial" style="font-weight:bold; font-size:0.9rem;">?</span>
+      <img id="pfp-img" src="" class="hidden" alt="Profile" />
+    </div>
   </div>
 
   <!-- Top Tab Bar -->
@@ -480,34 +504,25 @@
 
   <!-- Bottom Search Pill & Menus -->
   <div class="bottom-nav-wrapper">
-    <div class="split-switcher-bar" id="split-switcher-bar">
-      <button class="split-btn active" id="btn-screen1">screen 1</button>
-      <button class="split-btn" id="btn-screen2">screen 2</button>
-      <button class="split-close-btn" id="btn-close-split">×</button>
-    </div>
-
-    <!-- Mode Menu -->
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span></button>
       <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span></button>
     </div>
 
-    <!-- Expanded Device / Console Menu -->
     <div class="device-menu-table" id="device-menu">
       <button class="mode-row-btn" data-device="desktop"><span>Desktop (Chrome)</span></button>
       <button class="mode-row-btn" data-device="tablet"><span>Tablet (iPad)</span></button>
       <button class="mode-row-btn" data-device="mobile"><span>Mobile (iPhone)</span></button>
       <button class="mode-row-btn" data-device="xbox"><span>Xbox Console Browser</span></button>
       <button class="mode-row-btn" data-device="playstation"><span>PlayStation Browser</span></button>
-      <button class="mode-row-btn" data-device="smarttv"><span>Smart TV / Living Room</span></button>
+      <button class="mode-row-btn" data-device="smarttv"><span>Smart TV</span></button>
     </div>
 
-    <!-- Custom VPN Node Menu -->
     <div class="device-menu-table" id="vpn-menu" style="right: 120px;">
       <button class="mode-row-btn" data-vpn="direct"><span>Direct Proxy (Standard)</span></button>
-      <button class="mode-row-btn" data-vpn="us-east"><span>US-East (Virginia Node)</span></button>
-      <button class="mode-row-btn" data-vpn="eu-west"><span>EU-West (Frankfurt Node)</span></button>
-      <button class="mode-row-btn" data-vpn="asia-sec"><span>Asia-Secure (Tokyo Node)</span></button>
+      <button class="mode-row-btn" data-vpn="us-east"><span>US-East (Virginia)</span></button>
+      <button class="mode-row-btn" data-vpn="eu-west"><span>EU-West (Frankfurt)</span></button>
+      <button class="mode-row-btn" data-vpn="asia-sec"><span>Asia-Secure (Tokyo)</span></button>
     </div>
 
     <div class="bottom-nav-pill">
@@ -524,13 +539,84 @@
     </div>
   </div>
 
+  <!-- Bookmarks & Notes Modal -->
+  <div class="modal-overlay hidden" id="bookmarks-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>Bookmarks & Quick Notes</span>
+        <button class="nav-btn" id="close-bookmarks">×</button>
+      </div>
+      <div class="setting-group">
+        <label>Saved Quick Links</label>
+        <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:6px; max-height:120px; overflow-y:auto;"></div>
+      </div>
+      <div class="setting-group">
+        <label>Local Scratchpad</label>
+        <textarea id="notes-textarea" class="setting-input" rows="5" placeholder="Type quick notes here..."></textarea>
+      </div>
+      <button class="action-btn" id="save-notes">Save Notes</button>
+    </div>
+  </div>
+
+  <!-- Settings & Dark Color Presets Modal -->
+  <div class="modal-overlay hidden" id="settings-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>Sleek Dark Color Themes</span>
+        <button class="nav-btn" id="close-settings">×</button>
+      </div>
+      <div class="setting-group">
+        <label>Select a Dark Palette (Non-flashy)</label>
+        <div class="theme-grid">
+          <div class="theme-card active" data-theme="obsidian">
+            <div class="theme-color-preview" style="background:#3b82f6;"></div>
+            <span style="font-size:0.8rem;">Obsidian</span>
+          </div>
+          <div class="theme-card" data-theme="cyber">
+            <div class="theme-color-preview" style="background:#06b6d4;"></div>
+            <span style="font-size:0.8rem;">Cyber</span>
+          </div>
+          <div class="theme-card" data-theme="emerald">
+            <div class="theme-color-preview" style="background:#10b981;"></div>
+            <span style="font-size:0.8rem;">Emerald</span>
+          </div>
+          <div class="theme-card" data-theme="amethyst">
+            <div class="theme-color-preview" style="background:#8b5cf6;"></div>
+            <span style="font-size:0.8rem;">Amethyst</span>
+          </div>
+          <div class="theme-card" data-theme="crimson">
+            <div class="theme-color-preview" style="background:#ef4444;"></div>
+            <span style="font-size:0.8rem;">Crimson</span>
+          </div>
+        </div>
+      </div>
+      <button class="action-btn" id="close-settings-btn">Apply & Close</button>
+    </div>
+  </div>
+
+  <!-- Sign In / Custom Profile Modal -->
+  <div class="modal-overlay hidden" id="profile-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>Account & Profile</span>
+        <button class="nav-btn" id="close-profile">×</button>
+      </div>
+      <div class="setting-group">
+        <label>Display Name</label>
+        <input type="text" id="profile-name" class="setting-input" placeholder="e.g. VerbosUser" />
+      </div>
+      <div class="setting-group">
+        <label>Avatar Image URL (Custom PFP)</label>
+        <input type="text" id="profile-pfp" class="setting-input" placeholder="https://example.com/avatar.png" />
+      </div>
+      <button class="action-btn" id="save-profile">Sign In / Save Profile</button>
+    </div>
+  </div>
+
   <!-- Proxy Viewports -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div class="screen-panel" id="screen-panel-1">
       <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame"></iframe></div>
-    </div>
-    <div class="screen-panel hidden" id="screen-panel-2">
-      <div class="device-viewport"><iframe id="proxy-iframe-2" class="proxy-frame"></iframe></div>
     </div>
   </div>
 
