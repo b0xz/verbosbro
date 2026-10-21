@@ -18,14 +18,12 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Prevent nested proxy loops
-  while (targetUrl.includes('/api/proxy?url=')) {
+  // Clean up nested proxy URLs to prevent loop bugs
+  if (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
       targetUrl = decodeURIComponent(parts[parts.length - 1]);
-    } catch (e) {
-      break;
-    }
+    } catch (e) {}
   }
 
   if (!/^https?:\/\//i.test(targetUrl)) {
@@ -36,6 +34,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // Stable UA map optimized to avoid backend blocks on mobile/tablet/console views
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -51,7 +50,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // Custom VPN / IP Rotation simulation headers
+    // VPN IP Node Changer header simulation
     const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
 
     const headers = {
@@ -91,7 +90,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core');
+    res.setHeader('x-proxied-by', 'verbo-og-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -153,7 +152,6 @@ export default async function handler(req, res) {
 
     let body = await response.text();
 
-    // Strong CSS Rewriting
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
       body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
@@ -161,14 +159,12 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // Strong JS Rewriting
     if (isJS) {
       body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
-    // Ultimate HTML Rewriting & Redirect Fixing Interceptor
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -176,6 +172,7 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
+      // OG Reliable Click & Redirect Interceptor
       const injectionScript = `
         <base href="${baseUrl}/">
         <script>
@@ -192,7 +189,6 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Intercept Clicks & Form Actions
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -208,7 +204,6 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept Programmatic Redirects & Location Changes
             try {
               const originalAssign = window.location.assign;
               window.location.assign = function(url) {
@@ -231,26 +226,6 @@ export default async function handler(req, res) {
                 });
               }
             } catch(err) {}
-
-            // MutationObserver to catch dynamically injected links and media
-            try {
-              const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                  mutation.addedNodes.forEach(function(node) {
-                    if (node.nodeType === 1) {
-                      ['src', 'href', 'action'].forEach(attr => {
-                        if (node.hasAttribute && node.hasAttribute(attr)) {
-                          const val = node.getAttribute(attr);
-                          const proxied = proxify(val);
-                          if (proxied && proxied !== val) node.setAttribute(attr, proxied);
-                        }
-                      });
-                    }
-                  });
-                });
-              });
-              observer.observe(document.documentElement, { childList: true, subtree: true });
-            } catch(e) {}
           })();
         </script>
       `;
