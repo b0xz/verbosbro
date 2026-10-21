@@ -81,6 +81,22 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Listen for top-level navigation / redirect messages from the proxy iframe
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'verbos-navigate') {
+    const targetUrl = event.data.url;
+    if (targetUrl && !targetUrl.includes('/api/proxy?url=')) {
+      proxyInput.value = targetUrl;
+      const currentTab = tabs.find(t => t.id === activeTabId);
+      if (currentTab) {
+        currentTab.url = targetUrl;
+        try { currentTab.title = new URL(targetUrl).hostname; } catch(e) {}
+        renderTabs();
+      }
+    }
+  }
+});
+
 // Mode, Device & VPN Toggles
 let currentMode = 'fast';
 let currentDevice = 'desktop';
