@@ -35,7 +35,6 @@
       color: var(--text);
     }
 
-    /* Unified Blend Container for True Inversion of Text and Stars */
     .star-blend-container {
       position: fixed;
       top: 0;
@@ -80,7 +79,6 @@
       text-align: center;
     }
 
-    /* Smaller Central Star with Difference Blend Mode for Inversion */
     canvas#star-canvas {
       position: absolute;
       width: 380px;
@@ -202,39 +200,6 @@
     }
 
     .add-tab-btn:hover { background: var(--hover); }
-
-    /* Drag Ghost & Snap Zones */
-    .drag-tab-ghost {
-      position: fixed;
-      pointer-events: none;
-      z-index: 4000;
-      background: var(--panel);
-      border: 1px solid var(--accent);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      color: var(--text);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
-      transform: translate(-50%, -50%);
-      display: none;
-    }
-
-    .snap-overlay {
-      position: fixed;
-      top: calc(46px * var(--gui-scale));
-      bottom: 0;
-      width: 50vw;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px dashed var(--accent);
-      z-index: 2000;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    .snap-overlay.left { left: calc(64px * var(--gui-scale)); width: calc(50vw - 32px * var(--gui-scale)); }
-    .snap-overlay.right { right: 0; }
-    .snap-overlay.active { opacity: 1; }
 
     .footer-credit {
       position: fixed;
@@ -412,7 +377,7 @@
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Proxy Viewports */
+    /* Proxy Viewports & Loading Spinner */
     .proxy-viewer {
       position: fixed;
       top: calc(46px * var(--gui-scale));
@@ -439,64 +404,41 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: flex 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .screen-panel.hidden { display: none; }
+    .device-viewport { width: 100%; height: 100%; background: #ffffff; }
+    .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
 
-    .device-viewport {
-      width: 100%;
-      height: 100%;
-      background: #ffffff;
-      border: none;
-    }
-
-    .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; border-radius: inherit; }
-
-    /* Settings Modal */
-    .draggable-modal {
-      position: fixed;
-      top: 15%;
-      left: 30%;
-      width: calc(480px * var(--gui-scale));
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: calc(16px * var(--gui-scale));
-      z-index: 2500;
-      display: none;
-      flex-direction: column;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
-      user-select: none;
-      touch-action: none;
-    }
-
-    .draggable-modal.active { display: flex; }
-
-    .modal-header-drag {
-      padding: calc(14px * var(--gui-scale));
-      background: var(--hover);
-      border-bottom: 1px solid var(--border);
-      border-radius: 16px 16px 0 0;
+    .loading-overlay {
+      position: absolute;
+      top: calc(46px * var(--gui-scale));
+      left: calc(64px * var(--gui-scale));
+      right: 0;
+      bottom: calc(85px * var(--gui-scale));
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(2px);
+      z-index: 1500;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      cursor: grab;
-      font-weight: bold;
+      justify-content: center;
+    }
+    .loading-overlay.hidden { display: none; }
+
+    .spinner-ring {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
 
-    .modal-body { padding: calc(20px * var(--gui-scale)); display: flex; flex-direction: column; gap: calc(16px * var(--gui-scale)); }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-    .settings-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .tab-btn { background: var(--bg); border: 1px solid var(--border); color: var(--subtext); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
-    .tab-btn.active { background: var(--hover); color: var(--text); border-color: var(--accent); }
-    .settings-pane { display: none; flex-direction: column; gap: 12px; }
-    .settings-pane.active { display: flex; }
-
-    .setting-row { display: flex; flex-direction: column; gap: 6px; }
-    .setting-row label { font-size: calc(0.9rem * var(--gui-scale)); color: var(--subtext); }
-    .setting-select, .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
-    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
-
+    /* Modal Styling */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(3px);
@@ -504,13 +446,13 @@
     }
     .modal-overlay.hidden { display: none; }
     .modal-box { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 450px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-
+    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- Unified Blend Container for True Inversion of Text and Stars -->
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
@@ -519,20 +461,21 @@
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
-  <div class="drag-tab-ghost" id="tab-ghost">New Tab</div>
-  <div class="snap-overlay left" id="snap-left"></div>
-  <div class="snap-overlay right" id="snap-right"></div>
+  <!-- Loading Spinner Overlay -->
+  <div class="loading-overlay hidden" id="loading-spinner">
+    <div class="spinner-ring"></div>
+  </div>
 
   <!-- Sidebar Taskbar -->
   <div class="sidebar">
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
+    <button class="sidebar-btn" id="sb-chat" title="Global Chat">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </button>
     <button class="sidebar-btn" id="sb-games" title="Ruffle Games">
       <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4"></path></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-userscripts" title="Userscripts">
-      <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
     </button>
     <button class="sidebar-btn" id="sb-settings" title="Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -544,20 +487,19 @@
     <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
   </div>
 
-  <!-- Rotating Footer Credit -->
   <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
 
-  <!-- Bottom Search Pill & Dual Screen Switcher -->
+  <!-- Bottom Search Pill -->
   <div class="bottom-nav-wrapper">
     <div class="split-switcher-bar" id="split-switcher-bar">
       <button class="split-btn active" id="btn-screen1">screen 1</button>
       <button class="split-btn" id="btn-screen2">screen 2</button>
-      <button class="split-close-btn" id="btn-close-split" title="Close Split Screen">×</button>
+      <button class="split-close-btn" id="btn-close-split">×</button>
     </div>
 
     <div class="mode-menu-table" id="mode-menu">
-      <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span><small>Optimized Engine</small></button>
-      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span><small>SPA Interceptor</small></button>
+      <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span></button>
+      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span></button>
     </div>
 
     <div class="device-menu-table" id="device-menu">
@@ -567,103 +509,44 @@
     </div>
 
     <div class="bottom-nav-pill">
-      <button class="nav-btn" id="btn-back" title="Go Back"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
-      <button class="nav-btn" id="btn-forward" title="Go Forward"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
-      <button class="nav-btn" id="btn-reload" title="Refresh"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path></svg></button>
+      <button class="nav-btn" id="btn-back"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <button class="nav-btn" id="btn-forward"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+      <button class="nav-btn" id="btn-reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path></svg></button>
 
       <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">Fast</span> ▾</button>
       <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">Desktop</span> ▾</button>
 
       <input type="text" id="proxy-input" class="pill-input" placeholder="Enter URL..." autocomplete="off" autofocus />
-
-      <button class="go-btn" id="proxy-go" title="Go"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
+      <button class="go-btn" id="proxy-go"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
     </div>
   </div>
 
-  <!-- Games Modal -->
-  <div class="modal-overlay hidden" id="games-modal">
-    <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:bold;">Ruffle Flash Games (WIP)</span>
-        <button class="nav-btn" id="games-close">×</button>
+  <!-- Global Chat Modal -->
+  <div class="modal-overlay hidden" id="chat-modal">
+    <div class="modal-box" style="height: 500px; display: flex; flex-direction: column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
+        <span style="font-weight:bold; font-size:1.1rem;">Global Chat (No Login)</span>
+        <button class="nav-btn" id="chat-close">×</button>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px;">
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://ruffle.rs/demo/')">Ruffle Sandbox</div>
-        <div style="background:var(--bg); border:1px solid var(--border); padding:14px; border-radius:8px; text-align:center; cursor:pointer;" onclick="launchProxy('https://www.coolmathgames.com')">Coolmath Games</div>
+      <div style="margin-top: 10px;">
+        <label style="font-size:0.85rem; color:var(--subtext);">Your Display Name:</label>
+        <input type="text" id="chat-username" class="setting-input" placeholder="Enter username..." maxlength="20" style="margin-top:4px;" />
       </div>
-    </div>
-  </div>
-
-  <!-- Userscripts Modal -->
-  <div class="modal-overlay hidden" id="userscripts-modal">
-    <div class="modal-box" style="max-width:500px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:bold; font-size:1.1rem;">Userscripts Injector</span>
-        <button class="nav-btn" id="userscripts-close">×</button>
+      <div id="chat-messages" style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin: 10px 0;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="chat-input" class="setting-input" placeholder="Type a message..." style="flex:1;" />
+        <button class="save-btn" id="chat-send" style="padding: 10px 16px;">Send</button>
       </div>
-      <div style="font-size:0.85rem; color:var(--subtext);">Inject custom JavaScript into visited proxy pages automatically.</div>
-      <textarea id="userscript-input" class="setting-input" rows="8" placeholder="// Write JS code here... e.g. console.log('Injected!');" style="resize:vertical; font-family:monospace;"></textarea>
-      <button class="save-btn" id="save-userscript">Save Userscript</button>
-    </div>
-  </div>
-
-  <!-- Tabbed Settings Modal -->
-  <div class="draggable-modal" id="settings-modal">
-    <div class="modal-header-drag" id="modal-drag-handle">
-      <span>Settings</span>
-      <button class="nav-btn" id="modal-close">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="settings-tabs">
-        <button class="tab-btn active" data-pane="pane-gui">GUI</button>
-        <button class="tab-btn" data-pane="pane-appearance">Appearance</button>
-        <button class="tab-btn" data-pane="pane-proxy">Proxy</button>
-      </div>
-
-      <div class="settings-pane active" id="pane-gui">
-        <div class="setting-row">
-          <label for="gui-scale-slider">GUI Scale: <span id="gui-scale-val">1.15x</span></label>
-          <input type="range" id="gui-scale-slider" min="0.9" max="1.6" step="0.05" value="1.15">
-        </div>
-      </div>
-
-      <div class="settings-pane" id="pane-appearance">
-        <div class="setting-row">
-          <label>Auto Dark Mode</label>
-          <select id="setting-autodark" class="setting-select">
-            <option value="enabled">Enabled</option>
-            <option value="disabled">Disabled</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="settings-pane" id="pane-proxy">
-        <div class="setting-row">
-          <label for="preset-select">Educational Tab Disguise</label>
-          <select id="preset-select" class="setting-select">
-            <option value="canvas">Canvas LMS</option>
-            <option value="none">default</option>
-            <option value="classroom">Google Classroom</option>
-            <option value="drive">Google Drive</option>
-          </select>
-        </div>
-      </div>
-
-      <button class="save-btn" id="save-settings">Save Configurations</button>
     </div>
   </div>
 
   <!-- Proxy Viewports -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div class="screen-panel" id="screen-panel-1">
-      <div id="device-wrapper-1" class="device-viewport">
-        <iframe id="proxy-iframe-1" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
-      </div>
+      <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame"></iframe></div>
     </div>
     <div class="screen-panel hidden" id="screen-panel-2">
-      <div id="device-wrapper-2" class="device-viewport">
-        <iframe id="proxy-iframe-2" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
-      </div>
+      <div class="device-viewport"><iframe id="proxy-iframe-2" class="proxy-frame"></iframe></div>
     </div>
   </div>
 
