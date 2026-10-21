@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core');
+    res.setHeader('x-proxied-by', 'pryra-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -195,43 +195,12 @@ export default async function handler(req, res) {
                 if (trimmed.includes('/api/proxy?url=')) return url;
                 const abs = new URL(trimmed, targetBase).href;
 
-                // Sync URL with parent dashboard
                 if (window.parent && window.parent !== window) {
-                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
+                  window.parent.postMessage({ type: 'pryra-navigate', url: abs }, '*');
                 }
 
                 return proxyBase + encodeURIComponent(abs);
               } catch (e) { return url; }
-            }
-
-            function rewriteNavigationTargets() {
-              const nodes = document.querySelectorAll('a[href], area[href], form[action], button[formaction], input[formaction], [data-href], [data-url]');
-              nodes.forEach((node) => {
-                try {
-                  const tag = (node.tagName || '').toLowerCase();
-                  if (tag === 'form') {
-                    const action = node.getAttribute('action') || node.action;
-                    const proxied = proxify(action);
-                    if (proxied && proxied !== action) node.setAttribute('action', proxied);
-                    return;
-                  }
-
-                  if (tag === 'button' || tag === 'input') {
-                    const action = node.getAttribute('formaction');
-                    const proxied = proxify(action);
-                    if (proxied && proxied !== action) node.setAttribute('formaction', proxied);
-                    return;
-                  }
-
-                  const candidate = node.getAttribute('href') || node.getAttribute('data-href') || node.getAttribute('data-url');
-                  const proxied = proxify(candidate);
-                  if (proxied && proxied !== candidate) {
-                    if (node.hasAttribute('href')) node.setAttribute('href', proxied);
-                    else if (node.hasAttribute('data-href')) node.setAttribute('data-href', proxied);
-                    else if (node.hasAttribute('data-url')) node.setAttribute('data-url', proxied);
-                  }
-                } catch (e) {}
-              });
             }
 
             document.addEventListener('click', function(e) {
@@ -268,50 +237,6 @@ export default async function handler(req, res) {
               e.preventDefault();
               window.location.assign(proxied);
             }, true);
-
-            const originalAssign = window.location.assign.bind(window.location);
-            const originalReplace = window.location.replace.bind(window.location);
-
-            window.location.assign = function(url) {
-              const proxied = proxify(url);
-              return originalAssign(proxied || url);
-            };
-
-            window.location.replace = function(url) {
-              const proxied = proxify(url);
-              return originalReplace(proxied || url);
-            };
-
-            const originalPushState = history.pushState;
-            const originalReplaceState = history.replaceState;
-
-            history.pushState = function(state, title, url) {
-              if (url) {
-                const proxied = proxify(url);
-                return originalPushState.call(this, state, title, proxied || url);
-              }
-              return originalPushState.call(this, state, title, url);
-            };
-
-            history.replaceState = function(state, title, url) {
-              if (url) {
-                const proxied = proxify(url);
-                return originalReplaceState.call(this, state, title, proxied || url);
-              }
-              return originalReplaceState.call(this, state, title, url);
-            };
-
-            rewriteNavigationTargets();
-
-            const observer = new MutationObserver(function() {
-              rewriteNavigationTargets();
-            });
-            observer.observe(document.documentElement, {
-              childList: true,
-              subtree: true,
-              attributes: true,
-              attributeFilter: ['href', 'action', 'formaction', 'data-href', 'data-url']
-            });
           })();
         </script>
       `;
@@ -335,7 +260,6 @@ export default async function handler(req, res) {
       <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
         <h2>proxy connection error</h2>
         <p>failed to retrieve resource: ${error.message}</p>
-        <p><em>ill fix this after school maybe</em></p>
       </body>
       </html>
     `);
