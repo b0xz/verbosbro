@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verbo Chat</title>
+  <style>
+    :root {
+      --bg: #0b0b0e;
+      --sidebar: #121216;
+      --panel: #18181c;
+      --border: #26262d;
+      --text: #ffffff;
+      --subtext: #94949f;
+      --accent: #5865f2;
+      --hover: #202025;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; display: flex; }
+
+    /* Sidebar controls */
+    .chat-sidebar {
+      width: 280px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 16px;
+    }
+    .chat-sidebar h2 { font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+    .control-group label { font-size: 0.8rem; color: var(--subtext); }
+    .input-field, .select-field { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
+    .input-field:focus, .select-field:focus { border-color: var(--accent); }
+
+    /* Main chat area */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: var(--panel);
+    }
+    .chat-header {
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      justify-content: space-between;
+    }
+    .back-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.85rem; }
+    .back-btn:hover { background: var(--hover); }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .msg-card {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+    }
+    .msg-card:hover { border-color: var(--border); background: var(--hover); }
+    .msg-pfp { width: 40px; height: 40px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .msg-info { display: flex; gap: 10px; align-items: baseline; }
+    .msg-user { font-weight: bold; font-size: 0.95rem; }
+    .msg-time { font-size: 0.75rem; color: var(--subtext); }
+    .msg-text { word-break: break-word; font-size: 0.95rem; line-height: 1.4; }
+
+    .chat-input-bar {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      background: var(--sidebar);
+    }
+    .send-btn { background: var(--accent); border: none; color: white; padding: 0 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .send-btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <div class="chat-sidebar">
+    <h2>Verbo Chat <span style="font-size:0.7rem; color:var(--accent);">ONLINE</span></h2>
+    
+    <div class="control-group">
+      <label>Display Name</label>
+      <input type="text" id="username" class="input-field" maxlength="20" placeholder="Username..." />
+    </div>
+
+    <div class="control-group">
+      <label>Avatar Emoji / Icon</label>
+      <select id="user-pfp" class="select-field">
+        <option value="⭐">⭐ Star</option>
+        <option value="🚀">🚀 Rocket</option>
+        <option value="👻">👻 Ghost</option>
+        <option value="🤖">🤖 Robot</option>
+        <option value="🐱">🐱 Cat</option>
+        <option value="🔥">🔥 Fire</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Username Color</label>
+      <input type="color" id="user-color" class="input-field" value="#ffffff" style="height: 40px; padding: 2px; cursor: pointer;" />
+    </div>
+
+    <div class="control-group">
+      <label>Chat Font</label>
+      <select id="user-font" class="select-field">
+        <option value="sans-serif">Standard (Sans)</option>
+        <option value="monospace">Monospace (Code)</option>
+        <option value="serif">Classic (Serif)</option>
+        <option value="fantasy">Stylized (Fantasy)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="chat-main">
+    <div class="chat-header">
+      <span># global-chat</span>
+      <a href="/" class="back-btn">← Back to Dashboard</a>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages populate here -->
+    </div>
+
+    <div class="chat-input-bar">
+      <input type="text" id="chat-input" class="input-field" placeholder="Message #global-chat..." style="flex:1;" />
+      <button class="send-btn" id="chat-send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    const usernameInput = document.getElementById('username');
+    const userPfp = document.getElementById('user-pfp');
+    const userColor = document.getElementById('user-color');
+    const userFont = document.getElementById('user-font');
+
+    // Load saved profile settings
+    usernameInput.value = localStorage.getItem('vc_user') || 'User_' + Math.floor(Math.random() * 1000);
+    userPfp.value = localStorage.getItem('vc_pfp') || '⭐';
+    userColor.value = localStorage.getItem('vc_color') || '#ffffff';
+    userFont.value = localStorage.getItem('vc_font') || 'sans-serif';
+
+    [usernameInput, userPfp, userColor, userFont].forEach(el => {
+      el.addEventListener('input', () => {
+        localStorage.setItem('vc_user', usernameInput.value);
+        localStorage.setItem('vc_pfp', userPfp.value);
+        localStorage.setItem('vc_color', userColor.value);
+        localStorage.setItem('vc_font', userFont.value);
+      });
+    });
+
+    async function fetchMessages() {
+      try {
+        const res = await fetch('/api/chat');
+        if (!res.ok) return;
+        const data = await res.json();
+        chatMessages.innerHTML = data.map(m => `
+          <div class="msg-card">
+            <div class="msg-pfp">${m.pfp || '⭐'}</div>
+            <div class="msg-content">
+              <div class="msg-info">
+                <span class="msg-user" style="color: ${m.color || '#fff'};">${escapeHtml(m.user)}</span>
+                <span class="msg-time">${m.time}</span>
+              </div>
+              <div class="msg-text" style="font-family: ${m.font || 'sans-serif'};">${escapeHtml(m.text)}</div>
+            </div>
+          </div>
+        `).join('');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } catch (err) {}
+    }
+
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            user: usernameInput.value || 'Anonymous',
+            text,
+            color: userColor.value,
+            font: userFont.value,
+            pfp: userPfp.value
+          })
+        });
+        if (res.ok) {
+          chatInput.value = '';
+          fetchMessages();
+        }
+      } catch (err) {}
+    }
+
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMessage(); } });
+
+    setInterval(fetchMessages, 3000);
+    fetchMessages();
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
