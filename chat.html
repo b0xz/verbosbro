@@ -2,146 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Verbo Chat</title>
   <style>
     :root {
-      --bg: #0b0b0e;
-      --sidebar: #121216;
-      --panel: #18181c;
-      --border: #26262d;
+      --gui-scale: 1.15;
+      --bg: #000000;
+      --panel: #0a0a0a;
+      --border: #262626;
       --text: #ffffff;
-      --subtext: #94949f;
-      --accent: #5865f2;
-      --hover: #202025;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --hover: #1a1a1a;
+      --font: Arial, Helvetica, sans-serif;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body, html { width: 100%; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; display: flex; }
 
-    /* Sidebar controls */
-    .chat-sidebar {
-      width: 280px;
-      background: var(--sidebar);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      gap: 16px;
-    }
-    .chat-sidebar h2 { font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .control-group { display: flex; flex-direction: column; gap: 6px; }
-    .control-group label { font-size: 0.8rem; color: var(--subtext); }
-    .input-field, .select-field { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; }
-    .input-field:focus, .select-field:focus { border-color: var(--accent); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; }
 
-    /* Main chat area */
-    .chat-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background: var(--panel);
+    /* Star Background Canvas */
+    .star-blend-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+    canvas#bg-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+    /* Top Navigation bar */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 50px;
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000;
     }
-    .chat-header {
-      height: 60px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      font-weight: bold;
-      font-size: 1.1rem;
-      justify-content: space-between;
-    }
-    .back-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.85rem; }
+    .back-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.85rem; }
     .back-btn:hover { background: var(--hover); }
 
-    .chat-messages {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    /* Minimalist Chat Container */
+    .chat-container {
+      position: relative; z-index: 10; width: 100%; max-width: 800px; height: calc(100vh - 120px);
+      margin-top: 60px; display: flex; flex-direction: column; padding: 10px; gap: 12px;
     }
-    .msg-card {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      background: rgba(255, 255, 255, 0.02);
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-    }
-    .msg-card:hover { border-color: var(--border); background: var(--hover); }
-    .msg-pfp { width: 40px; height: 40px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-    .msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .msg-info { display: flex; gap: 10px; align-items: baseline; }
-    .msg-user { font-weight: bold; font-size: 0.95rem; }
-    .msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .msg-text { word-break: break-word; font-size: 0.95rem; line-height: 1.4; }
 
-    .chat-input-bar {
-      padding: 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 12px;
-      background: var(--sidebar);
+    .chat-messages {
+      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
-    .send-btn { background: var(--accent); border: none; color: white; padding: 0 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .send-btn:hover { opacity: 0.9; }
+
+    .msg-item { display: flex; gap: 12px; align-items: flex-start; }
+    .msg-pfp { width: 36px; height: 36px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 1rem; flex-shrink: 0; }
+    .msg-pfp img { width: 100%; height: 100%; object-fit: cover; }
+    .msg-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .msg-header { display: flex; gap: 10px; align-items: baseline; }
+    .msg-user { font-weight: bold; font-size: 0.9rem; }
+    .msg-time { font-size: 0.7rem; color: var(--subtext); }
+    .msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; line-height: 1.4; }
+
+    /* Bottom Pill Input bar matching Verbos */
+    .bottom-bar {
+      position: relative; z-index: 1000; width: 100%; max-width: 800px; padding: 0 10px 15px 10px;
+      display: flex; gap: 10px; align-items: center;
+    }
+    .pill-input-box {
+      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 35px;
+      padding: 6px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+    }
+    .pill-input-box:focus-within { border-color: var(--accent); }
+    .pill-input { flex: 1; background: transparent; border: none; outline: none; font-size: 1rem; color: var(--text); padding: 8px 0; }
+    .pill-input::placeholder { color: var(--subtext); }
+
+    /* White Spinning Star Button */
+    .spin-star-btn {
+      background: var(--text); border: none; width: 42px; height: 42px; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .spin-star-btn:hover { transform: scale(1.08); }
+    .spin-star-btn svg { width: 22px; height: 22px; fill: var(--bg); animation: spin 4s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Settings Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 400px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .setting-row { display: flex; flex-direction: column; gap: 6px; }
+    .setting-row label { font-size: 0.8rem; color: var(--subtext); }
+    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
+    .save-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
 
-  <div class="chat-sidebar">
-    <h2>Verbo Chat <span style="font-size:0.7rem; color:var(--accent);">ONLINE</span></h2>
-    
-    <div class="control-group">
-      <label>Display Name</label>
-      <input type="text" id="username" class="input-field" maxlength="20" placeholder="Username..." />
-    </div>
+  <div class="star-blend-container">
+    <canvas id="bg-stars"></canvas>
+  </div>
 
-    <div class="control-group">
-      <label>Avatar Emoji / Icon</label>
-      <select id="user-pfp" class="select-field">
-        <option value="⭐">⭐ Star</option>
-        <option value="🚀">🚀 Rocket</option>
-        <option value="👻">👻 Ghost</option>
-        <option value="🤖">🤖 Robot</option>
-        <option value="🐱">🐱 Cat</option>
-        <option value="🔥">🔥 Fire</option>
-      </select>
-    </div>
+  <div class="top-nav">
+    <a href="/" class="back-btn">← Back</a>
+    <span style="font-weight: bold; letter-spacing: 1px;">*verbo chat</span>
+    <button class="back-btn" id="open-settings">Settings</button>
+  </div>
 
-    <div class="control-group">
-      <label>Username Color</label>
-      <input type="color" id="user-color" class="input-field" value="#ffffff" style="height: 40px; padding: 2px; cursor: pointer;" />
-    </div>
-
-    <div class="control-group">
-      <label>Chat Font</label>
-      <select id="user-font" class="select-field">
-        <option value="sans-serif">Standard (Sans)</option>
-        <option value="monospace">Monospace (Code)</option>
-        <option value="serif">Classic (Serif)</option>
-        <option value="fantasy">Stylized (Fantasy)</option>
-      </select>
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages load here -->
     </div>
   </div>
 
-  <div class="chat-main">
-    <div class="chat-header">
-      <span># global-chat</span>
-      <a href="/" class="back-btn">← Back to Dashboard</a>
+  <div class="bottom-bar">
+    <div class="pill-input-box">
+      <input type="text" id="chat-input" class="pill-input" placeholder="Type a message..." autocomplete="off" />
+      <button class="spin-star-btn" id="chat-send" title="Send">
+        <!-- Spinning Star SVG -->
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6.2 4.8 2.4 7.2-6.2-4.8-6.2 4.8 2.4-7.2-6.2-4.8h7.6z"/></svg>
+      </button>
     </div>
+  </div>
 
-    <div class="chat-messages" id="chat-messages">
-      <!-- Messages populate here -->
-    </div>
-
-    <div class="chat-input-bar">
-      <input type="text" id="chat-input" class="input-field" placeholder="Message #global-chat..." style="flex:1;" />
-      <button class="send-btn" id="chat-send">Send</button>
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settings-modal">
+    <div class="modal-box">
+      <h3 style="font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px;">Chat Profile Settings</h3>
+      <div class="setting-row">
+        <label>Display Name</label>
+        <input type="text" id="set-username" class="setting-input" maxlength="20" placeholder="Your name..." />
+      </div>
+      <div class="setting-row">
+        <label>Avatar (Emoji or Image URL)</label>
+        <input type="text" id="set-pfp" class="setting-input" placeholder="⭐ or https://..." />
+      </div>
+      <div class="setting-row">
+        <label>Username Color</label>
+        <input type="color" id="set-color" class="setting-input" value="#ffffff" style="height: 40px; padding: 2px; cursor: pointer;" />
+      </div>
+      <button class="save-btn" id="close-settings">Save & Close</button>
     </div>
   </div>
 
@@ -149,43 +141,51 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send');
-    const usernameInput = document.getElementById('username');
-    const userPfp = document.getElementById('user-pfp');
-    const userColor = document.getElementById('user-color');
-    const userFont = document.getElementById('user-font');
+    const settingsModal = document.getElementById('settings-modal');
+    const openSettings = document.getElementById('open-settings');
+    const closeSettings = document.getElementById('close-settings');
 
-    // Load saved profile settings
-    usernameInput.value = localStorage.getItem('vc_user') || 'User_' + Math.floor(Math.random() * 1000);
-    userPfp.value = localStorage.getItem('vc_pfp') || '⭐';
-    userColor.value = localStorage.getItem('vc_color') || '#ffffff';
-    userFont.value = localStorage.getItem('vc_font') || 'sans-serif';
+    const setUsername = document.getElementById('set-username');
+    const setPfp = document.getElementById('set-pfp');
+    const setColor = document.getElementById('set-color');
 
-    [usernameInput, userPfp, userColor, userFont].forEach(el => {
+    // Load Profile Settings
+    setUsername.value = localStorage.getItem('vc_user') || 'User_' + Math.floor(Math.random() * 1000);
+    setPfp.value = localStorage.getItem('vc_pfp') || '⭐';
+    setColor.value = localStorage.getItem('vc_color') || '#ffffff';
+
+    [setUsername, setPfp, setColor].forEach(el => {
       el.addEventListener('input', () => {
-        localStorage.setItem('vc_user', usernameInput.value);
-        localStorage.setItem('vc_pfp', userPfp.value);
-        localStorage.setItem('vc_color', userColor.value);
-        localStorage.setItem('vc_font', userFont.value);
+        localStorage.setItem('vc_user', setUsername.value);
+        localStorage.setItem('vc_pfp', setPfp.value);
+        localStorage.setItem('vc_color', setColor.value);
       });
     });
+
+    openSettings.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+    closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
     async function fetchMessages() {
       try {
         const res = await fetch('/api/chat');
         if (!res.ok) return;
         const data = await res.json();
-        chatMessages.innerHTML = data.map(m => `
-          <div class="msg-card">
-            <div class="msg-pfp">${m.pfp || '⭐'}</div>
-            <div class="msg-content">
-              <div class="msg-info">
-                <span class="msg-user" style="color: ${m.color || '#fff'};">${escapeHtml(m.user)}</span>
-                <span class="msg-time">${m.time}</span>
+        chatMessages.innerHTML = data.map(m => {
+          const isImg = m.pfp && (m.pfp.startsWith('http://') || m.pfp.startsWith('https://'));
+          const pfpHTML = isImg ? `<img src="${escapeHtml(m.pfp)}" alt="pfp" />` : (m.pfp || '⭐');
+          return `
+            <div class="msg-item">
+              <div class="msg-pfp">${pfpHTML}</div>
+              <div class="msg-body">
+                <div class="msg-header">
+                  <span class="msg-user" style="color: ${m.color || '#fff'};">${escapeHtml(m.user)}</span>
+                  <span class="msg-time">${m.time}</span>
+                </div>
+                <div class="msg-text">${escapeHtml(m.text)}</div>
               </div>
-              <div class="msg-text" style="font-family: ${m.font || 'sans-serif'};">${escapeHtml(m.text)}</div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
         chatMessages.scrollTop = chatMessages.scrollHeight;
       } catch (err) {}
     }
@@ -198,11 +198,10 @@
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            user: usernameInput.value || 'Anonymous',
+            user: setUsername.value || 'Anonymous',
             text,
-            color: userColor.value,
-            font: userFont.value,
-            pfp: userPfp.value
+            pfp: setPfp.value || '⭐',
+            color: setColor.value || '#ffffff'
           })
         });
         if (res.ok) {
@@ -221,6 +220,29 @@
     function escapeHtml(str) {
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    // Star Background Canvas Animation
+    const bgCanvas = document.getElementById('bg-stars');
+    const bgCtx = bgCanvas.getContext('2d');
+    let stars = [];
+    window.addEventListener('resize', () => { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; });
+    for (let i = 0; i < 120; i++) {
+      stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, size: Math.random() * 2.5 + 0.8, speed: Math.random() * 0.3 + 0.05, rot: Math.random() * Math.PI, rotSpeed: (Math.random() - 0.5) * 0.02 });
+    }
+    function drawBgStars() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.fillStyle = '#ffffff';
+      stars.forEach(s => {
+        s.x += s.speed; s.rot += s.rotSpeed;
+        if (s.x > bgCanvas.width) s.x = 0;
+        bgCtx.save(); bgCtx.translate(s.x, s.y); bgCtx.rotate(s.rot);
+        bgCtx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size);
+        bgCtx.restore();
+      });
+      requestAnimationFrame(drawBgStars);
+    }
+    drawBgStars();
+    bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight;
   </script>
 </body>
 </html>
