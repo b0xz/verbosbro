@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">Dashboard - Canvas</title>
+  <title id="tab-title">Pryra - Dashboard</title>
   <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
 
   <style>
@@ -260,7 +260,11 @@
       gap: calc(8px * var(--gui-scale));
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
       width: 100%;
+      transition: all 0.3s ease;
     }
+
+    .bottom-nav-pill.style-minimal { border-radius: 8px; }
+    .bottom-nav-pill.style-centered { justify-content: center; }
 
     .bottom-nav-pill:focus-within { border-color: var(--accent); }
 
@@ -467,7 +471,7 @@
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
-      <div class="star-text">*welcome to verbos</div>
+      <div class="star-text">*welcome to pryra</div>
     </div>
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
@@ -483,6 +487,9 @@
     </button>
     <button class="sidebar-btn" id="sb-bookmarks" title="Bookmarks & Notes">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+    </button>
+    <button class="sidebar-btn" id="sb-chat" title="Pryra Chat">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
     </button>
     <button class="sidebar-btn" id="sb-settings" title="Theme & Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -523,7 +530,7 @@
       <button class="mode-row-btn" data-vpn="asia-sec"><span>Asia-Secure (Tokyo)</span></button>
     </div>
 
-    <div class="bottom-nav-pill">
+    <div class="bottom-nav-pill" id="search-pill-container">
       <button class="nav-btn" id="btn-back"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
       <button class="nav-btn" id="btn-forward"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
       <button class="nav-btn" id="btn-reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path></svg></button>
@@ -552,11 +559,26 @@
     </div>
   </div>
 
+  <!-- Integrated Chat Modal -->
+  <div class="modal-overlay hidden" id="chat-modal">
+    <div class="modal-box" style="height: 500px; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <span># pryra-global-chat</span>
+        <button class="nav-btn" id="close-chat">×</button>
+      </div>
+      <div id="chat-messages" style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin: 10px 0;"></div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="chat-input" class="setting-input" placeholder="Type a message..." style="flex:1;" />
+        <button class="action-btn" id="chat-send" style="padding: 10px 16px;">Send</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings & Dark Color Presets Modal -->
   <div class="modal-overlay hidden" id="settings-modal">
     <div class="modal-box">
       <div class="modal-header">
-        <span>Sleek Dark Color Themes</span>
+        <span>Sleek Dark Color Themes & Styles</span>
         <button class="nav-btn" id="close-settings">×</button>
       </div>
       <div class="setting-group">
@@ -584,6 +606,22 @@
           </div>
         </div>
       </div>
+      <div class="setting-group">
+        <label>Background Animation Style</label>
+        <select id="bg-style-select" class="setting-input">
+          <option value="stars">Starfield Particles</option>
+          <option value="matrix">Matrix Code Rain</option>
+          <option value="void">Minimalist Void</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Search Bar Style</label>
+        <select id="search-style-select" class="setting-input">
+          <option value="pill">Rounded Pill (Default)</option>
+          <option value="minimal">Minimal Rounded Box</option>
+          <option value="centered">Centered Streamlined</option>
+        </select>
+      </div>
       <button class="action-btn" id="close-settings-btn">Apply & Close</button>
     </div>
   </div>
@@ -597,7 +635,7 @@
       </div>
       <div class="setting-group">
         <label>Display Name</label>
-        <input type="text" id="profile-name" class="setting-input" placeholder="e.g. VerbosUser" />
+        <input type="text" id="profile-name" class="setting-input" placeholder="e.g. PryraUser" />
       </div>
       <div class="setting-group">
         <label>Avatar Image URL (Custom PFP)</label>
