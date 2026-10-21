@@ -235,7 +235,7 @@
       user-select: none;
     }
 
-    /* Bottom Pill & Screen Switcher */
+    /* Bottom Pill & Nav Controls */
     .bottom-nav-wrapper {
       position: fixed;
       bottom: calc(20px * var(--gui-scale));
@@ -444,7 +444,6 @@
     }
     .setting-input:focus { border-color: var(--accent); }
 
-    /* Dark Theme Preset Cards */
     .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .theme-card {
       background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
@@ -473,7 +472,6 @@
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
-  <!-- Loading Spinner Overlay -->
   <div class="loading-overlay hidden" id="loading-spinner">
     <div class="spinner-ring"></div>
   </div>
@@ -547,10 +545,6 @@
         <button class="nav-btn" id="close-bookmarks">×</button>
       </div>
       <div class="setting-group">
-        <label>Saved Quick Links</label>
-        <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:6px; max-height:120px; overflow-y:auto;"></div>
-      </div>
-      <div class="setting-group">
         <label>Local Scratchpad</label>
         <textarea id="notes-textarea" class="setting-input" rows="5" placeholder="Type quick notes here..."></textarea>
       </div>
@@ -616,7 +610,8 @@
   <!-- Proxy Viewports -->
   <div class="proxy-viewer" id="proxy-viewer">
     <div class="screen-panel" id="screen-panel-1">
-      <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame"></iframe></div>
+      <!-- Added sandbox attributes to allow robust interaction & navigation syncing -->
+      <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe></div>
     </div>
   </div>
 
