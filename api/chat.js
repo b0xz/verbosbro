@@ -14,14 +14,23 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { user, text, pfp, color } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = {};
+      }
+    }
+
+    const { user, text, pfp, color } = body || {};
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Message text is required.' });
     }
 
     const cleanUser = (user && typeof user === 'string' ? user.trim() : 'Anonymous').slice(0, 20);
     const cleanText = text.trim().slice(0, 400);
-    const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 500); // supports image URLs or emojis
+    const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 500);
     const cleanColor = color || '#ffffff';
 
     if (!cleanText) return res.status(400).json({ error: 'Empty message.' });
