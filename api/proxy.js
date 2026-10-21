@@ -140,7 +140,7 @@ export default async function handler(req, res) {
         let trimmed = val.trim();
         if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
         if (trimmed.includes('/api/proxy?url=')) return val;
-        
+
         const absUrl = new URL(trimmed, baseUrl).href;
         return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}&vpn=${vpn}`;
       } catch (e) {
@@ -186,61 +186,126 @@ export default async function handler(req, res) {
           (function() {
             const targetBase = "${baseUrl}";
             const proxyBase = '/api/proxy?mode=${mode}&device=${device}&vpn=${vpn}&url=';
+
             function proxify(url) {
               try {
                 if (!url || typeof url !== 'string') return url;
-                let trimmed = url.trim();
-                if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
+                const trimmed = url.trim();
+                if (!trimmed || trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:') || trimmed.startsWith('#')) return url;
                 if (trimmed.includes('/api/proxy?url=')) return url;
-                
-                // Explicitly resolve against targetBase to prevent relative path breakage
                 const abs = new URL(trimmed, targetBase).href;
-
-                if (window.parent && window.parent !== window) {
-                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
-                }
-
                 return proxyBase + encodeURIComponent(abs);
-              } catch(e) { return url; }
+              } catch (e) { return url; }
+            }
+
+            function rewriteNavigationTargets() {
+              const nodes = document.querySelectorAll('a[href], area[href], form[action], button[formaction], input[formaction], [data-href], [data-url]');
+              nodes.forEach((node) => {
+                try {
+                  const tag = (node.tagName || '').toLowerCase();
+                  if (tag === 'form') {
+                    const action = node.getAttribute('action') || node.action;
+                    const proxied = proxify(action);
+                    if (proxied && proxied !== action) node.setAttribute('action', proxied);
+                    return;
+                  }
+
+                  if (tag === 'button' || tag === 'input') {
+                    const action = node.getAttribute('formaction');
+                    const proxied = proxify(action);
+                    if (proxied && proxied !== action) node.setAttribute('formaction', proxied);
+                    return;
+                  }
+
+                  const candidate = node.getAttribute('href') || node.getAttribute('data-href') || node.getAttribute('data-url');
+                  const proxied = proxify(candidate);
+                  if (proxied && proxied !== candidate) {
+                    if (node.hasAttribute('href')) node.setAttribute('href', proxied);
+                    else if (node.hasAttribute('data-href')) node.setAttribute('data-href', proxied);
+                    else if (node.hasAttribute('data-url')) node.setAttribute('data-url', proxied);
+                  }
+                } catch (e) {}
+              });
             }
 
             document.addEventListener('click', function(e) {
-              const anchor = e.target.closest('a, area');
-              if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
-                e.preventDefault();
-                window.location.href = proxify(anchor.getAttribute('href') || anchor.href);
+              const target = e.target && e.target.closest ? e.target.closest('a[href], area[href], button[formaction], input[formaction], form[action], [data-href], [data-url], [role="button"]') : null;
+              if (!target) return;
+
+              let candidate = null;
+              const tag = (target.tagName || '').toLowerCase();
+
+              if (tag === 'form') {
+                candidate = target.getAttribute('action') || target.action;
+              } else if (tag === 'button' || tag === 'input') {
+                candidate = target.getAttribute('formaction') || (target.form ? (target.form.getAttribute('action') || target.form.action) : null);
+              } else {
+                candidate = target.getAttribute('href') || target.getAttribute('data-href') || target.getAttribute('data-url') || target.href;
               }
+
+              if (!candidate || candidate.startsWith('javascript:') || candidate.startsWith('#')) return;
+              const proxied = proxify(candidate);
+              if (!proxied || proxied === candidate) return;
+
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.assign(proxied);
             }, true);
 
             document.addEventListener('submit', function(e) {
               const form = e.target;
-              if (form && form.action) {
-                form.action = proxify(form.getAttribute('action') || form.action);
-              }
+              if (!form || form.nodeName !== 'FORM') return;
+              const action = form.getAttribute('action') || form.action;
+              if (!action || action.startsWith('javascript:') || action.startsWith('#')) return;
+              const proxied = proxify(action);
+              if (!proxied || proxied === action) return;
+              e.preventDefault();
+              window.location.assign(proxied);
             }, true);
 
-            try {
-              const originalAssign = window.location.assign;
-              window.location.assign = function(url) {
-                return originalAssign.call(window.location, proxify(url));
-              };
+            const originalAssign = window.location.assign.bind(window.location);
+            const originalReplace = window.location.replace.bind(window.location);
 
-              const originalReplace = window.location.replace;
-              window.location.replace = function(url) {
-                return originalReplace.call(window.location, proxify(url));
-              };
+            window.location.assign = function(url) {
+              const proxied = proxify(url);
+              return originalAssign(proxied || url);
+            };
 
-              const loc = window.location;
-              if (loc) {
-                Object.defineProperty(window, 'location', {
-                  get: function() { return loc; },
-                  set: function(val) {
-                    loc.href = proxify(val);
-                  },
-                  configurable: true
-                });
+            window.location.replace = function(url) {
+              const proxied = proxify(url);
+              return originalReplace(proxied || url);
+            };
+
+            const originalPushState = history.pushState;
+            const originalReplaceState = history.replaceState;
+
+            history.pushState = function(state, title, url) {
+              if (url) {
+                const proxied = proxify(url);
+                return originalPushState.call(this, state, title, proxied || url);
               }
-            } catch(err) {}
+              return originalPushState.call(this, state, title, url);
+            };
+
+            history.replaceState = function(state, title, url) {
+              if (url) {
+                const proxied = proxify(url);
+                return originalReplaceState.call(this, state, title, proxied || url);
+              }
+              return originalReplaceState.call(this, state, title, url);
+            };
+
+            rewriteNavigationTargets();
+
+            const observer = new MutationObserver(function() {
+              rewriteNavigationTargets();
+            });
+            observer.observe(document.documentElement, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ['href', 'action', 'formaction', 'data-href', 'data-url']
+            });
           })();
         </script>
       `;
