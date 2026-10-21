@@ -194,6 +194,12 @@ export default async function handler(req, res) {
                 if (!trimmed || trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:') || trimmed.startsWith('#')) return url;
                 if (trimmed.includes('/api/proxy?url=')) return url;
                 const abs = new URL(trimmed, targetBase).href;
+
+                // Sync URL with parent dashboard
+                if (window.parent && window.parent !== window) {
+                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
+                }
+
                 return proxyBase + encodeURIComponent(abs);
               } catch (e) { return url; }
             }
