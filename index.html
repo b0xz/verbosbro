@@ -219,8 +219,8 @@
       bottom: calc(20px * var(--gui-scale));
       left: calc(50% + 32px * var(--gui-scale));
       transform: translateX(-50%);
-      width: 85%;
-      max-width: calc(700px * var(--gui-scale));
+      width: 90%;
+      max-width: calc(750px * var(--gui-scale));
       z-index: 1300;
       display: flex;
       flex-direction: column;
@@ -304,13 +304,14 @@
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: calc(18px * var(--gui-scale));
-      padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale));
-      font-size: calc(0.85rem * var(--gui-scale));
+      padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale));
+      font-size: calc(0.78rem * var(--gui-scale));
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .pill-input {
@@ -319,7 +320,7 @@
       border: none;
       outline: none;
       padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale));
-      font-size: calc(1.05rem * var(--gui-scale));
+      font-size: calc(1rem * var(--gui-scale));
       color: var(--text);
     }
 
@@ -365,14 +366,15 @@
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: calc(10px * var(--gui-scale)) calc(14px * var(--gui-scale));
+      padding: calc(8px * var(--gui-scale)) calc(12px * var(--gui-scale));
       border-radius: calc(8px * var(--gui-scale));
-      font-size: calc(0.9rem * var(--gui-scale));
+      font-size: calc(0.85rem * var(--gui-scale));
       text-align: left;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
+      white-space: nowrap;
     }
 
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
@@ -438,16 +440,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Modal Styling */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(3px);
-      z-index: 3000; display: flex; align-items: center; justify-content: center;
-    }
-    .modal-overlay.hidden { display: none; }
-    .modal-box { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 450px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
-    .save-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -471,11 +463,8 @@
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
-    <button class="sidebar-btn" id="sb-chat" title="Global Chat">
+    <button class="sidebar-btn" id="sb-chat" title="Verbo Chat">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-games" title="Ruffle Games">
-      <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4"></path></svg>
     </button>
     <button class="sidebar-btn" id="sb-settings" title="Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -489,7 +478,7 @@
 
   <div class="footer-credit" id="footer-credit">(based off of rammerhead)</div>
 
-  <!-- Bottom Search Pill -->
+  <!-- Bottom Search Pill & Menus -->
   <div class="bottom-nav-wrapper">
     <div class="split-switcher-bar" id="split-switcher-bar">
       <button class="split-btn active" id="btn-screen1">screen 1</button>
@@ -497,15 +486,28 @@
       <button class="split-close-btn" id="btn-close-split">×</button>
     </div>
 
+    <!-- Mode Menu -->
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span></button>
       <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span></button>
     </div>
 
+    <!-- Expanded Device / Console Menu -->
     <div class="device-menu-table" id="device-menu">
-      <button class="mode-row-btn" data-device="desktop"><span>Desktop View</span></button>
-      <button class="mode-row-btn" data-device="tablet"><span>Tablet View</span></button>
-      <button class="mode-row-btn" data-device="mobile"><span>Mobile View</span></button>
+      <button class="mode-row-btn" data-device="desktop"><span>Desktop (Chrome)</span></button>
+      <button class="mode-row-btn" data-device="tablet"><span>Tablet (iPad)</span></button>
+      <button class="mode-row-btn" data-device="mobile"><span>Mobile (iPhone)</span></button>
+      <button class="mode-row-btn" data-device="xbox"><span>Xbox Console Browser</span></button>
+      <button class="mode-row-btn" data-device="playstation"><span>PlayStation Browser</span></button>
+      <button class="mode-row-btn" data-device="smarttv"><span>Smart TV / Living Room</span></button>
+    </div>
+
+    <!-- Custom VPN Node Menu -->
+    <div class="device-menu-table" id="vpn-menu" style="right: 120px;">
+      <button class="mode-row-btn" data-vpn="direct"><span>Direct Proxy (Standard)</span></button>
+      <button class="mode-row-btn" data-vpn="us-east"><span>US-East (Virginia Node)</span></button>
+      <button class="mode-row-btn" data-vpn="eu-west"><span>EU-West (Frankfurt Node)</span></button>
+      <button class="mode-row-btn" data-vpn="asia-sec"><span>Asia-Secure (Tokyo Node)</span></button>
     </div>
 
     <div class="bottom-nav-pill">
@@ -515,28 +517,10 @@
 
       <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">Fast</span> ▾</button>
       <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">Desktop</span> ▾</button>
+      <button class="pill-btn-toggle" id="vpn-toggle-btn"><span id="current-vpn-label">US-East</span> ▾</button>
 
       <input type="text" id="proxy-input" class="pill-input" placeholder="Enter URL..." autocomplete="off" autofocus />
       <button class="go-btn" id="proxy-go"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
-    </div>
-  </div>
-
-  <!-- Global Chat Modal -->
-  <div class="modal-overlay hidden" id="chat-modal">
-    <div class="modal-box" style="height: 500px; display: flex; flex-direction: column;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
-        <span style="font-weight:bold; font-size:1.1rem;">Global Chat (No Login)</span>
-        <button class="nav-btn" id="chat-close">×</button>
-      </div>
-      <div style="margin-top: 10px;">
-        <label style="font-size:0.85rem; color:var(--subtext);">Your Display Name:</label>
-        <input type="text" id="chat-username" class="setting-input" placeholder="Enter username..." maxlength="20" style="margin-top:4px;" />
-      </div>
-      <div id="chat-messages" style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin: 10px 0;"></div>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="chat-input" class="setting-input" placeholder="Type a message..." style="flex:1;" />
-        <button class="save-btn" id="chat-send" style="padding: 10px 16px;">Send</button>
-      </div>
     </div>
   </div>
 
