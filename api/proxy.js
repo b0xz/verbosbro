@@ -18,7 +18,6 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Prevent nested proxy loops
   while (targetUrl.includes('/api/proxy?url=')) {
     try {
       const parts = targetUrl.split('/api/proxy?url=');
@@ -50,7 +49,6 @@ export default async function handler(req, res) {
   try {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
-
     const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
 
     const headers = {
@@ -73,7 +71,7 @@ export default async function handler(req, res) {
     const fetchOptions = {
       method: req.method,
       headers,
-      redirect: 'manual', // Manually handle redirects to prevent loop/filter drop issues
+      redirect: 'manual',
       compress: true
     };
 
@@ -84,7 +82,6 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Handle server-side redirects cleanly
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -195,6 +192,12 @@ export default async function handler(req, res) {
                 if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
                 if (trimmed.includes('/api/proxy?url=')) return url;
                 const abs = new URL(trimmed, document.baseURI).href;
+                
+                // Notify parent dashboard to update link bar
+                if (window.parent && window.parent !== window) {
+                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
+                }
+
                 return proxyBase + encodeURIComponent(abs);
               } catch(e) { return url; }
             }
