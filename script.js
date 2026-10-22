@@ -6,6 +6,8 @@ if ('serviceWorker' in navigator) {
 
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
+let currentChatRoom = 'global';
+let dmUsers = [];
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -87,26 +89,11 @@ document.getElementById('sb-home').addEventListener('click', () => {
   document.getElementById('sb-chat').classList.remove('active');
 });
 
-// Panic key (\)
+// Panic Key (\)
 document.addEventListener('keydown', (e) => {
   if (e.key === '\\') {
     e.preventDefault();
     document.body.style.display = document.body.style.display === 'none' ? 'block' : 'none';
-  }
-});
-
-window.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'pryra-navigate') {
-    const targetUrl = event.data.url;
-    if (targetUrl && !targetUrl.includes('/api/proxy?url=')) {
-      proxyInput.value = targetUrl;
-      const currentTab = tabs.find(t => t.id === activeTabId);
-      if (currentTab) {
-        currentTab.url = targetUrl;
-        try { currentTab.title = new URL(targetUrl).hostname; } catch(e) {}
-        renderTabs();
-      }
-    }
   }
 });
 
@@ -132,16 +119,6 @@ vpnToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.cl
 
 document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); });
 
-document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentMode = btn.getAttribute('data-mode'); currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1); modeMenu.classList.remove('active'); });
-});
-document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentDevice = btn.getAttribute('data-device'); currentDeviceLabel.textContent = btn.querySelector('span').textContent.split(' ')[0]; deviceMenu.classList.remove('active'); });
-});
-document.querySelectorAll('#vpn-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentVpn = btn.getAttribute('data-vpn'); currentVpnLabel.textContent = btn.querySelector('span').textContent.split(' ')[0]; vpnMenu.classList.remove('active'); });
-});
-
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
@@ -155,7 +132,7 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   showSpinner();
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab) {
@@ -177,7 +154,7 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Full Page Chat System --- */
+/* --- Full Page Chat System with XSS Safety & DMs --- */
 const sbChat = document.getElementById('sb-chat');
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
@@ -190,13 +167,22 @@ sbChat.addEventListener('click', () => {
   homeView.classList.add('hidden');
   proxyViewer.classList.remove('active');
   chatPageView.classList.add('active');
-  bottomNavWrapper.classList.add('hidden'); // Hide search on chat view
+  bottomNavWrapper.classList.add('hidden');
   document.getElementById('sb-home').classList.remove('active');
   sbChat.classList.add('active');
   fetchChat(true);
   
-  // Refresh chat every 3 seconds while on chat view
   if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 3000);
+});
+
+document.querySelectorAll('.room-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentChatRoom = btn.getAttribute('data-room');
+    document.getElementById('current-room-title').textContent = currentChatRoom === 'global' ? '# global-chat' : `DM: @${currentChatRoom}`;
+    fetchChat(true);
+  });
 });
 
 async function fetchChat(forceScroll = false) {
@@ -205,27 +191,62 @@ async function fetchChat(forceScroll = false) {
     if (!res.ok) return;
     const data = await res.json();
     
-    if (data.length !== lastKnownCount || forceScroll) {
-      lastKnownCount = data.length;
+    // Filter messages based on active room
+    const filteredData = data.filter(m => {
+      if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
+      return (m.recipient === currentChatRoom && m.user === localStorage.getItem('verbos_user_name')) ||
+             (m.user === currentChatRoom && m.recipient === localStorage.getItem('verbos_user_name'));
+    });
 
-      chatMessages.innerHTML = data.map(m => {
+    if (filteredData.length !== lastKnownCount || forceScroll) {
+      lastKnownCount = filteredData.length;
+
+      chatMessages.innerHTML = '';
+      filteredData.forEach(m => {
         const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
         const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
         const msgFont = m.font || 'Arial, sans-serif';
 
-        return `
-          <div class="chat-msg-item">
-            <div class="chat-msg-pfp" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${pfpHTML}</div>
-            <div class="chat-msg-content">
-              <div class="chat-msg-header">
-                <span class="chat-msg-username" style="color: ${m.color || '#ffffff'};" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${escapeHtml(m.user)}</span>
-                <span class="chat-msg-time">${m.time}</span>
-              </div>
-              <div class="chat-msg-text" style="font-family: ${msgFont};">${escapeHtml(m.text)}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
+        const itemEl = document.createElement('div');
+        itemEl.className = 'chat-msg-item';
+
+        const pfpDiv = document.createElement('div');
+        pfpDiv.className = 'chat-msg-pfp';
+        pfpDiv.innerHTML = pfpHTML;
+        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'Exploring the web with Verbos.');
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'chat-msg-content';
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'chat-msg-header';
+
+        const userSpan = document.createElement('span');
+        userSpan.className = 'chat-msg-username';
+        userSpan.style.color = m.color || '#ffffff';
+        userSpan.textContent = m.user;
+        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'Exploring the web with Verbos.');
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'chat-msg-time';
+        timeSpan.textContent = m.time;
+
+        headerDiv.appendChild(userSpan);
+        headerDiv.appendChild(timeSpan);
+
+        const textDiv = document.createElement('div');
+        textDiv.className = 'chat-msg-text';
+        textDiv.style.fontFamily = msgFont;
+        // SECURE XSS FIX: textContent guarantees text is never interpreted as HTML/scripts
+        textDiv.textContent = m.text;
+
+        contentDiv.appendChild(headerDiv);
+        contentDiv.appendChild(textDiv);
+        itemEl.appendChild(pfpDiv);
+        itemEl.appendChild(contentDiv);
+
+        chatMessages.appendChild(itemEl);
+      });
 
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
@@ -236,25 +257,24 @@ async function sendChat() {
   const text = chatInput.value.trim();
   if (!text) return;
 
-  // Anti-spam check (2 second cooldown)
   const now = Date.now();
   if (now - lastMessageTime < 2000) {
-    alert('Please wait 2 seconds before sending another message (Anti-Spam).');
+    alert('Please wait 2 seconds before sending another message.');
     return;
   }
   lastMessageTime = now;
 
-  const user = localStorage.getItem('pryra_user_name') || 'PryraUser';
-  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
-  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
-  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
-  const font = localStorage.getItem('pryra_chat_font') || 'Arial, sans-serif';
+  const user = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
+  const bio = localStorage.getItem('verbos_user_bio') || 'Exploring the web with Verbos.';
+  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
+  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, bio, color, font })
+      body: JSON.stringify({ user, text, pfp, bio, color, font, recipient: currentChatRoom })
     });
     if (res.ok) { 
       chatInput.value = ''; 
@@ -266,19 +286,13 @@ async function sendChat() {
 chatSend.addEventListener('click', sendChat);
 chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
 
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-/* --- User Dashboard Modal --- */
+/* --- User Dashboard Modal & DMs --- */
 const userDashboardModal = document.getElementById('user-dashboard-modal');
 document.getElementById('close-user-dashboard').addEventListener('click', () => userDashboardModal.classList.add('hidden'));
 
-window.openUserDashboard = function(encodedUser, encodedPfp, encodedBio) {
-  const username = decodeURIComponent(encodedUser);
-  const pfp = decodeURIComponent(encodedPfp);
-  const bio = decodeURIComponent(encodedBio);
-
+let selectedDashboardUser = '';
+window.openUserDashboard = function(username, pfp, bio) {
+  selectedDashboardUser = username;
   document.getElementById('ud-username').textContent = username;
   document.getElementById('ud-bio').textContent = bio;
 
@@ -292,6 +306,57 @@ window.openUserDashboard = function(encodedUser, encodedPfp, encodedBio) {
 
   userDashboardModal.classList.remove('hidden');
 };
+
+document.getElementById('ud-message-btn').addEventListener('click', () => {
+  if (!selectedDashboardUser) return;
+  const myName = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  if (selectedDashboardUser === myName) {
+    alert("You cannot message yourself!");
+    return;
+  }
+
+  // Add DM channel if not present
+  if (!dmUsers.includes(selectedDashboardUser)) {
+    dmUsers.push(selectedDashboardUser);
+    renderDmList();
+  }
+
+  userDashboardModal.classList.add('hidden');
+  document.querySelector(`.room-btn[data-room="${selectedDashboardUser}"]`)?.click();
+});
+
+function renderDmList() {
+  const container = document.getElementById('dm-rooms-list');
+  container.innerHTML = dmUsers.map(user => `
+    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}">@${user}</button>
+  `).join('');
+
+  container.querySelectorAll('.room-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentChatRoom = btn.getAttribute('data-room');
+      document.getElementById('current-room-title').textContent = `DM: @${currentChatRoom}`;
+      fetchChat(true);
+    });
+  });
+}
+
+document.getElementById('add-friend-btn').addEventListener('click', async () => {
+  const friendName = prompt("Enter username to start a Direct Message:");
+  if (!friendName) return;
+  const clean = friendName.trim();
+  const myName = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  if (clean === myName) {
+    alert("That's you!");
+    return;
+  }
+  if (!dmUsers.includes(clean)) {
+    dmUsers.push(clean);
+    renderDmList();
+  }
+  document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
+});
 
 /* --- Themes & Customization --- */
 const DARK_THEMES = {
@@ -311,7 +376,7 @@ function applyTheme(key) {
   root.style.setProperty('--border', t.border);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('pryra_theme', key);
+  localStorage.setItem('verbos_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -321,26 +386,26 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('pryra_theme') || 'obsidian');
+applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
 
 const bgSelect = document.getElementById('bg-style-select');
-bgSelect.value = localStorage.getItem('pryra_bg_style') || 'stars';
+bgSelect.value = localStorage.getItem('verbos_bg_style') || 'stars';
 bgSelect.addEventListener('change', () => {
-  localStorage.setItem('pryra_bg_style', bgSelect.value);
+  localStorage.setItem('verbos_bg_style', bgSelect.value);
   initBackground(bgSelect.value);
 });
 
 const searchSelect = document.getElementById('search-style-select');
 const searchContainer = document.getElementById('search-pill-container');
-searchSelect.value = localStorage.getItem('pryra_search_style') || 'pill';
+searchSelect.value = localStorage.getItem('verbos_search_style') || 'pill';
 function applySearchStyle(style) {
   searchContainer.className = 'bottom-nav-pill style-' + style;
 }
 searchSelect.addEventListener('change', () => {
-  localStorage.setItem('pryra_search_style', searchSelect.value);
+  localStorage.setItem('verbos_search_style', searchSelect.value);
   applySearchStyle(searchSelect.value);
 });
-applySearchStyle(localStorage.getItem('pryra_search_style') || 'pill');
+applySearchStyle(localStorage.getItem('verbos_search_style') || 'pill');
 
 /* --- Modals Handling --- */
 const settingsModal = document.getElementById('settings-modal');
@@ -357,7 +422,7 @@ document.getElementById('close-bookmarks').addEventListener('click', () => bookm
 document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
 document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
 
-// Profile & Customization Logic
+// Profile Logic with Unique Name Check
 const profileNameInput = document.getElementById('profile-name');
 const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
@@ -368,11 +433,11 @@ const pfpInitial = document.getElementById('pfp-initial');
 const pfpImg = document.getElementById('pfp-img');
 
 function loadProfile() {
-  const name = localStorage.getItem('pryra_user_name') || 'PryraUser';
-  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
-  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
-  const font = localStorage.getItem('pryra_chat_font') || 'Arial, sans-serif';
-  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
+  const name = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  const bio = localStorage.getItem('verbos_user_bio') || 'Exploring the web with Verbos.';
+  const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
+  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
+  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
 
   profileNameInput.value = name;
   profileBioInput.value = bio;
@@ -394,6 +459,10 @@ function loadProfile() {
 profileFileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
+    if (file.size > 200 * 1024) {
+      alert("Image is too large! Please choose an image smaller than 200KB.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = function(uploadEvent) {
       profilePfpInput.value = uploadEvent.target.result;
@@ -402,25 +471,39 @@ profileFileInput.addEventListener('change', (e) => {
   }
 });
 
-document.getElementById('save-profile').addEventListener('click', () => {
-  const name = profileNameInput.value.trim() || 'PryraUser';
-  const bio = profileBioInput.value.trim() || 'Exploring the web with Pryra.';
+document.getElementById('save-profile').addEventListener('click', async () => {
+  const name = profileNameInput.value.trim() || 'VerbosUser';
+  
+  // Verify unique display name on backend
+  try {
+    const res = await fetch('/api/chat?type=users');
+    if (res.ok) {
+      const users = await res.json();
+      const currentStoredName = localStorage.getItem('verbos_user_name');
+      if (users.includes(name) && name !== currentStoredName) {
+        alert("This display name is already taken! Please choose another.");
+        return;
+      }
+    }
+  } catch (e) {}
+
+  const bio = profileBioInput.value.trim() || 'Exploring the web with Verbos.';
   const pfp = profilePfpInput.value.trim() || '⭐';
   const font = profileFontSelect.value;
   const color = profileColorInput.value;
 
-  localStorage.setItem('pryra_user_name', name);
-  localStorage.setItem('pryra_user_bio', bio);
-  localStorage.setItem('pryra_user_pfp', pfp);
-  localStorage.setItem('pryra_chat_font', font);
-  localStorage.setItem('pryra_user_color', color);
+  localStorage.setItem('verbos_user_name', name);
+  localStorage.setItem('verbos_user_bio', bio);
+  localStorage.setItem('verbos_user_pfp', pfp);
+  localStorage.setItem('verbos_chat_font', font);
+  localStorage.setItem('verbos_user_color', color);
 
   loadProfile();
   profileModal.classList.add('hidden');
 });
 loadProfile();
 
-/* --- Dynamic Background Canvas Rendering --- */
+/* --- Dynamic Background --- */
 const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let animationFrameId = null;
@@ -431,7 +514,7 @@ function initBackground(style) {
   bgCanvas.height = window.innerHeight;
 
   if (style === 'matrix') {
-    const letters = 'PRYRA010101XYZ';
+    const letters = 'VERBOS010101XYZ';
     const fontSize = 14;
     const columns = Math.floor(bgCanvas.width / fontSize);
     const drops = Array(columns).fill(1);
@@ -472,9 +555,9 @@ function initBackground(style) {
     drawStars();
   }
 }
-initBackground(localStorage.getItem('pryra_bg_style') || 'stars');
+initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
 
-// Center Star Canvas Logo
+// Star Logo
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
