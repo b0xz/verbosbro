@@ -1,14 +1,19 @@
 let globalMessages = [
   { 
+    id: 'msg-1',
     user: 'verbos-bot', 
     text: 'Welcome to Verbos Chat!', 
     pfp: '⭐', 
     bio: 'Official Verbos System Bot', 
     color: '#ffffff', 
     font: 'Arial, sans-serif',
+    recipient: 'global',
     time: '12:00 PM' 
   }
 ];
+
+let registeredUsers = new Set(['verbos-bot']);
+let friendLists = {}; // username -> array of friends
 
 export default async function handler(req, res) {
   try {
@@ -21,57 +26,57 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+      const type = req.query.type;
+      if (type === 'users') {
+        return res.status(200).json(Array.from(registeredUsers));
+      }
       return res.status(200).json(globalMessages);
     }
 
     if (req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') {
-        try { 
-          body = JSON.parse(body); 
-        } catch (e) { 
-          body = {}; 
-        }
+        try { body = JSON.parse(body); } catch (e) { body = {}; }
       }
 
-      const { user, text, pfp, bio, color, font } = body || {};
+      const { user, text, pfp, bio, color, font, recipient } = body || {};
 
       if (!text || typeof text !== 'string') {
         return res.status(400).json({ error: 'Message text is required.' });
       }
 
-      const cleanText = text.trim().slice(0, 400).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cleanUser = (user && typeof user === 'string' ? user.trim() : 'Anonymous').slice(0, 20);
+      if (!cleanUser) {
+        return res.status(400).json({ error: 'Valid username is required.' });
+      }
+
+      registeredUsers.add(cleanUser);
+
+      const cleanText = text.trim().slice(0, 500);
       if (!cleanText) {
         return res.status(400).json({ error: 'Empty message.' });
       }
 
-      const cleanUser = (user && typeof user === 'string' ? user.trim() : 'Anonymous')
-        .slice(0, 20)
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-      const cleanBio = (bio && typeof bio === 'string' ? bio.trim() : 'Exploring the web with Verbos.')
-        .slice(0, 120)
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-      // Limit payload size to under 200KB to avoid memory crashes
+      const cleanBio = (bio && typeof bio === 'string' ? bio.trim() : 'Exploring the web with Verbos.').slice(0, 120);
       const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 200000);
       const cleanColor = (color && typeof color === 'string') ? color : '#ffffff';
       const cleanFont = (font && typeof font === 'string') ? font : 'Arial, sans-serif';
+      const cleanRecipient = (recipient && typeof recipient === 'string') ? recipient.trim() : 'global';
 
       const newMessage = {
+        id: 'msg-' + Date.now() + '-' + Math.random().toString(36.substring(2, 7)),
         user: cleanUser,
         text: cleanText,
         pfp: cleanPfp,
         bio: cleanBio,
         color: cleanColor,
         font: cleanFont,
+        recipient: cleanRecipient,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       globalMessages.push(newMessage);
-      if (globalMessages.length > 80) {
+      if (globalMessages.length > 100) {
         globalMessages.shift();
       }
 
