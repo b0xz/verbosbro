@@ -1,10 +1,10 @@
 let globalMessages = [
   { 
-    user: 'pryra-bot', 
-    text: 'Welcome to Pryra Chat!', 
+    user: 'verbos-bot', 
+    text: 'Welcome to Verbos Chat!', 
     pfp: '⭐', 
-    bio: 'Official Pryra System Bot', 
-    color: '#3b82f6', 
+    bio: 'Official Verbos System Bot', 
+    color: '#ffffff', 
     font: 'Arial, sans-serif',
     time: '12:00 PM' 
   }
@@ -12,7 +12,6 @@ let globalMessages = [
 
 export default async function handler(req, res) {
   try {
-    // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -51,14 +50,14 @@ export default async function handler(req, res) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      const cleanBio = (bio && typeof bio === 'string' ? bio.trim() : 'Exploring the web with Pryra.')
+      const cleanBio = (bio && typeof bio === 'string' ? bio.trim() : 'Exploring the web with Verbos.')
         .slice(0, 120)
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 
-      // Allow up to 500,000 chars for uploaded image base64 data URIs
-      const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 500000);
-      const cleanColor = (color && typeof color === 'string') ? color : '#3b82f6';
+      // Limit payload size to under 200KB to avoid memory crashes
+      const cleanPfp = (pfp && typeof pfp === 'string' ? pfp.trim() : '⭐').slice(0, 200000);
+      const cleanColor = (color && typeof color === 'string') ? color : '#ffffff';
       const cleanFont = (font && typeof font === 'string') ? font : 'Arial, sans-serif';
 
       const newMessage = {
@@ -82,7 +81,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
 
   } catch (error) {
-    console.error('Fatal API Error in api/chat.js:', error);
+    console.error('API Error in api/chat.js:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
