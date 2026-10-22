@@ -1,516 +1,270 @@
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-  });
-}
+export default async function handler(req, res) {
+  res.setHeader('access-control-allow-origin', '*');
+  res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.setHeader('access-control-allow-headers', '*');
+  res.setHeader('access-control-allow-credentials', 'true');
+  res.setHeader('timing-allow-origin', '*');
 
-let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
-let activeTabId = 1;
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-const tabBar = document.getElementById('tab-bar');
-const addTabBtn = document.getElementById('add-tab-btn');
-const proxyInput = document.getElementById('proxy-input');
-const proxyViewer = document.getElementById('proxy-viewer');
-const homeView = document.getElementById('home-view');
-const chatPageView = document.getElementById('chat-page-view');
-const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
-const proxyIframe1 = document.getElementById('proxy-iframe-1');
-const loadingSpinner = document.getElementById('loading-spinner');
+  let targetUrl = req.query.url || (req.body && req.body.url);
+  const mode = req.query.mode || 'fast';
+  const device = req.query.device || 'desktop';
+  const vpn = req.query.vpn || 'us-east';
 
-function showSpinner() { loadingSpinner.classList.remove('hidden'); }
-function hideSpinner() { loadingSpinner.classList.add('hidden'); }
-
-proxyIframe1.addEventListener('load', hideSpinner);
-
-function renderTabs() {
-  tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
-  tabs.forEach(tab => {
-    const tabEl = document.createElement('div');
-    tabEl.className = `tab-item ${tab.id === activeTabId ? 'active' : ''}`;
-    tabEl.innerHTML = `
-      <span style="overflow:hidden; text-overflow:ellipsis;">${tab.title}</span>
-      <button class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</button>
-    `;
-    tabEl.addEventListener('click', () => switchTab(tab.id));
-    tabBar.insertBefore(tabEl, addTabBtn);
-  });
-}
-
-function switchTab(id) {
-  activeTabId = id;
-  const tab = tabs.find(t => t.id === id);
-  if (tab) {
-    proxyInput.value = tab.url;
-    chatPageView.classList.remove('active');
-    bottomNavWrapper.classList.remove('hidden');
-    document.getElementById('sb-chat').classList.remove('active');
-    document.getElementById('sb-home').classList.add('active');
-
-    if (tab.src === 'about:blank' || !tab.url) {
-      proxyViewer.classList.remove('active');
-      homeView.classList.remove('hidden');
-      proxyIframe1.src = 'about:blank';
-    } else {
-      homeView.classList.add('hidden');
-      proxyViewer.classList.add('active');
-      proxyIframe1.src = tab.src;
-    }
-  }
-  renderTabs();
-}
-
-function addTab(url = '', src = 'about:blank', title = 'New Tab') {
-  const newId = Date.now();
-  tabs.push({ id: newId, title, url, src });
-  switchTab(newId);
-}
-
-window.closeTab = function(id) {
-  if (tabs.length === 1) {
-    tabs[0] = { id: Date.now(), title: 'New Tab', url: '', src: 'about:blank' };
-    switchTab(tabs[0].id);
-    return;
-  }
-  tabs = tabs.filter(t => t.id !== id);
-  if (activeTabId === id) switchTab(tabs[tabs.length - 1].id);
-  else renderTabs();
-};
-
-addTabBtn.addEventListener('click', () => addTab());
-
-document.getElementById('sb-home').addEventListener('click', () => {
-  chatPageView.classList.remove('active');
-  bottomNavWrapper.classList.remove('hidden');
-  proxyViewer.classList.remove('active');
-  homeView.classList.remove('hidden');
-  document.getElementById('sb-home').classList.add('active');
-  document.getElementById('sb-chat').classList.remove('active');
-});
-
-// Panic key (\)
-document.addEventListener('keydown', (e) => {
-  if (e.key === '\\') {
-    e.preventDefault();
-    document.body.style.display = document.body.style.display === 'none' ? 'block' : 'none';
-  }
-});
-
-window.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'pryra-navigate') {
-    const targetUrl = event.data.url;
-    if (targetUrl && !targetUrl.includes('/api/proxy?url=')) {
-      proxyInput.value = targetUrl;
-      const currentTab = tabs.find(t => t.id === activeTabId);
-      if (currentTab) {
-        currentTab.url = targetUrl;
-        try { currentTab.title = new URL(targetUrl).hostname; } catch(e) {}
-        renderTabs();
-      }
-    }
-  }
-});
-
-let currentMode = 'fast';
-let currentDevice = 'desktop';
-let currentVpn = 'us-east';
-
-const modeToggleBtn = document.getElementById('mode-toggle-btn');
-const modeMenu = document.getElementById('mode-menu');
-const currentModeLabel = document.getElementById('current-mode-label');
-
-const deviceToggleBtn = document.getElementById('device-toggle-btn');
-const deviceMenu = document.getElementById('device-menu');
-const currentDeviceLabel = document.getElementById('current-device-label');
-
-const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
-const vpnMenu = document.getElementById('vpn-menu');
-const currentVpnLabel = document.getElementById('current-vpn-label');
-
-modeToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); modeMenu.classList.toggle('active'); });
-deviceToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); vpnMenu.classList.remove('active'); deviceMenu.classList.toggle('active'); });
-vpnToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.toggle('active'); });
-
-document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); });
-
-document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentMode = btn.getAttribute('data-mode'); currentModeLabel.textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1); modeMenu.classList.remove('active'); });
-});
-document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentDevice = btn.getAttribute('data-device'); currentDeviceLabel.textContent = btn.querySelector('span').textContent.split(' ')[0]; deviceMenu.classList.remove('active'); });
-});
-document.querySelectorAll('#vpn-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => { e.stopPropagation(); currentVpn = btn.getAttribute('data-vpn'); currentVpnLabel.textContent = btn.querySelector('span').textContent.split(' ')[0]; vpnMenu.classList.remove('active'); });
-});
-
-function processUrl(rawInput) {
-  let query = rawInput.trim();
-  if (!query) return '';
-  if (!query.includes('.') || query.includes(' ')) return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
-  if (/^https?:\/\//i.test(query)) return query;
-  return 'https://' + query;
-}
-
-window.launchProxy = function(rawInput) {
-  const targetUrl = processUrl(rawInput);
-  if (!targetUrl) return;
-
-  showSpinner();
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
-  
-  const currentTab = tabs.find(t => t.id === activeTabId);
-  if (currentTab) {
-    currentTab.url = targetUrl;
-    currentTab.src = proxyUrl;
-    try { currentTab.title = new URL(targetUrl).hostname; } catch(e) { currentTab.title = targetUrl; }
-  }
-
-  proxyInput.value = targetUrl;
-  homeView.classList.add('hidden');
-  chatPageView.classList.remove('active');
-  bottomNavWrapper.classList.remove('hidden');
-  proxyViewer.classList.add('active');
-
-  proxyIframe1.src = proxyUrl;
-  renderTabs();
-};
-
-document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
-proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
-
-/* --- Full Page Chat System with Typewriter & Anti-Spam --- */
-const sbChat = document.getElementById('sb-chat');
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const chatSend = document.getElementById('chat-send');
-let chatPoll = null;
-let lastMessageTime = 0;
-let lastKnownMessageCount = 0;
-
-sbChat.addEventListener('click', () => {
-  homeView.classList.add('hidden');
-  proxyViewer.classList.remove('active');
-  chatPageView.classList.add('active');
-  bottomNavWrapper.classList.add('hidden'); // Hide search bar on chat view
-  document.getElementById('sb-home').classList.remove('active');
-  sbChat.classList.add('active');
-  fetchChat(true);
-  if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 5000); // Poll every 5s or instant on new message
-});
-
-async function fetchChat(forceScroll = false) {
-  try {
-    const res = await fetch('/api/chat');
-    if (!res.ok) return;
-    const data = await res.json();
-    
-    if (data.length !== lastKnownMessageCount || forceScroll) {
-      const hasNewMessages = data.length > lastKnownMessageCount;
-      lastKnownMessageCount = data.length;
-
-      chatMessages.innerHTML = data.map((m, index) => {
-        const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image/') || m.pfp.startsWith('data:image'));
-        const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-        const isLatest = hasNewMessages && index === data.length - 1;
-        const msgId = `msg-text-${index}`;
-
-        return `
-          <div class="chat-msg-item">
-            <div class="chat-msg-pfp" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${pfpHTML}</div>
-            <div class="chat-msg-content">
-              <div class="chat-msg-header">
-                <span class="chat-msg-username" style="color: ${m.color || '#ffffff'};" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${escapeHtml(m.user)}</span>
-                <span class="chat-msg-time">${m.time}</span>
-              </div>
-              <div class="chat-msg-text" id="${msgId}">${isLatest ? '' : escapeHtml(m.text)}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // Apply typewriter effect to the newest message if newly received
-      if (hasNewMessages && data.length > 0) {
-        const latestMsg = data[data.length - 1];
-        typewriterEffect(`msg-text-${data.length - 1}`, latestMsg.text);
-      }
-
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  } catch (e) {}
-}
-
-function typewriterEffect(elementId, text) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  el.textContent = '';
-  let i = 0;
-  const speed = 15; // Fast typewriter speed (ms per char)
-  function type() {
-    if (i < text.length) {
-      el.textContent += text.charAt(i);
-      i++;
-      setTimeout(type, speed);
-    }
-  }
-  type();
-}
-
-async function sendChat() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  // Anti-spam check (2 second cooldown)
-  const now = Date.now();
-  if (now - lastMessageTime < 2000) {
-    alert('Please wait 2 seconds before sending another message (Anti-Spam).');
-    return;
-  }
-  lastMessageTime = now;
-
-  const user = localStorage.getItem('pryra_user_name') || 'PryraUser';
-  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
-  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
-  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
+  if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, bio, color })
-    });
-    if (res.ok) { chatInput.value = ''; fetchChat(true); }
+    targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
-}
 
-chatSend.addEventListener('click', sendChat);
-chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
-
-function escapeHtml(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-/* --- User Dashboard Modal --- */
-const userDashboardModal = document.getElementById('user-dashboard-modal');
-document.getElementById('close-user-dashboard').addEventListener('click', () => userDashboardModal.classList.add('hidden'));
-
-window.openUserDashboard = function(encodedUser, encodedPfp, encodedBio) {
-  const username = decodeURIComponent(encodedUser);
-  const pfp = decodeURIComponent(encodedPfp);
-  const bio = decodeURIComponent(encodedBio);
-
-  document.getElementById('ud-username').textContent = username;
-  document.getElementById('ud-bio').textContent = bio;
-
-  const pfpContainer = document.getElementById('ud-pfp-container');
-  const isImg = pfp && (pfp.startsWith('http') || pfp.startsWith('data:image/') || pfp.startsWith('data:image'));
-  if (isImg) {
-    pfpContainer.innerHTML = `<img src="${pfp}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />`;
-  } else {
-    pfpContainer.textContent = pfp || username.charAt(0).toUpperCase();
+  while (targetUrl.includes('/api/proxy?url=')) {
+    try {
+      const parts = targetUrl.split('/api/proxy?url=');
+      targetUrl = decodeURIComponent(parts[parts.length - 1]);
+    } catch (e) {
+      break;
+    }
   }
 
-  userDashboardModal.classList.remove('hidden');
-};
-
-/* --- Themes & Customization --- */
-const DARK_THEMES = {
-  obsidian: { bg: '#000000', panel: '#0a0a0a', border: '#262626', accent: '#ffffff', hover: '#1a1a1a' },
-  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
-  emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
-  amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
-  amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
-  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' }
-};
-
-function applyTheme(key) {
-  const t = DARK_THEMES[key] || DARK_THEMES.obsidian;
-  const root = document.documentElement;
-  root.style.setProperty('--bg', t.bg);
-  root.style.setProperty('--panel', t.panel);
-  root.style.setProperty('--border', t.border);
-  root.style.setProperty('--accent', t.accent);
-  root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('pryra_theme', key);
-}
-
-document.querySelectorAll('.theme-card').forEach(card => {
-  card.addEventListener('click', () => {
-    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
-    card.classList.add('active');
-    applyTheme(card.getAttribute('data-theme'));
-  });
-});
-applyTheme(localStorage.getItem('pryra_theme') || 'obsidian');
-
-const bgSelect = document.getElementById('bg-style-select');
-bgSelect.value = localStorage.getItem('pryra_bg_style') || 'stars';
-bgSelect.addEventListener('change', () => {
-  localStorage.setItem('pryra_bg_style', bgSelect.value);
-  initBackground(bgSelect.value);
-});
-
-const searchSelect = document.getElementById('search-style-select');
-const searchContainer = document.getElementById('search-pill-container');
-searchSelect.value = localStorage.getItem('pryra_search_style') || 'pill';
-function applySearchStyle(style) {
-  searchContainer.className = 'bottom-nav-pill style-' + style;
-}
-searchSelect.addEventListener('change', () => {
-  localStorage.setItem('pryra_search_style', searchSelect.value);
-  applySearchStyle(searchSelect.value);
-});
-applySearchStyle(localStorage.getItem('pryra_search_style') || 'pill');
-
-/* --- Modals Handling --- */
-const settingsModal = document.getElementById('settings-modal');
-const profileModal = document.getElementById('profile-modal');
-const bookmarksModal = document.getElementById('bookmarks-modal');
-
-document.getElementById('sb-settings').addEventListener('click', () => settingsModal.classList.remove('hidden'));
-document.getElementById('close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
-document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
-
-document.getElementById('sb-bookmarks').addEventListener('click', () => bookmarksModal.classList.remove('hidden'));
-document.getElementById('close-bookmarks').addEventListener('click', () => bookmarksModal.classList.add('hidden'));
-
-document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
-document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
-
-// Profile & Customization Logic
-const profileNameInput = document.getElementById('profile-name');
-const profileBioInput = document.getElementById('profile-bio');
-const profilePfpInput = document.getElementById('profile-pfp');
-const profileFileInput = document.getElementById('profile-file-input');
-const profileFontSelect = document.getElementById('profile-font');
-const profileColorInput = document.getElementById('profile-color');
-const pfpInitial = document.getElementById('pfp-initial');
-const pfpImg = document.getElementById('pfp-img');
-
-function loadProfile() {
-  const name = localStorage.getItem('pryra_user_name') || 'PryraUser';
-  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
-  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
-  const font = localStorage.getItem('pryra_chat_font') || "'Inter', Arial, sans-serif";
-  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
-
-  profileNameInput.value = name;
-  profileBioInput.value = bio;
-  if (!pfp.startsWith('data:')) profilePfpInput.value = pfp;
-  profileFontSelect.value = font;
-  profileColorInput.value = color;
-
-  document.documentElement.style.setProperty('--chat-font', font);
-
-  if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
-    pfpImg.src = pfp;
-    pfpImg.classList.remove('hidden');
-    pfpInitial.classList.add('hidden');
-  } else {
-    pfpInitial.textContent = name.charAt(0).toUpperCase();
-    pfpImg.classList.add('hidden');
-    pfpInitial.classList.remove('hidden');
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    try {
+      targetUrl = new URL(targetUrl, 'https://example.com').href;
+    } catch (e) {
+      return res.status(400).send('Invalid target URL parameter.');
+    }
   }
-}
 
-profileFileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(uploadEvent) {
-      profilePfpInput.value = uploadEvent.target.result;
+  const UA_MAP = {
+    desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+    xbox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edge/110.0.1587.57',
+    playstation: 'Mozilla/5.0 (PlayStation 5 3.20) AppleWebKit/605.1.15 (KHTML, like Gecko)',
+    smarttv: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.100 TV Safari/537.36'
+  };
+
+  const selectedUA = UA_MAP[device] || UA_MAP.desktop;
+
+  try {
+    const parsedUrl = new URL(targetUrl);
+    const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+    const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
+
+    const headers = {
+      'user-agent': selectedUA,
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'accept-language': 'en-US,en;q=0.9',
+      'accept-encoding': 'gzip, deflate, br',
+      'referer': `${baseUrl}/`,
+      'origin': baseUrl,
+      'x-forwarded-for': vpnXForwarded,
+      'x-real-ip': vpnXForwarded,
+      'upgrade-insecure-requests': '1',
+      'dnt': '1'
     };
-    reader.readAsDataURL(file);
-  }
-});
 
-document.getElementById('save-profile').addEventListener('click', () => {
-  const name = profileNameInput.value.trim() || 'PryraUser';
-  const bio = profileBioInput.value.trim() || 'Exploring the web with Pryra.';
-  const pfp = profilePfpInput.value.trim() || '⭐';
-  const font = profileFontSelect.value;
-  const color = profileColorInput.value;
+    if (req.headers.cookie) headers.cookie = req.headers.cookie;
+    if (req.headers['authorization']) headers.authorization = req.headers['authorization'];
+    if (req.headers['range']) headers.range = req.headers['range'];
 
-  localStorage.setItem('pryra_user_name', name);
-  localStorage.setItem('pryra_user_bio', bio);
-  localStorage.setItem('pryra_user_pfp', pfp);
-  localStorage.setItem('pryra_chat_font', font);
-  localStorage.setItem('pryra_user_color', color);
+    const fetchOptions = {
+      method: req.method,
+      headers,
+      redirect: 'manual',
+      compress: true
+    };
 
-  loadProfile();
-  profileModal.classList.add('hidden');
-});
-loadProfile();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
+      if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+      if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
+    }
 
-/* --- Dynamic Background Canvas Rendering --- */
-const bgCanvas = document.getElementById('bg-stars');
-const bgCtx = bgCanvas.getContext('2d');
-let animationFrameId = null;
+    const response = await fetch(targetUrl, fetchOptions);
 
-function initBackground(style) {
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
-
-  if (style === 'matrix') {
-    const letters = 'PRYRA010101XYZ';
-    const fontSize = 14;
-    const columns = Math.floor(bgCanvas.width / fontSize);
-    const drops = Array(columns).fill(1);
-
-    function drawMatrix() {
-      bgCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = '#ffffff';
-      bgCtx.font = fontSize + 'px monospace';
-      for (let i = 0; i < drops.length; i++) {
-        const text = letters.charAt(Math.floor(Math.random() * letters.length));
-        bgCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > bgCanvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const locationHeader = response.headers.get('location');
+      if (locationHeader) {
+        const absoluteRedirectUrl = new URL(locationHeader, baseUrl).href;
+        const proxiedRedirect = `/api/proxy?url=${encodeURIComponent(absoluteRedirectUrl)}&mode=${mode}&device=${device}&vpn=${vpn}`;
+        return res.redirect(302, proxiedRedirect);
       }
-      animationFrameId = requestAnimationFrame(drawMatrix);
     }
-    drawMatrix();
-  } else if (style === 'void') {
-    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-  } else {
-    let stars = [];
-    for (let i = 0; i < 120; i++) {
-      stars.push({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2.5 + 0.8, speed: Math.random() * 0.3 + 0.05, rot: Math.random() * Math.PI, rotSpeed: (Math.random() - 0.5) * 0.02 });
+
+    const rawContentType = response.headers.get('content-type') || 'application/octet-stream';
+    const contentType = rawContentType.toLowerCase();
+
+    try { res.setHeader('content-type', rawContentType); } catch (e) {}
+    if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
+    if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
+
+    res.setHeader('x-proxied-by', 'verbo-quantum-core');
+    res.setHeader('x-target-url', targetUrl);
+    res.setHeader('x-target-origin', baseUrl);
+    res.setHeader('x-vpn-node', vpn);
+
+    const setCookie = response.headers.get('set-cookie');
+    if (setCookie) {
+      try {
+        const sanitizedCookie = setCookie
+          .replace(/;\s*Domain=[^;]+/gi, '')
+          .replace(/;\s*Secure/gi, '')
+          .replace(/;\s*SameSite=[^;]+/gi, '; SameSite=None');
+        res.setHeader('set-cookie', sanitizedCookie);
+      } catch (e) {}
     }
-    function drawStars() {
-      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = '#ffffff';
-      stars.forEach(s => {
-        s.x += s.speed; s.rot += s.rotSpeed;
-        if (s.x > bgCanvas.width) s.x = 0;
-        bgCtx.save(); bgCtx.translate(s.x, s.y); bgCtx.rotate(s.rot);
-        bgCtx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size);
-        bgCtx.restore();
-      });
-      animationFrameId = requestAnimationFrame(drawStars);
+
+    const headersToRemove = [
+      'x-frame-options',
+      'content-security-policy',
+      'content-security-policy-report-only',
+      'x-content-type-options',
+      'cross-origin-opener-policy',
+      'cross-origin-embedder-policy',
+      'cross-origin-resource-policy',
+      'permissions-policy',
+      'strict-transport-security'
+    ];
+
+    headersToRemove.forEach(h => {
+      try { res.removeHeader(h); } catch (e) {}
+    });
+
+    const isHTML = contentType.includes('text/html') || contentType.includes('application/xhtml+xml');
+    const isCSS = contentType.includes('text/css') || contentType.includes('css');
+    const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
+
+    function proxifyUrl(val) {
+      try {
+        if (!val || typeof val !== 'string') return val;
+        let trimmed = val.trim();
+        if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
+        if (trimmed.includes('/api/proxy?url=')) return val;
+        
+        const absUrl = new URL(trimmed, baseUrl).href;
+        return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}&vpn=${vpn}`;
+      } catch (e) {
+        return val;
+      }
     }
-    drawStars();
+
+    if (!isHTML && !isCSS && !isJS) {
+      if (response.body && typeof response.body.pipe === 'function') {
+        try { res.removeHeader('content-length'); } catch (e) {}
+        return response.body.pipe(res);
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      try { res.removeHeader('content-length'); } catch (e) {}
+      return res.status(200).send(buffer);
+    }
+
+    let body = await response.text();
+
+    if (isCSS) {
+      body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
+      body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
+      try { res.removeHeader('content-length'); } catch (e) {}
+      return res.status(200).send(body);
+    }
+
+    if (isJS) {
+      body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
+      try { res.removeHeader('content-length'); } catch (e) {}
+      return res.status(200).send(body);
+    }
+
+    if (isHTML) {
+      body = body
+        .replace(/integrity="[^"]*"/gi, '')
+        .replace(/nonce="[^"]*"/gi, '')
+        .replace(/crossorigin="[^"]*"/gi, '')
+        .replace(/http:\/\//gi, 'https://');
+
+      const injectionScript = `
+        <base href="${baseUrl}/">
+        <script>
+          (function() {
+            const proxyBase = '/api/proxy?mode=${mode}&device=${device}&vpn=${vpn}&url=';
+            function proxify(url) {
+              try {
+                if (!url || typeof url !== 'string') return url;
+                let trimmed = url.trim();
+                if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
+                if (trimmed.includes('/api/proxy?url=')) return url;
+                const abs = new URL(trimmed, document.baseURI).href;
+                
+                // Notify parent dashboard to update link bar
+                if (window.parent && window.parent !== window) {
+                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
+                }
+
+                return proxyBase + encodeURIComponent(abs);
+              } catch(e) { return url; }
+            }
+
+            document.addEventListener('click', function(e) {
+              const anchor = e.target.closest('a, area');
+              if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
+                e.preventDefault();
+                window.location.href = proxify(anchor.href);
+              }
+            }, true);
+
+            document.addEventListener('submit', function(e) {
+              const form = e.target;
+              if (form && form.action) {
+                form.action = proxify(form.action);
+              }
+            }, true);
+
+            try {
+              const originalAssign = window.location.assign;
+              window.location.assign = function(url) {
+                return originalAssign.call(window.location, proxify(url));
+              };
+
+              const originalReplace = window.location.replace;
+              window.location.replace = function(url) {
+                return originalReplace.call(window.location, proxify(url));
+              };
+
+              const loc = window.location;
+              if (loc) {
+                Object.defineProperty(window, 'location', {
+                  get: function() { return loc; },
+                  set: function(val) {
+                    loc.href = proxify(val);
+                  },
+                  configurable: true
+                });
+              }
+            } catch(err) {}
+          })();
+        </script>
+      `;
+
+      if (body.includes('<head>')) {
+        body = body.replace('<head>', `<head>${injectionScript}`);
+      } else if (body.includes('<head ')) {
+        body = body.replace(/<head(.*?)>/i, (m, attrs) => `<head${attrs}>${injectionScript}`);
+      } else {
+        body = injectionScript + body;
+      }
+    }
+
+    try { res.removeHeader('content-length'); } catch (e) {}
+    return res.status(200).send(body);
+
+  } catch (error) {
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
+        <h2>proxy connection error</h2>
+        <p>failed to retrieve resource: ${error.message}</p>
+        <p><em>ill fix this after school maybe</em></p>
+      </body>
+      </html>
+    `);
   }
 }
-initBackground(localStorage.getItem('pryra_bg_style') || 'stars');
-
-// Center Star Canvas Logo
-const starCanvas = document.getElementById('star-canvas');
-const starCtx = starCanvas.getContext('2d');
-let angle = 0, floatTime = 0;
-function drawStarLogo() {
-  starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-  starCtx.save();
-  floatTime += 0.01;
-  starCtx.translate(starCanvas.width / 2 + Math.sin(floatTime) * 5, starCanvas.height / 2 + Math.cos(floatTime * 0.8) * 5);
-  starCtx.rotate(angle);
-  starCtx.fillStyle = '#ffffff';
-  starCtx.beginPath();
-  for (let i = 0; i < 4; i++) { starCtx.lineTo(0, -95); starCtx.rotate(Math.PI / 4); starCtx.lineTo(0, -38); starCtx.rotate(Math.PI / 4); }
-  starCtx.closePath(); starCtx.fill();
-  starCtx.restore();
-  angle += 0.0015;
-  requestAnimationFrame(drawStarLogo);
-}
-drawStarLogo();
-renderTabs();
