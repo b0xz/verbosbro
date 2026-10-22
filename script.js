@@ -4,6 +4,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Auto-assign default verbosuser-<random numbers> on first visit
+if (!localStorage.getItem('verbos_user_name')) {
+  const randNum = Math.floor(1000 + Math.random() * 9000);
+  localStorage.setItem('verbos_user_name', 'verbosuser-' + randNum);
+  localStorage.setItem('verbos_user_bio', 'Exploring the web with Verbos.');
+  localStorage.setItem('verbos_user_pfp', '⭐');
+  localStorage.setItem('verbos_user_color', '#ffffff');
+  localStorage.setItem('verbos_chat_font', 'Arial, sans-serif');
+}
+
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
 let currentChatRoom = 'global';
@@ -15,6 +25,8 @@ const proxyInput = document.getElementById('proxy-input');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
+const gamesPageView = document.getElementById('games-page-view');
+const settingsPageView = document.getElementById('settings-page-view');
 const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
 const loadingSpinner = document.getElementById('loading-spinner');
@@ -43,9 +55,8 @@ function switchTab(id) {
   const tab = tabs.find(t => t.id === id);
   if (tab) {
     proxyInput.value = tab.url;
-    chatPageView.classList.remove('active');
+    hideAllPages();
     bottomNavWrapper.classList.remove('hidden');
-    document.getElementById('sb-chat').classList.remove('active');
     document.getElementById('sb-home').classList.add('active');
 
     if (tab.src === 'about:blank' || !tab.url) {
@@ -80,13 +91,99 @@ window.closeTab = function(id) {
 
 addTabBtn.addEventListener('click', () => addTab());
 
-document.getElementById('sb-home').addEventListener('click', () => {
-  chatPageView.classList.remove('active');
-  bottomNavWrapper.classList.remove('hidden');
+function hideAllPages() {
+  homeView.classList.add('hidden');
   proxyViewer.classList.remove('active');
-  homeView.classList.remove('hidden');
-  document.getElementById('sb-home').classList.add('active');
-  document.getElementById('sb-chat').classList.remove('active');
+  chatPageView.classList.remove('active');
+  gamesPageView.classList.remove('active');
+  settingsPageView.classList.remove('active');
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+}
+
+/* --- Pixel Dust & Randomized Swipe Transitions --- */
+function triggerPixelDustTransition(callback) {
+  const canvas = document.getElementById('dust-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.display = 'block';
+
+  const directions = ['left', 'right', 'up', 'down'];
+  const chosenDir = directions[Math.floor(Math.random() * directions.length)];
+
+  let particles = [];
+  for (let i = 0; i < 300; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: chosenDir === 'left' ? -Math.random() * 25 - 5 : chosenDir === 'right' ? Math.random() * 25 + 5 : (Math.random() - 0.5) * 15,
+      vy: chosenDir === 'up' ? -Math.random() * 25 - 5 : chosenDir === 'down' ? Math.random() * 25 + 5 : (Math.random() - 0.5) * 15,
+      size: Math.random() * 4 + 1,
+      alpha: Math.random() * 0.8 + 0.2
+    });
+  }
+
+  let frame = 0;
+  function animateDust() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      ctx.globalAlpha = p.alpha;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    });
+
+    frame++;
+    if (frame === 15) {
+      callback();
+    }
+    if (frame < 30) {
+      requestAnimationFrame(animateDust);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'none';
+    }
+  }
+  animateDust();
+}
+
+document.getElementById('sb-home').addEventListener('click', () => {
+  triggerPixelDustTransition(() => {
+    hideAllPages();
+    bottomNavWrapper.classList.remove('hidden');
+    homeView.classList.remove('hidden');
+    document.getElementById('sb-home').classList.add('active');
+  });
+});
+
+document.getElementById('sb-chat').addEventListener('click', () => {
+  triggerPixelDustTransition(() => {
+    hideAllPages();
+    chatPageView.classList.add('active');
+    bottomNavWrapper.classList.add('hidden');
+    document.getElementById('sb-chat').classList.add('active');
+    fetchChat(true);
+    if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 3000);
+  });
+});
+
+document.getElementById('sb-games').addEventListener('click', () => {
+  triggerPixelDustTransition(() => {
+    hideAllPages();
+    gamesPageView.classList.add('active');
+    bottomNavWrapper.classList.add('hidden');
+    document.getElementById('sb-games').classList.add('active');
+  });
+});
+
+document.getElementById('sb-settings').addEventListener('click', () => {
+  triggerPixelDustTransition(() => {
+    hideAllPages();
+    settingsPageView.classList.add('active');
+    bottomNavWrapper.classList.add('hidden');
+    document.getElementById('sb-settings').classList.add('active');
+  });
 });
 
 // Panic Key (\)
@@ -132,7 +229,7 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   showSpinner();
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab) {
@@ -142,8 +239,7 @@ window.launchProxy = function(rawInput) {
   }
 
   proxyInput.value = targetUrl;
-  homeView.classList.add('hidden');
-  chatPageView.classList.remove('active');
+  hideAllPages();
   bottomNavWrapper.classList.remove('hidden');
   proxyViewer.classList.add('active');
 
@@ -154,26 +250,13 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Full Page Chat System with XSS Safety & DMs --- */
-const sbChat = document.getElementById('sb-chat');
+/* --- Chat System --- */
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
 let lastMessageTime = 0;
 let lastKnownCount = 0;
-
-sbChat.addEventListener('click', () => {
-  homeView.classList.add('hidden');
-  proxyViewer.classList.remove('active');
-  chatPageView.classList.add('active');
-  bottomNavWrapper.classList.add('hidden');
-  document.getElementById('sb-home').classList.remove('active');
-  sbChat.classList.add('active');
-  fetchChat(true);
-  
-  if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 3000);
-});
 
 document.querySelectorAll('.room-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -191,7 +274,6 @@ async function fetchChat(forceScroll = false) {
     if (!res.ok) return;
     const data = await res.json();
     
-    // Filter messages based on active room
     const filteredData = data.filter(m => {
       if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
       return (m.recipient === currentChatRoom && m.user === localStorage.getItem('verbos_user_name')) ||
@@ -237,7 +319,6 @@ async function fetchChat(forceScroll = false) {
         const textDiv = document.createElement('div');
         textDiv.className = 'chat-msg-text';
         textDiv.style.fontFamily = msgFont;
-        // SECURE XSS FIX: textContent guarantees text is never interpreted as HTML/scripts
         textDiv.textContent = m.text;
 
         contentDiv.appendChild(headerDiv);
@@ -258,8 +339,7 @@ async function sendChat() {
   if (!text) return;
 
   const now = Date.now();
-  if (now - lastMessageTime < 2000) {
-    alert('Please wait 2 seconds before sending another message.');
+  if (now - lastMessageTime < 1500) {
     return;
   }
   lastMessageTime = now;
@@ -309,13 +389,12 @@ window.openUserDashboard = function(username, pfp, bio) {
 
 document.getElementById('ud-message-btn').addEventListener('click', () => {
   if (!selectedDashboardUser) return;
-  const myName = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  const myName = localStorage.getItem('verbos_user_name');
   if (selectedDashboardUser === myName) {
     alert("You cannot message yourself!");
     return;
   }
 
-  // Add DM channel if not present
   if (!dmUsers.includes(selectedDashboardUser)) {
     dmUsers.push(selectedDashboardUser);
     renderDmList();
@@ -346,7 +425,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   const friendName = prompt("Enter username to start a Direct Message:");
   if (!friendName) return;
   const clean = friendName.trim();
-  const myName = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  const myName = localStorage.getItem('verbos_user_name');
   if (clean === myName) {
     alert("That's you!");
     return;
@@ -408,13 +487,8 @@ searchSelect.addEventListener('change', () => {
 applySearchStyle(localStorage.getItem('verbos_search_style') || 'pill');
 
 /* --- Modals Handling --- */
-const settingsModal = document.getElementById('settings-modal');
 const profileModal = document.getElementById('profile-modal');
 const bookmarksModal = document.getElementById('bookmarks-modal');
-
-document.getElementById('sb-settings').addEventListener('click', () => settingsModal.classList.remove('hidden'));
-document.getElementById('close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
-document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
 
 document.getElementById('sb-bookmarks').addEventListener('click', () => bookmarksModal.classList.remove('hidden'));
 document.getElementById('close-bookmarks').addEventListener('click', () => bookmarksModal.classList.add('hidden'));
@@ -433,11 +507,11 @@ const pfpInitial = document.getElementById('pfp-initial');
 const pfpImg = document.getElementById('pfp-img');
 
 function loadProfile() {
-  const name = localStorage.getItem('verbos_user_name') || 'VerbosUser';
-  const bio = localStorage.getItem('verbos_user_bio') || 'Exploring the web with Verbos.';
-  const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
-  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
-  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
+  const name = localStorage.getItem('verbos_user_name');
+  const bio = localStorage.getItem('verbos_user_bio');
+  const pfp = localStorage.getItem('verbos_user_pfp');
+  const font = localStorage.getItem('verbos_chat_font');
+  const color = localStorage.getItem('verbos_user_color');
 
   profileNameInput.value = name;
   profileBioInput.value = bio;
@@ -472,9 +546,12 @@ profileFileInput.addEventListener('change', (e) => {
 });
 
 document.getElementById('save-profile').addEventListener('click', async () => {
-  const name = profileNameInput.value.trim() || 'VerbosUser';
+  const name = profileNameInput.value.trim();
+  if (!name) {
+    alert("Display name cannot be empty!");
+    return;
+  }
   
-  // Verify unique display name on backend
   try {
     const res = await fetch('/api/chat?type=users');
     if (res.ok) {
