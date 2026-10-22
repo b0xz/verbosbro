@@ -173,12 +173,13 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Full Page Chat System --- */
+/* --- Full Page Chat System with Anti-Spam & Image Fix --- */
 const sbChat = document.getElementById('sb-chat');
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
+let lastMessageTime = 0;
 
 sbChat.addEventListener('click', () => {
   homeView.classList.add('hidden');
@@ -196,7 +197,7 @@ async function fetchChat() {
     if (!res.ok) return;
     const data = await res.json();
     chatMessages.innerHTML = data.map(m => {
-      const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:'));
+      const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image/'));
       const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
       return `
         <div class="chat-msg-item">
@@ -217,10 +218,20 @@ async function fetchChat() {
 
 async function sendChat() {
   const text = chatInput.value.trim();
+  if (!text) return;
+
+  // Anti-spam check (2 second cooldown)
+  const now = Date.now();
+  if (now - lastMessageTime < 2000) {
+    alert('Please wait 2 seconds before sending another message (Anti-Spam).');
+    return;
+  }
+  lastMessageTime = now;
+
   const user = localStorage.getItem('pryra_user_name') || 'PryraUser';
   const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
   const color = localStorage.getItem('pryra_user_color') || '#ffffff';
-  if (!text) return;
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -230,6 +241,7 @@ async function sendChat() {
     if (res.ok) { chatInput.value = ''; fetchChat(); }
   } catch (e) {}
 }
+
 chatSend.addEventListener('click', sendChat);
 chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
 
