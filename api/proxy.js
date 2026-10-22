@@ -1,3 +1,5 @@
+import { Readable } from 'stream';
+
 export default async function handler(req, res) {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
@@ -82,10 +84,11 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
+    // Enhanced Redirect Handling: Intercept 3xx and rewrite Location
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
-        const absoluteRedirectUrl = new URL(locationHeader, baseUrl).href;
+        const absoluteRedirectUrl = new URL(locationHeader, targetUrl).href;
         const proxiedRedirect = `/api/proxy?url=${encodeURIComponent(absoluteRedirectUrl)}&mode=${mode}&device=${device}&vpn=${vpn}`;
         return res.redirect(302, proxiedRedirect);
       }
@@ -98,7 +101,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core');
+    res.setHeader('x-proxied-by', 'verbos-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -141,7 +144,7 @@ export default async function handler(req, res) {
         if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
         if (trimmed.includes('/api/proxy?url=')) return val;
         
-        const absUrl = new URL(trimmed, baseUrl).href;
+        const absUrl = new URL(trimmed, targetUrl).href;
         return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}&vpn=${vpn}`;
       } catch (e) {
         return val;
@@ -149,13 +152,24 @@ export default async function handler(req, res) {
     }
 
     if (!isHTML && !isCSS && !isJS) {
-      if (response.body && typeof response.body.pipe === 'function') {
-        try { res.removeHeader('content-length'); } catch (e) {}
-        return response.body.pipe(res);
-      }
-      const buffer = Buffer.from(await response.arrayBuffer());
+      res.status(response.status);
       try { res.removeHeader('content-length'); } catch (e) {}
-      return res.status(200).send(buffer);
+      
+      if (response.body) {
+        try {
+          const reader = response.body.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(value);
+          }
+          return res.end();
+        } catch (streamErr) {
+          const buffer = Buffer.from(await response.arrayBuffer());
+          return res.send(buffer);
+        }
+      }
+      return res.end();
     }
 
     let body = await response.text();
@@ -193,7 +207,6 @@ export default async function handler(req, res) {
                 if (trimmed.includes('/api/proxy?url=')) return url;
                 const abs = new URL(trimmed, document.baseURI).href;
                 
-                // Notify parent dashboard to update link bar
                 if (window.parent && window.parent !== window) {
                   window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
                 }
