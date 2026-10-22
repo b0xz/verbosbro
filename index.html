@@ -85,36 +85,35 @@
 
     .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; }
 
-    /* Full Page Chat View with Typewriter Animation */
-    @keyframes typeEffect {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    /* Full Page Chat View */
     .chat-page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
-      padding: 20px calc(20px * var(--gui-scale)) calc(90px * var(--gui-scale)) calc(20px * var(--gui-scale)); gap: 14px;
+      padding: 20px calc(20px * var(--gui-scale)) calc(30px * var(--gui-scale)) calc(20px * var(--gui-scale)); gap: 14px;
     }
     .chat-page-view.active { display: flex; }
     .chat-messages-container {
       flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; overflow-y: auto;
       display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
-    .chat-msg-item { display: flex; gap: 12px; align-items: flex-start; animation: typeEffect 0.3s ease-out forwards; }
-    .chat-msg-pfp { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .chat-msg-item { display: flex; gap: 12px; align-items: flex-start; }
+    .chat-msg-pfp { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; cursor: pointer; }
     .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 3px; }
     .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
-    .chat-msg-username { font-weight: bold; font-size: 0.9rem; }
+    .chat-msg-username { font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+    .chat-msg-username:hover { text-decoration: underline; }
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
     .chat-msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; font-family: var(--chat-font); }
-    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 6px 16px; }
+    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 6px 16px; margin-bottom: 10px; }
 
     /* Bottom Pill & Nav Controls */
     .bottom-nav-wrapper {
       position: fixed; bottom: calc(20px * var(--gui-scale)); left: calc(50% + 32px * var(--gui-scale)); transform: translateX(-50%);
       width: 90%; max-width: calc(750px * var(--gui-scale)); z-index: 1300; display: flex; flex-direction: column; gap: 6px; align-items: center;
+      transition: opacity 0.2s ease, transform 0.2s ease;
     }
+    .bottom-nav-wrapper.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
     .bottom-nav-pill {
       background: var(--panel); border: 1px solid var(--border); border-radius: calc(35px * var(--gui-scale));
       padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
@@ -259,8 +258,26 @@
     </div>
   </div>
 
+  <!-- User Dashboard Modal -->
+  <div class="modal-overlay hidden" id="user-dashboard-modal">
+    <div class="modal-box" style="align-items: center; text-align: center;">
+      <div class="modal-header" style="width: 100%;">
+        <span>User Profile</span>
+        <button class="nav-btn" id="close-user-dashboard">×</button>
+      </div>
+      <div id="ud-pfp-container" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 2rem; margin-top: 10px;">
+        <!-- Avatar preview -->
+      </div>
+      <h3 id="ud-username" style="margin-top: 5px; font-size: 1.3rem;">Username</h3>
+      <div class="setting-group" style="width: 100%; text-align: left; margin-top: 10px;">
+        <label>User Bio / Status</label>
+        <div id="ud-bio" class="setting-input" style="min-height: 60px; background: var(--bg); color: #ccc;">Exploring the web with Pryra.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bottom Search Pill & Menus -->
-  <div class="bottom-nav-wrapper">
+  <div class="bottom-nav-wrapper" id="bottom-nav-wrapper">
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span></button>
       <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span></button>
@@ -359,6 +376,10 @@
       <div class="setting-group">
         <label>Display Name</label>
         <input type="text" id="profile-name" class="setting-input" placeholder="Your Username..." maxlength="20" />
+      </div>
+      <div class="setting-group">
+        <label>User Bio / Status</label>
+        <textarea id="profile-bio" class="setting-input" rows="2" placeholder="Tell others about yourself..." maxlength="120"></textarea>
       </div>
       <div class="setting-group">
         <label>Upload Profile Picture (Image File)</label>
