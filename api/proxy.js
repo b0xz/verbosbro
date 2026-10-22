@@ -1,5 +1,3 @@
-import { Readable } from 'stream';
-
 export default async function handler(req, res) {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
@@ -84,7 +82,6 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Enhanced Redirect Handling: Intercept 3xx and rewrite Location
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -101,7 +98,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbos-quantum-core');
+    res.setHeader('x-proxied-by', 'verbo-quantum-core');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -229,29 +226,6 @@ export default async function handler(req, res) {
                 form.action = proxify(form.action);
               }
             }, true);
-
-            try {
-              const originalAssign = window.location.assign;
-              window.location.assign = function(url) {
-                return originalAssign.call(window.location, proxify(url));
-              };
-
-              const originalReplace = window.location.replace;
-              window.location.replace = function(url) {
-                return originalReplace.call(window.location, proxify(url));
-              };
-
-              const loc = window.location;
-              if (loc) {
-                Object.defineProperty(window, 'location', {
-                  get: function() { return loc; },
-                  set: function(val) {
-                    loc.href = proxify(val);
-                  },
-                  configurable: true
-                });
-              }
-            } catch(err) {}
           })();
         </script>
       `;
@@ -275,7 +249,6 @@ export default async function handler(req, res) {
       <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
         <h2>proxy connection error</h2>
         <p>failed to retrieve resource: ${error.message}</p>
-        <p><em>ill fix this after school maybe</em></p>
       </body>
       </html>
     `);
