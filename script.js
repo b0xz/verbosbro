@@ -13,6 +13,7 @@ const proxyInput = document.getElementById('proxy-input');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
+const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
 const loadingSpinner = document.getElementById('loading-spinner');
 
@@ -41,6 +42,7 @@ function switchTab(id) {
   if (tab) {
     proxyInput.value = tab.url;
     chatPageView.classList.remove('active');
+    bottomNavWrapper.classList.remove('hidden');
     document.getElementById('sb-chat').classList.remove('active');
     document.getElementById('sb-home').classList.add('active');
 
@@ -78,6 +80,7 @@ addTabBtn.addEventListener('click', () => addTab());
 
 document.getElementById('sb-home').addEventListener('click', () => {
   chatPageView.classList.remove('active');
+  bottomNavWrapper.classList.remove('hidden');
   proxyViewer.classList.remove('active');
   homeView.classList.remove('hidden');
   document.getElementById('sb-home').classList.add('active');
@@ -164,6 +167,7 @@ window.launchProxy = function(rawInput) {
   proxyInput.value = targetUrl;
   homeView.classList.add('hidden');
   chatPageView.classList.remove('active');
+  bottomNavWrapper.classList.remove('hidden');
   proxyViewer.classList.add('active');
 
   proxyIframe1.src = proxyUrl;
@@ -173,46 +177,58 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Full Page Chat System with Anti-Spam & Image Fix --- */
+/* --- Full Page Chat System --- */
 const sbChat = document.getElementById('sb-chat');
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
 let lastMessageTime = 0;
+let lastKnownCount = 0;
 
 sbChat.addEventListener('click', () => {
   homeView.classList.add('hidden');
   proxyViewer.classList.remove('active');
   chatPageView.classList.add('active');
+  bottomNavWrapper.classList.add('hidden'); // Hide search on chat view
   document.getElementById('sb-home').classList.remove('active');
   sbChat.classList.add('active');
-  fetchChat();
-  if (!chatPoll) chatPoll = setInterval(fetchChat, 3000);
+  fetchChat(true);
+  
+  // Refresh chat every 3 seconds while on chat view
+  if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 3000);
 });
 
-async function fetchChat() {
+async function fetchChat(forceScroll = false) {
   try {
     const res = await fetch('/api/chat');
     if (!res.ok) return;
     const data = await res.json();
-    chatMessages.innerHTML = data.map(m => {
-      const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image/'));
-      const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-      return `
-        <div class="chat-msg-item">
-          <div class="chat-msg-pfp">${pfpHTML}</div>
-          <div class="chat-msg-content">
-            <div class="chat-msg-header">
-              <span class="chat-msg-username" style="color: ${m.color || '#ffffff'};">${escapeHtml(m.user)}</span>
-              <span class="chat-msg-time">${m.time}</span>
+    
+    if (data.length !== lastKnownCount || forceScroll) {
+      lastKnownCount = data.length;
+
+      chatMessages.innerHTML = data.map(m => {
+        const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
+        const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
+        const msgFont = m.font || 'Arial, sans-serif';
+
+        return `
+          <div class="chat-msg-item">
+            <div class="chat-msg-pfp" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${pfpHTML}</div>
+            <div class="chat-msg-content">
+              <div class="chat-msg-header">
+                <span class="chat-msg-username" style="color: ${m.color || '#ffffff'};" onclick="openUserDashboard('${encodeURIComponent(m.user)}', '${encodeURIComponent(m.pfp || '⭐')}', '${encodeURIComponent(m.bio || 'Exploring the web with Pryra.')}')">${escapeHtml(m.user)}</span>
+                <span class="chat-msg-time">${m.time}</span>
+              </div>
+              <div class="chat-msg-text" style="font-family: ${msgFont};">${escapeHtml(m.text)}</div>
             </div>
-            <div class="chat-msg-text">${escapeHtml(m.text)}</div>
           </div>
-        </div>
-      `;
-    }).join('');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+        `;
+      }).join('');
+
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   } catch (e) {}
 }
 
@@ -230,15 +246,20 @@ async function sendChat() {
 
   const user = localStorage.getItem('pryra_user_name') || 'PryraUser';
   const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
+  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
   const color = localStorage.getItem('pryra_user_color') || '#ffffff';
+  const font = localStorage.getItem('pryra_chat_font') || 'Arial, sans-serif';
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, color })
+      body: JSON.stringify({ user, text, pfp, bio, color, font })
     });
-    if (res.ok) { chatInput.value = ''; fetchChat(); }
+    if (res.ok) { 
+      chatInput.value = ''; 
+      fetchChat(true); 
+    }
   } catch (e) {}
 }
 
@@ -248,6 +269,29 @@ chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventD
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+/* --- User Dashboard Modal --- */
+const userDashboardModal = document.getElementById('user-dashboard-modal');
+document.getElementById('close-user-dashboard').addEventListener('click', () => userDashboardModal.classList.add('hidden'));
+
+window.openUserDashboard = function(encodedUser, encodedPfp, encodedBio) {
+  const username = decodeURIComponent(encodedUser);
+  const pfp = decodeURIComponent(encodedPfp);
+  const bio = decodeURIComponent(encodedBio);
+
+  document.getElementById('ud-username').textContent = username;
+  document.getElementById('ud-bio').textContent = bio;
+
+  const pfpContainer = document.getElementById('ud-pfp-container');
+  const isImg = pfp && (pfp.startsWith('http') || pfp.startsWith('data:image'));
+  if (isImg) {
+    pfpContainer.innerHTML = `<img src="${pfp}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />`;
+  } else {
+    pfpContainer.textContent = pfp || username.charAt(0).toUpperCase();
+  }
+
+  userDashboardModal.classList.remove('hidden');
+};
 
 /* --- Themes & Customization --- */
 const DARK_THEMES = {
@@ -315,6 +359,7 @@ document.getElementById('close-profile').addEventListener('click', () => profile
 
 // Profile & Customization Logic
 const profileNameInput = document.getElementById('profile-name');
+const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
 const profileFileInput = document.getElementById('profile-file-input');
 const profileFontSelect = document.getElementById('profile-font');
@@ -324,16 +369,16 @@ const pfpImg = document.getElementById('pfp-img');
 
 function loadProfile() {
   const name = localStorage.getItem('pryra_user_name') || 'PryraUser';
+  const bio = localStorage.getItem('pryra_user_bio') || 'Exploring the web with Pryra.';
   const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
-  const font = localStorage.getItem('pryra_chat_font') || "'Inter', Arial, sans-serif";
+  const font = localStorage.getItem('pryra_chat_font') || 'Arial, sans-serif';
   const color = localStorage.getItem('pryra_user_color') || '#ffffff';
 
   profileNameInput.value = name;
+  profileBioInput.value = bio;
   if (!pfp.startsWith('data:')) profilePfpInput.value = pfp;
   profileFontSelect.value = font;
   profileColorInput.value = color;
-
-  document.documentElement.style.setProperty('--chat-font', font);
 
   if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
     pfpImg.src = pfp;
@@ -359,11 +404,13 @@ profileFileInput.addEventListener('change', (e) => {
 
 document.getElementById('save-profile').addEventListener('click', () => {
   const name = profileNameInput.value.trim() || 'PryraUser';
+  const bio = profileBioInput.value.trim() || 'Exploring the web with Pryra.';
   const pfp = profilePfpInput.value.trim() || '⭐';
   const font = profileFontSelect.value;
   const color = profileColorInput.value;
 
   localStorage.setItem('pryra_user_name', name);
+  localStorage.setItem('pryra_user_bio', bio);
   localStorage.setItem('pryra_user_pfp', pfp);
   localStorage.setItem('pryra_chat_font', font);
   localStorage.setItem('pryra_user_color', color);
