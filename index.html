@@ -80,20 +80,18 @@
 
     .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; }
 
-    /* Full Page Chat View with Sidebar Rooms */
-    .chat-page-view {
+    /* Full Page Views (Chat, Games, Settings) */
+    .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
-      height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: row;
+      height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
     }
-    .chat-page-view.active { display: flex; }
-    
-    .chat-sidebar {
-      width: 240px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 10px;
-    }
+    .page-view.active { display: flex; }
+
+    /* Chat View Layout */
+    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; }
+    .chat-sidebar { width: 240px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 10px; }
     .chat-sidebar h4 { font-size: 0.9rem; color: var(--subtext); margin-bottom: 5px; }
-    .room-btn {
-      background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.85rem;
-    }
+    .room-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.85rem; }
     .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
 
     .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; }
@@ -112,7 +110,17 @@
     .chat-msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 6px 16px; margin-bottom: 10px; }
 
-    /* Bottom Search Navigation */
+    /* Games Hub Layout */
+    .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; }
+    .games-frame { width: 100%; flex: 1; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+
+    /* Settings Page Layout */
+    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; overflow-y: auto; }
+
+    /* Pixel Dust Transition Canvas */
+    canvas#dust-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5000; display: none; }
+
+    /* Bottom Search Bar */
     .bottom-nav-wrapper {
       position: fixed; bottom: calc(20px * var(--gui-scale)); left: calc(50% + 32px * var(--gui-scale)); transform: translateX(-50%);
       width: 90%; max-width: calc(750px * var(--gui-scale)); z-index: 1300; display: flex; flex-direction: column; gap: 6px; align-items: center;
@@ -124,16 +132,6 @@
       padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8); width: 100%; transition: all 0.3s ease;
     }
-    .bottom-nav-pill.style-minimal { border-radius: 8px; }
-    .bottom-nav-pill.style-centered { justify-content: center; }
-    .bottom-nav-pill:focus-within { border-color: var(--accent); }
-
-    .nav-btn { background: transparent; border: none; color: var(--text); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .nav-btn:hover { background: var(--hover); color: var(--accent); }
-    .pill-btn-toggle {
-      background: var(--hover); border: 1px solid var(--border); color: var(--text); border-radius: calc(18px * var(--gui-scale));
-      padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(0.78rem * var(--gui-scale)); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap;
-    }
     .pill-input { flex: 1; background: transparent; border: none; outline: none; padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(1rem * var(--gui-scale)); color: var(--text); }
     .pill-input::placeholder { color: var(--subtext); }
     .go-btn {
@@ -141,6 +139,13 @@
       color: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
     }
     .go-btn:hover { background: var(--accent); transform: scale(1.05); }
+
+    .nav-btn { background: transparent; border: none; color: var(--text); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .nav-btn:hover { background: var(--hover); color: var(--accent); }
+    .pill-btn-toggle {
+      background: var(--hover); border: 1px solid var(--border); color: var(--text); border-radius: calc(18px * var(--gui-scale));
+      padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(0.78rem * var(--gui-scale)); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap;
+    }
 
     .mode-menu-table, .device-menu-table {
       position: absolute; bottom: calc(60px * var(--gui-scale)); background: var(--panel); border: 1px solid var(--border);
@@ -214,6 +219,8 @@
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
+  <canvas id="dust-canvas"></canvas>
+
   <div class="loading-overlay hidden" id="loading-spinner">
     <div class="spinner-ring"></div>
   </div>
@@ -228,6 +235,9 @@
     </button>
     <button class="sidebar-btn" id="sb-chat" title="Verbos Chat">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </button>
+    <button class="sidebar-btn" id="sb-games" title="Games Hub">
+      <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m10-2h.01M16 10h.01"></path></svg>
     </button>
     <button class="sidebar-btn" id="sb-settings" title="Theme & Settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -245,25 +255,69 @@
 
   <div class="footer-credit" id="footer-credit">(powered by verbos)</div>
 
-  <!-- Full Page Chat View -->
-  <div class="chat-page-view" id="chat-page-view">
-    <div class="chat-sidebar">
-      <h4>💬 Channels & DMs</h4>
-      <button class="room-btn active" data-room="global"># global-chat</button>
-      <h4 style="margin-top: 15px;">Direct Messages</h4>
-      <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 5px;"></div>
-    </div>
-    <div class="chat-main-area">
-      <div style="font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
-        <span id="current-room-title"># global-chat</span>
-        <button class="action-btn" id="add-friend-btn" style="padding: 6px 12px; font-size: 0.8rem;">+ Add Friend</button>
+  <!-- Chat Page View -->
+  <div class="page-view" id="chat-page-view">
+    <div class="chat-layout">
+      <div class="chat-sidebar">
+        <h4>💬 Channels & DMs</h4>
+        <button class="room-btn active" data-room="global"># global-chat</button>
+        <h4 style="margin-top: 15px;">Direct Messages</h4>
+        <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 5px;"></div>
       </div>
-      <div class="chat-messages-container" id="chat-messages"></div>
-      <div class="chat-input-bar">
-        <input type="text" id="chat-input" class="pill-input" placeholder="Type a message safely..." autocomplete="off" />
-        <button class="go-btn" id="chat-send" title="Send">
-          <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        </button>
+      <div class="chat-main-area">
+        <div style="font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
+          <span id="current-room-title"># global-chat</span>
+          <button class="action-btn" id="add-friend-btn" style="padding: 6px 12px; font-size: 0.8rem;">+ Add Friend</button>
+        </div>
+        <div class="chat-messages-container" id="chat-messages"></div>
+        <div class="chat-input-bar">
+          <input type="text" id="chat-input" class="pill-input" placeholder="Type a message safely..." autocomplete="off" />
+          <button class="go-btn" id="chat-send" title="Send">
+            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Games Hub Page View -->
+  <div class="page-view" id="games-page-view">
+    <div class="games-container">
+      <div style="font-weight: bold; font-size: 1.2rem;">🎮 Verbos Games Hub</div>
+      <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
+    </div>
+  </div>
+
+  <!-- Settings Page View -->
+  <div class="page-view" id="settings-page-view">
+    <div class="settings-container">
+      <div style="font-weight: bold; font-size: 1.2rem;">⚙️ Theme & Preferences</div>
+      <div class="setting-group">
+        <label>Select Color Scheme</label>
+        <div class="theme-grid">
+          <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>Obsidian</span></div>
+          <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>Crimson</span></div>
+          <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>Emerald</span></div>
+          <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>Amethyst</span></div>
+          <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>Amber</span></div>
+          <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>Ghost</span></div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <label>Background Animation Style</label>
+        <select id="bg-style-select" class="setting-input">
+          <option value="stars">Starfield Particles</option>
+          <option value="matrix">Matrix Code Rain</option>
+          <option value="void">Minimalist Void</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>Search Bar Style</label>
+        <select id="search-style-select" class="setting-input">
+          <option value="pill">Rounded Pill (Default)</option>
+          <option value="minimal">Minimal Rounded Box</option>
+          <option value="centered">Centered Streamlined</option>
+        </select>
       </div>
     </div>
   </div>
@@ -337,44 +391,6 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
-  <div class="modal-overlay hidden" id="settings-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span>Theme & Customization</span>
-        <button class="nav-btn" id="close-settings">×</button>
-      </div>
-      <div class="setting-group">
-        <label>Select Color Scheme</label>
-        <div class="theme-grid">
-          <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>Obsidian</span></div>
-          <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>Crimson</span></div>
-          <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>Emerald</span></div>
-          <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>Amethyst</span></div>
-          <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>Amber</span></div>
-          <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>Ghost</span></div>
-        </div>
-      </div>
-      <div class="setting-group">
-        <label>Background Animation Style</label>
-        <select id="bg-style-select" class="setting-input">
-          <option value="stars">Starfield Particles</option>
-          <option value="matrix">Matrix Code Rain</option>
-          <option value="void">Minimalist Void</option>
-        </select>
-      </div>
-      <div class="setting-group">
-        <label>Search Bar Style</label>
-        <select id="search-style-select" class="setting-input">
-          <option value="pill">Rounded Pill (Default)</option>
-          <option value="minimal">Minimal Rounded Box</option>
-          <option value="centered">Centered Streamlined</option>
-        </select>
-      </div>
-      <button class="action-btn" id="close-settings-btn">Apply & Close</button>
-    </div>
-  </div>
-
   <!-- Profile Modal -->
   <div class="modal-overlay hidden" id="profile-modal">
     <div class="modal-box">
@@ -383,7 +399,7 @@
         <button class="nav-btn" id="close-profile">×</button>
       </div>
       <div class="setting-group">
-        <label>Display Name (Must be unique)</label>
+        <label>Display Name (Unique)</label>
         <input type="text" id="profile-name" class="setting-input" placeholder="Your Username..." maxlength="20" />
       </div>
       <div class="setting-group">
