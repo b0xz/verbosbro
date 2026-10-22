@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tab-title">Pryra - Dashboard</title>
   <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
-  <!-- Include Custom Fonts -->
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
@@ -18,8 +18,7 @@
       --subtext: #888888;
       --accent: #ffffff;
       --hover: #1a1a1a;
-      --font: 'Inter', Arial, sans-serif;
-      --chat-font: 'Inter', Arial, sans-serif;
+      --font: Arial, Helvetica, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
@@ -104,7 +103,7 @@
     .chat-msg-username { font-weight: bold; font-size: 0.9rem; cursor: pointer; }
     .chat-msg-username:hover { text-decoration: underline; }
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .chat-msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; font-family: var(--chat-font); }
+    .chat-msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 6px 16px; margin-bottom: 10px; }
 
     /* Bottom Pill & Nav Controls */
@@ -265,9 +264,7 @@
         <span>User Profile</span>
         <button class="nav-btn" id="close-user-dashboard">×</button>
       </div>
-      <div id="ud-pfp-container" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 2rem; margin-top: 10px;">
-        <!-- Avatar preview -->
-      </div>
+      <div id="ud-pfp-container" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 2rem; margin-top: 10px;"></div>
       <h3 id="ud-username" style="margin-top: 5px; font-size: 1.3rem;">Username</h3>
       <div class="setting-group" style="width: 100%; text-align: left; margin-top: 10px;">
         <label>User Bio / Status</label>
@@ -390,13 +387,14 @@
         <input type="text" id="profile-pfp" class="setting-input" placeholder="https://..." />
       </div>
       <div class="setting-group">
-        <label>Chat Font Style</label>
+        <label>Chat Message Font</label>
         <select id="profile-font" class="setting-input">
-          <option value="'Inter', Arial, sans-serif">Standard Modern</option>
+          <option value="Arial, sans-serif">Standard (Arial)</option>
           <option value="'Orbitron', sans-serif">Sci-Fi (Orbitron)</option>
           <option value="'Press Start 2P', monospace">Press Start 2P (Retro)</option>
           <option value="'Rajdhani', sans-serif">Rajdhani (Futuristic)</option>
           <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+          <option value="'Inter', sans-serif">Inter Clean</option>
         </select>
       </div>
       <div class="setting-group">
