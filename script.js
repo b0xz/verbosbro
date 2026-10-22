@@ -12,6 +12,7 @@ const addTabBtn = document.getElementById('add-tab-btn');
 const proxyInput = document.getElementById('proxy-input');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
+const chatPageView = document.getElementById('chat-page-view');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
 const loadingSpinner = document.getElementById('loading-spinner');
 
@@ -39,6 +40,10 @@ function switchTab(id) {
   const tab = tabs.find(t => t.id === id);
   if (tab) {
     proxyInput.value = tab.url;
+    chatPageView.classList.remove('active');
+    document.getElementById('sb-chat').classList.remove('active');
+    document.getElementById('sb-home').classList.add('active');
+
     if (tab.src === 'about:blank' || !tab.url) {
       proxyViewer.classList.remove('active');
       homeView.classList.remove('hidden');
@@ -71,6 +76,14 @@ window.closeTab = function(id) {
 
 addTabBtn.addEventListener('click', () => addTab());
 
+document.getElementById('sb-home').addEventListener('click', () => {
+  chatPageView.classList.remove('active');
+  proxyViewer.classList.remove('active');
+  homeView.classList.remove('hidden');
+  document.getElementById('sb-home').classList.add('active');
+  document.getElementById('sb-chat').classList.remove('active');
+});
+
 // Panic key (\)
 document.addEventListener('keydown', (e) => {
   if (e.key === '\\') {
@@ -79,7 +92,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Navigation listener from proxy iframe
 window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'pryra-navigate') {
     const targetUrl = event.data.url;
@@ -95,7 +107,6 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// Toggles for Modes, Devices, VPN
 let currentMode = 'fast';
 let currentDevice = 'desktop';
 let currentVpn = 'us-east';
@@ -152,6 +163,7 @@ window.launchProxy = function(rawInput) {
 
   proxyInput.value = targetUrl;
   homeView.classList.add('hidden');
+  chatPageView.classList.remove('active');
   proxyViewer.classList.add('active');
 
   proxyIframe1.src = proxyUrl;
@@ -161,36 +173,44 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Integrated Global Chat System --- */
+/* --- Full Page Chat System --- */
 const sbChat = document.getElementById('sb-chat');
-const chatModal = document.getElementById('chat-modal');
-const closeChat = document.getElementById('close-chat');
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
 
 sbChat.addEventListener('click', () => {
-  chatModal.classList.remove('hidden');
+  homeView.classList.add('hidden');
+  proxyViewer.classList.remove('active');
+  chatPageView.classList.add('active');
+  document.getElementById('sb-home').classList.remove('active');
+  sbChat.classList.add('active');
   fetchChat();
   if (!chatPoll) chatPoll = setInterval(fetchChat, 3000);
 });
-closeChat.addEventListener('click', () => { chatModal.classList.add('hidden'); clearInterval(chatPoll); chatPoll = null; });
 
 async function fetchChat() {
   try {
     const res = await fetch('/api/chat');
     if (!res.ok) return;
     const data = await res.json();
-    chatMessages.innerHTML = data.map(m => `
-      <div style="background:var(--hover); padding:6px 10px; border-radius:6px; font-size:0.85rem;">
-        <div style="display:flex; justify-content:space-between; color:var(--subtext); font-size:0.75rem;">
-          <span style="color:${m.color || '#fff'}; font-weight:bold;">${escapeHtml(m.user)}</span>
-          <span>${m.time}</span>
+    chatMessages.innerHTML = data.map(m => {
+      const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:'));
+      const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
+      return `
+        <div class="chat-msg-item">
+          <div class="chat-msg-pfp">${pfpHTML}</div>
+          <div class="chat-msg-content">
+            <div class="chat-msg-header">
+              <span class="chat-msg-username" style="color: ${m.color || '#ffffff'};">${escapeHtml(m.user)}</span>
+              <span class="chat-msg-time">${m.time}</span>
+            </div>
+            <div class="chat-msg-text">${escapeHtml(m.text)}</div>
+          </div>
         </div>
-        <div style="margin-top:2px; word-break:break-word;">${escapeHtml(m.text)}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
     chatMessages.scrollTop = chatMessages.scrollHeight;
   } catch (e) {}
 }
@@ -198,12 +218,14 @@ async function fetchChat() {
 async function sendChat() {
   const text = chatInput.value.trim();
   const user = localStorage.getItem('pryra_user_name') || 'PryraUser';
+  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
+  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
   if (!text) return;
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, color: '#3b82f6' })
+      body: JSON.stringify({ user, text, pfp, color })
     });
     if (res.ok) { chatInput.value = ''; fetchChat(); }
   } catch (e) {}
@@ -217,11 +239,12 @@ function escapeHtml(str) {
 
 /* --- Themes & Customization --- */
 const DARK_THEMES = {
-  obsidian: { bg: '#000000', panel: '#0a0a0a', border: '#262626', accent: '#3b82f6', hover: '#1a1a1a' },
-  cyber: { bg: '#050b14', panel: '#0c1524', border: '#1e293b', accent: '#06b6d4', hover: '#111e36' },
+  obsidian: { bg: '#000000', panel: '#0a0a0a', border: '#262626', accent: '#ffffff', hover: '#1a1a1a' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
   emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
   amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
-  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' }
+  amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
+  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' }
 };
 
 function applyTheme(key) {
@@ -244,7 +267,6 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('pryra_theme') || 'obsidian');
 
-// Background style switcher
 const bgSelect = document.getElementById('bg-style-select');
 bgSelect.value = localStorage.getItem('pryra_bg_style') || 'stars';
 bgSelect.addEventListener('change', () => {
@@ -252,7 +274,6 @@ bgSelect.addEventListener('change', () => {
   initBackground(bgSelect.value);
 });
 
-// Search bar style switcher
 const searchSelect = document.getElementById('search-style-select');
 const searchContainer = document.getElementById('search-pill-container');
 searchSelect.value = localStorage.getItem('pryra_search_style') || 'pill';
@@ -268,43 +289,80 @@ applySearchStyle(localStorage.getItem('pryra_search_style') || 'pill');
 /* --- Modals Handling --- */
 const settingsModal = document.getElementById('settings-modal');
 const profileModal = document.getElementById('profile-modal');
+const bookmarksModal = document.getElementById('bookmarks-modal');
 
 document.getElementById('sb-settings').addEventListener('click', () => settingsModal.classList.remove('hidden'));
 document.getElementById('close-settings').addEventListener('click', () => settingsModal.classList.add('hidden'));
-document.getElementById('save-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+document.getElementById('sb-bookmarks').addEventListener('click', () => bookmarksModal.classList.remove('hidden'));
+document.getElementById('close-bookmarks').addEventListener('click', () => bookmarksModal.classList.add('hidden'));
 
 document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
 document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
 
-// Profile Logic
+// Profile & Customization Logic
 const profileNameInput = document.getElementById('profile-name');
 const profilePfpInput = document.getElementById('profile-pfp');
+const profileFileInput = document.getElementById('profile-file-input');
+const profileFontSelect = document.getElementById('profile-font');
+const profileColorInput = document.getElementById('profile-color');
 const pfpInitial = document.getElementById('pfp-initial');
 const pfpImg = document.getElementById('pfp-img');
 
 function loadProfile() {
-  const name = localStorage.getItem('pryra_user_name') || '';
-  const pfp = localStorage.getItem('pryra_user_pfp') || '';
-  profileNameInput.value = name;
-  profilePfpInput.value = pfp;
+  const name = localStorage.getItem('pryra_user_name') || 'PryraUser';
+  const pfp = localStorage.getItem('pryra_user_pfp') || '⭐';
+  const font = localStorage.getItem('pryra_chat_font') || "'Inter', Arial, sans-serif";
+  const color = localStorage.getItem('pryra_user_color') || '#ffffff';
 
-  if (pfp && pfp.startsWith('http')) {
-    pfpImg.src = pfp; pfpImg.classList.remove('hidden'); pfpInitial.classList.add('hidden');
-  } else if (name) {
+  profileNameInput.value = name;
+  if (!pfp.startsWith('data:')) profilePfpInput.value = pfp;
+  profileFontSelect.value = font;
+  profileColorInput.value = color;
+
+  document.documentElement.style.setProperty('--chat-font', font);
+
+  if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
+    pfpImg.src = pfp;
+    pfpImg.classList.remove('hidden');
+    pfpInitial.classList.add('hidden');
+  } else {
     pfpInitial.textContent = name.charAt(0).toUpperCase();
-    pfpImg.classList.add('hidden'); pfpInitial.classList.remove('hidden');
+    pfpImg.classList.add('hidden');
+    pfpInitial.classList.remove('hidden');
   }
 }
+
+profileFileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(uploadEvent) {
+      profilePfpInput.value = uploadEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
 document.getElementById('save-profile').addEventListener('click', () => {
-  localStorage.setItem('pryra_user_name', profileNameInput.value.trim());
-  localStorage.setItem('pryra_user_pfp', profilePfpInput.value.trim());
+  const name = profileNameInput.value.trim() || 'PryraUser';
+  const pfp = profilePfpInput.value.trim() || '⭐';
+  const font = profileFontSelect.value;
+  const color = profileColorInput.value;
+
+  localStorage.setItem('pryra_user_name', name);
+  localStorage.setItem('pryra_user_pfp', pfp);
+  localStorage.setItem('pryra_chat_font', font);
+  localStorage.setItem('pryra_user_color', color);
+
   loadProfile();
   profileModal.classList.add('hidden');
 });
 loadProfile();
 
 /* --- Dynamic Background Canvas Rendering --- */
-const bgCanvas = document.getElementById('bg-canvas');
+const bgCanvas = document.getElementById('bg-stars');
 const bgCtx = bgCanvas.getContext('2d');
 let animationFrameId = null;
 
@@ -322,7 +380,7 @@ function initBackground(style) {
     function drawMatrix() {
       bgCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = '#3b82f6';
+      bgCtx.fillStyle = '#ffffff';
       bgCtx.font = fontSize + 'px monospace';
       for (let i = 0; i < drops.length; i++) {
         const text = letters.charAt(Math.floor(Math.random() * letters.length));
@@ -336,7 +394,6 @@ function initBackground(style) {
   } else if (style === 'void') {
     bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
   } else {
-    // Starfield default
     let stars = [];
     for (let i = 0; i < 120; i++) {
       stars.push({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2.5 + 0.8, speed: Math.random() * 0.3 + 0.05, rot: Math.random() * Math.PI, rotSpeed: (Math.random() - 0.5) * 0.02 });
