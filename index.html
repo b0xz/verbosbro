@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">Verbos - Welcome</title>
+  <title id="tab-title">verbos</title>
   <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --gui-scale: 1.15;
-      --bg: #070709;
-      --panel: #111116;
-      --border: #24242c;
+      --bg: #000000;
+      --panel: #000000;
+      --border: #ffffff;
       --text: #ffffff;
-      --subtext: #9ca3af;
-      --accent: #6366f1;
-      --hover: #1b1b22;
-      --font: 'Inter', Arial, sans-serif;
+      --subtext: #888888;
+      --accent: #ffffff;
+      --hover: #141414;
+      --font: Arial, Helvetica, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
@@ -31,33 +31,32 @@
 
     .home-view {
       position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
-      width: 100%; height: 100%; gap: 12px;
+      width: 100%; height: 100%;
     }
     .home-view.hidden { display: none; }
-    .star-text { color: var(--text); font-size: 2.5rem; font-weight: 700; letter-spacing: -0.5px; text-transform: lowercase; user-select: none; text-align: center; }
-    .home-subtitle { color: var(--subtext); font-size: 1.05rem; font-weight: 400; letter-spacing: 0.3px; }
+    .star-text { color: var(--text); font-size: 2rem; font-weight: bold; letter-spacing: 2.5px; text-transform: lowercase; user-select: none; text-align: center; }
 
-    canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; opacity: 0.85; mix-blend-mode: screen; }
+    /* Fixed star canvas: removed mix-blend-mode difference to fix inversion */
+    canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; }
 
-    /* Sidebar Taskbar */
+    /* Sidebar */
     .sidebar {
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column;
       align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
-      gap: calc(14px * var(--gui-scale)); z-index: 1200; box-shadow: 4px 0 25px rgba(0,0,0,0.6);
+      gap: calc(14px * var(--gui-scale)); z-index: 1200;
     }
     .sidebar-btn {
-      background: transparent; border: 1px solid transparent; color: var(--subtext);
+      background: transparent; border: 1px solid transparent; color: var(--text);
       width: calc(42px * var(--gui-scale)); height: calc(42px * var(--gui-scale)); border-radius: 12px;
       display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;
     }
-    .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--text); }
+    .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--accent); }
     .profile-avatar-btn {
       margin-top: auto; width: calc(40px * var(--gui-scale)); height: calc(40px * var(--gui-scale));
       border-radius: 50%; border: 1px solid var(--border); background: var(--bg); display: flex;
-      align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: transform 0.2s;
+      align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
     }
-    .profile-avatar-btn:hover { transform: scale(1.08); }
     .profile-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
     .svg-icon { width: calc(20px * var(--gui-scale)); height: calc(20px * var(--gui-scale)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -70,67 +69,72 @@
     .tab-item {
       background: var(--bg); border: 1px solid var(--border); color: var(--subtext); padding: calc(8px * var(--gui-scale)) calc(14px * var(--gui-scale));
       border-radius: 10px 10px 0 0; font-size: calc(0.85rem * var(--gui-scale)); cursor: grab; display: flex; align-items: center; gap: 10px; max-width: 180px; white-space: nowrap; user-select: none;
-      transition: background 0.2s ease, color 0.2s ease;
     }
-    .tab-item.active { background: var(--panel); color: var(--text); border-bottom-color: var(--panel); border-top: 2px solid var(--accent); }
+    .tab-item.active { background: var(--panel); color: var(--text); border-bottom-color: var(--panel); }
     .tab-close { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 1rem; }
     .tab-close:hover { color: var(--text); }
     .add-tab-btn {
-      background: transparent; border: 1px dashed var(--border); color: var(--subtext); width: calc(32px * var(--gui-scale)); height: calc(32px * var(--gui-scale));
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+      background: transparent; border: 1px dashed var(--border); color: var(--text); width: calc(32px * var(--gui-scale)); height: calc(32px * var(--gui-scale));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
-    .add-tab-btn:hover { background: var(--hover); color: var(--text); border-color: var(--accent); }
 
-    .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.8rem; z-index: 1300; user-select: none; }
+    .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; text-transform: lowercase; }
 
     /* Full Page Views with Swipe Transitions */
     .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     }
     .page-view.active { display: flex; }
 
-    /* Swipe Overlay for Transitions */
     .swipe-overlay {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--panel); z-index: 5000; pointer-events: none; opacity: 0;
-      transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
-      transform: translateX(100%);
+      transition: transform 0.35s ease, opacity 0.35s ease; transform: translateX(100%);
     }
     .swipe-overlay.animate-left { transform: translateX(0); opacity: 1; }
     .swipe-overlay.animate-exit { transform: translateX(-100%); opacity: 1; }
 
     /* Chat Layout */
     .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; }
-    .chat-sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; gap: 10px; }
-    .chat-sidebar h4 { font-size: 0.8rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-    .room-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
+    .chat-sidebar { width: 240px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; gap: 10px; }
+    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); text-transform: lowercase; margin-bottom: 5px; }
+    .room-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.9rem; text-transform: lowercase; }
     .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
 
-    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 25px; gap: 16px; background: var(--bg); }
+    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; background: var(--bg); }
     .chat-messages-container {
-      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 14px; box-shadow: inset 0 2px 12px rgba(0,0,0,0.6);
+      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
     }
-    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .chat-msg-pfp { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; }
+    .chat-msg-pfp { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; cursor: pointer; }
     .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
     .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
-    .chat-msg-username { font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+    .chat-msg-username { font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: lowercase; }
     .chat-msg-username:hover { text-decoration: underline; }
+    
+    /* Wavy Username Animation Effect */
+    @keyframes wavyText {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .chat-msg-username.wavy {
+      display: inline-block;
+      animation: wavyText 1.2s ease-in-out infinite;
+    }
+
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .chat-msg-text { font-size: 0.98rem; color: #f3f4f6; word-break: break-word; line-height: 1.45; }
-    .chat-input-bar { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 8px 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+    .chat-msg-text { font-size: 0.98rem; color: #ffffff; word-break: break-word; }
+    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 8px 18px; }
 
     /* Games Hub Layout */
-    .games-container { flex: 1; display: flex; flex-direction: column; padding: 25px; gap: 15px; }
-    .games-frame { width: 100%; flex: 1; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: 0 10px 35px rgba(0,0,0,0.7); }
+    .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; }
+    .games-frame { width: 100%; flex: 1; border: 1px solid var(--border); border-radius: 12px; background: #ffffff; }
 
     /* Settings Page Layout */
-    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 40px; gap: 24px; max-width: 650px; margin: 0 auto; width: 100%; overflow-y: auto; }
+    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; overflow-y: auto; }
 
     /* Bottom Search Bar */
     .bottom-nav-wrapper {
@@ -142,32 +146,32 @@
     .bottom-nav-pill {
       background: var(--panel); border: 1px solid var(--border); border-radius: calc(35px * var(--gui-scale));
       padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85); width: 100%; transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1); width: 100%; transition: all 0.3s ease;
     }
     .pill-input { flex: 1; background: transparent; border: none; outline: none; padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(1rem * var(--gui-scale)); color: var(--text); }
-    .pill-input::placeholder { color: var(--subtext); }
+    .pill-input::placeholder { color: var(--subtext); text-transform: lowercase; }
     .go-btn {
-      background: var(--accent); border: none; width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%;
-      color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s;
+      background: var(--text); border: none; width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%;
+      color: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
     }
-    .go-btn:hover { transform: scale(1.08); }
+    .go-btn:hover { background: var(--accent); transform: scale(1.05); }
 
-    .nav-btn { background: transparent; border: none; color: var(--subtext); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: color 0.2s; }
-    .nav-btn:hover { background: var(--hover); color: var(--text); }
+    .nav-btn { background: transparent; border: none; color: var(--text); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .nav-btn:hover { background: var(--hover); color: var(--accent); }
     .pill-btn-toggle {
       background: var(--hover); border: 1px solid var(--border); color: var(--text); border-radius: calc(18px * var(--gui-scale));
-      padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(0.78rem * var(--gui-scale)); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap;
+      padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(0.78rem * var(--gui-scale)); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; text-transform: lowercase;
     }
 
     .mode-menu-table, .device-menu-table {
       position: absolute; bottom: calc(60px * var(--gui-scale)); background: var(--panel); border: 1px solid var(--border);
       border-radius: calc(14px * var(--gui-scale)); padding: calc(10px * var(--gui-scale)); display: flex; flex-direction: column;
-      gap: calc(6px * var(--gui-scale)); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.2s ease; z-index: 1400;
+      gap: calc(6px * var(--gui-scale)); box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1); opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.2s ease; z-index: 1400;
     }
     .mode-menu-table.active, .device-menu-table.active { opacity: 1; pointer-events: all; transform: translateY(0); }
     .mode-row-btn {
       background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: calc(8px * var(--gui-scale)) calc(12px * var(--gui-scale));
-      border-radius: calc(8px * var(--gui-scale)); font-size: calc(0.85rem * var(--gui-scale)); text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap;
+      border-radius: calc(8px * var(--gui-scale)); font-size: calc(0.85rem * var(--gui-scale)); text-align: left; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; text-transform: lowercase;
     }
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
@@ -179,44 +183,43 @@
     }
     .proxy-viewer.active { display: flex; }
     .screen-panel { flex: 1; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
-    .device-viewport { width: 100%; height: 100%; background: #ffffff; border-radius: 12px; overflow: hidden; }
+    .device-viewport { width: 100%; height: 100%; background: #ffffff; }
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
 
     .loading-overlay {
       position: absolute; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); right: 0; bottom: calc(85px * var(--gui-scale));
-      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); z-index: 1500; display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(2px); z-index: 1500; display: flex; align-items: center; justify-content: center;
     }
     .loading-overlay.hidden { display: none; }
     .spinner-ring {
-      width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%;
+      width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--text); border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Modals */
     .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px);
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
       z-index: 3000; display: flex; align-items: center; justify-content: center;
     }
     .modal-overlay.hidden { display: none; }
     .modal-box {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 18px; width: 90%; max-width: 440px; padding: 28px;
-      display: flex; flex-direction: column; gap: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); max-height: 85vh; overflow-y: auto;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 440px; padding: 24px;
+      display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 30px rgba(255,255,255,0.1); max-height: 85vh; overflow-y: auto;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; font-weight: 600; font-size: 1.1rem; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: bold; text-transform: lowercase; }
     .setting-group { display: flex; flex-direction: column; gap: 8px; }
-    .setting-group label { font-size: 0.85rem; color: var(--subtext); font-weight: 500; }
-    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); outline: none; width: 100%; transition: border-color 0.2s; }
-    .setting-input:focus { border-color: var(--accent); }
+    .setting-group label { font-size: 0.82rem; color: var(--subtext); text-transform: lowercase; }
+    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; text-transform: lowercase; }
 
-    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .theme-card {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; text-transform: lowercase;
     }
     .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
-    .theme-color-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); }
+    .theme-color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); }
 
-    .action-btn { background: var(--accent); border: none; border-radius: 10px; padding: 12px; font-weight: 600; color: #fff; cursor: pointer; transition: opacity 0.2s; }
+    .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; text-transform: lowercase; }
     .action-btn:hover { opacity: 0.9; }
 
     .hidden { display: none !important; }
@@ -227,8 +230,7 @@
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
-      <div class="star-text">welcome to verbos</div>
-      <div class="home-subtitle">your secure gateway to the web & community</div>
+      <div class="star-text">*welcome to verbos</div>
     </div>
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
@@ -239,32 +241,32 @@
     <div class="spinner-ring"></div>
   </div>
 
-  <!-- Sidebar Taskbar -->
+  <!-- Sidebar -->
   <div class="sidebar">
-    <button class="sidebar-btn active" id="sb-home" title="Home">
+    <button class="sidebar-btn active" id="sb-home" title="home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
-    <button class="sidebar-btn" id="sb-bookmarks" title="Bookmarks & Notes">
+    <button class="sidebar-btn" id="sb-bookmarks" title="bookmarks & notes">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
     </button>
-    <button class="sidebar-btn" id="sb-chat" title="Verbos Chat">
+    <button class="sidebar-btn" id="sb-chat" title="verbos chat">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
     </button>
-    <button class="sidebar-btn" id="sb-games" title="Games Hub">
+    <button class="sidebar-btn" id="sb-games" title="games hub">
       <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m10-2h.01M16 10h.01"></path></svg>
     </button>
-    <button class="sidebar-btn" id="sb-settings" title="Theme & Settings">
+    <button class="sidebar-btn" id="sb-settings" title="theme & settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
-    <div class="profile-avatar-btn" id="sb-profile" title="Account & Profile">
+    <div class="profile-avatar-btn" id="sb-profile" title="account & profile">
       <span id="pfp-initial" style="font-weight:bold; font-size:0.9rem;">?</span>
-      <img id="pfp-img" src="" class="hidden" alt="Profile" />
+      <img id="pfp-img" src="" class="hidden" alt="profile" />
     </div>
   </div>
 
   <!-- Top Tab Bar -->
   <div class="tab-bar-container" id="tab-bar">
-    <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
+    <button class="add-tab-btn" id="add-tab-btn" title="new tab">+</button>
   </div>
 
   <div class="footer-credit" id="footer-credit">(powered by verbos)</div>
@@ -273,20 +275,20 @@
   <div class="page-view" id="chat-page-view">
     <div class="chat-layout">
       <div class="chat-sidebar">
-        <h4>💬 Channels & DMs</h4>
-        <button class="room-btn active" data-room="global"><span># global-chat</span></button>
-        <h4 style="margin-top: 15px;">Direct Messages</h4>
+        <h4>channels & dms</h4>
+        <button class="room-btn active" data-room="global"># global-chat</button>
+        <h4 style="margin-top: 15px;">direct messages</h4>
         <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
       </div>
       <div class="chat-main-area">
-        <div style="font-weight: 600; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-weight: bold; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center; text-transform: lowercase;">
           <span id="current-room-title"># global-chat</span>
-          <button class="action-btn" id="add-friend-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ Add DM</button>
+          <button class="action-btn" id="add-friend-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ add dm</button>
         </div>
         <div class="chat-messages-container" id="chat-messages"></div>
         <div class="chat-input-bar">
-          <input type="text" id="chat-input" class="pill-input" placeholder="Say something nice to everyone..." autocomplete="off" />
-          <button class="go-btn" id="chat-send" title="Send">
+          <input type="text" id="chat-input" class="pill-input" placeholder="type a message..." autocomplete="off" />
+          <button class="go-btn" id="chat-send" title="send">
             <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
         </div>
@@ -297,7 +299,7 @@
   <!-- Games Hub Page View -->
   <div class="page-view" id="games-page-view">
     <div class="games-container">
-      <div style="font-weight: 600; font-size: 1.25rem;">🎮 Verbos Games Hub</div>
+      <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">🎮 verbos games hub</div>
       <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
     </div>
   </div>
@@ -305,32 +307,24 @@
   <!-- Settings Page View -->
   <div class="page-view" id="settings-page-view">
     <div class="settings-container">
-      <div style="font-weight: 600; font-size: 1.25rem;">⚙️ Theme & Preferences</div>
+      <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">⚙️ theme & preferences</div>
       <div class="setting-group">
-        <label>Select Color Scheme</label>
+        <label>select color scheme</label>
         <div class="theme-grid">
-          <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>Obsidian</span></div>
-          <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>Crimson</span></div>
-          <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>Emerald</span></div>
-          <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>Amethyst</span></div>
-          <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>Amber</span></div>
-          <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>Ghost</span></div>
+          <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>obsidian</span></div>
+          <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>crimson</span></div>
+          <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>emerald</span></div>
+          <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>amethyst</span></div>
+          <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>amber</span></div>
+          <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>ghost</span></div>
         </div>
       </div>
       <div class="setting-group">
-        <label>Background Animation Style</label>
+        <label>background animation style</label>
         <select id="bg-style-select" class="setting-input">
-          <option value="stars">Starfield Particles</option>
-          <option value="matrix">Matrix Code Rain</option>
-          <option value="void">Minimalist Void</option>
-        </select>
-      </div>
-      <div class="setting-group">
-        <label>Search Bar Style</label>
-        <select id="search-style-select" class="setting-input">
-          <option value="pill">Rounded Pill (Default)</option>
-          <option value="minimal">Minimal Rounded Box</option>
-          <option value="centered">Centered Streamlined</option>
+          <option value="stars">starfield particles</option>
+          <option value="matrix">matrix code rain</option>
+          <option value="void">minimalist void</option>
         </select>
       </div>
     </div>
@@ -340,40 +334,40 @@
   <div class="modal-overlay hidden" id="user-dashboard-modal">
     <div class="modal-box" style="align-items: center; text-align: center;">
       <div class="modal-header" style="width: 100%;">
-        <span>User Profile</span>
+        <span>user profile</span>
         <button class="nav-btn" id="close-user-dashboard">×</button>
       </div>
       <div id="ud-pfp-container" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 2rem; margin-top: 10px;"></div>
-      <h3 id="ud-username" style="margin-top: 5px; font-size: 1.3rem;">Username</h3>
+      <h3 id="ud-username" style="margin-top: 5px; font-size: 1.3rem; text-transform: lowercase;">username</h3>
       <div class="setting-group" style="width: 100%; text-align: left; margin-top: 10px;">
-        <label>User Bio / Status</label>
-        <div id="ud-bio" class="setting-input" style="min-height: 60px; background: var(--bg); color: #ccc;">Exploring the web with Verbos.</div>
+        <label>user bio / status</label>
+        <div id="ud-bio" class="setting-input" style="min-height: 60px; background: var(--bg); color: #ccc;">exploring the web with verbos.</div>
       </div>
-      <button class="action-btn" id="ud-message-btn" style="width: 100%;">Direct Message User</button>
+      <button class="action-btn" id="ud-message-btn" style="width: 100%;">direct message user</button>
     </div>
   </div>
 
   <!-- Bottom Search Bar -->
   <div class="bottom-nav-wrapper" id="bottom-nav-wrapper">
     <div class="mode-menu-table" id="mode-menu">
-      <button class="mode-row-btn" data-mode="fast"><span>Fast Mode</span></button>
-      <button class="mode-row-btn" data-mode="strong"><span>Strong Mode</span></button>
+      <button class="mode-row-btn" data-mode="fast"><span>fast mode</span></button>
+      <button class="mode-row-btn" data-mode="strong"><span>strong mode</span></button>
     </div>
 
     <div class="device-menu-table" id="device-menu">
-      <button class="mode-row-btn" data-device="desktop"><span>Desktop (Chrome)</span></button>
-      <button class="mode-row-btn" data-device="tablet"><span>Tablet (iPad)</span></button>
-      <button class="mode-row-btn" data-device="mobile"><span>Mobile (iPhone)</span></button>
-      <button class="mode-row-btn" data-device="xbox"><span>Xbox Console Browser</span></button>
-      <button class="mode-row-btn" data-device="playstation"><span>PlayStation Browser</span></button>
-      <button class="mode-row-btn" data-device="smarttv"><span>Smart TV</span></button>
+      <button class="mode-row-btn" data-device="desktop"><span>desktop (chrome)</span></button>
+      <button class="mode-row-btn" data-device="tablet"><span>tablet (ipad)</span></button>
+      <button class="mode-row-btn" data-device="mobile"><span>mobile (iphone)</span></button>
+      <button class="mode-row-btn" data-device="xbox"><span>xbox console browser</span></button>
+      <button class="mode-row-btn" data-device="playstation"><span>playstation browser</span></button>
+      <button class="mode-row-btn" data-device="smarttv"><span>smart tv</span></button>
     </div>
 
     <div class="device-menu-table" id="vpn-menu" style="right: 120px;">
-      <button class="mode-row-btn" data-vpn="direct"><span>Direct Proxy (Standard)</span></button>
-      <button class="mode-row-btn" data-vpn="us-east"><span>US-East (Virginia)</span></button>
-      <button class="mode-row-btn" data-vpn="eu-west"><span>EU-West (Frankfurt)</span></button>
-      <button class="mode-row-btn" data-vpn="asia-sec"><span>Asia-Secure (Tokyo)</span></button>
+      <button class="mode-row-btn" data-vpn="direct"><span>direct proxy (standard)</span></button>
+      <button class="mode-row-btn" data-vpn="us-east"><span>us-east (virginia)</span></button>
+      <button class="mode-row-btn" data-vpn="eu-west"><span>eu-west (frankfurt)</span></button>
+      <button class="mode-row-btn" data-vpn="asia-sec"><span>asia-secure (tokyo)</span></button>
     </div>
 
     <div class="bottom-nav-pill" id="search-pill-container">
@@ -381,11 +375,11 @@
       <button class="nav-btn" id="btn-forward"><svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
       <button class="nav-btn" id="btn-reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path></svg></button>
 
-      <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">Fast</span> ▾</button>
-      <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">Desktop</span> ▾</button>
-      <button class="pill-btn-toggle" id="vpn-toggle-btn"><span id="current-vpn-label">US-East</span> ▾</button>
+      <button class="pill-btn-toggle" id="mode-toggle-btn"><span id="current-mode-label">fast</span> ▾</button>
+      <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">desktop</span> ▾</button>
+      <button class="pill-btn-toggle" id="vpn-toggle-btn"><span id="current-vpn-label">us-east</span> ▾</button>
 
-      <input type="text" id="proxy-input" class="pill-input" placeholder="Search or type URL (e.g. youtube.com)..." autocomplete="off" autofocus />
+      <input type="text" id="proxy-input" class="pill-input" placeholder="enter url..." autocomplete="off" autofocus />
       <button class="go-btn" id="proxy-go"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
     </div>
   </div>
@@ -394,14 +388,14 @@
   <div class="modal-overlay hidden" id="bookmarks-modal">
     <div class="modal-box">
       <div class="modal-header">
-        <span>Bookmarks & Quick Notes</span>
+        <span>bookmarks & quick notes</span>
         <button class="nav-btn" id="close-bookmarks">×</button>
       </div>
       <div class="setting-group">
-        <label>Local Scratchpad</label>
-        <textarea id="notes-textarea" class="setting-input" rows="5" placeholder="Type quick notes here..."></textarea>
+        <label>local scratchpad</label>
+        <textarea id="notes-textarea" class="setting-input" rows="5" placeholder="type quick notes here..."></textarea>
       </div>
-      <button class="action-btn" id="save-notes">Save Notes</button>
+      <button class="action-btn" id="save-notes">save notes</button>
     </div>
   </div>
 
@@ -409,41 +403,48 @@
   <div class="modal-overlay hidden" id="profile-modal">
     <div class="modal-box">
       <div class="modal-header">
-        <span>Account & Profile Settings</span>
+        <span>account & profile settings</span>
         <button class="nav-btn" id="close-profile">×</button>
       </div>
       <div class="setting-group">
-        <label>Display Name (Unique)</label>
-        <input type="text" id="profile-name" class="setting-input" placeholder="Your Username..." maxlength="20" />
+        <label>display name (unique)</label>
+        <input type="text" id="profile-name" class="setting-input" placeholder="your username..." maxlength="20" />
       </div>
       <div class="setting-group">
-        <label>User Bio / Status</label>
-        <textarea id="profile-bio" class="setting-input" rows="2" placeholder="Tell others about yourself..." maxlength="120"></textarea>
+        <label>user bio / status</label>
+        <textarea id="profile-bio" class="setting-input" rows="2" placeholder="tell others about yourself..." maxlength="120"></textarea>
       </div>
       <div class="setting-group">
-        <label>Upload Profile Picture (Image File)</label>
+        <label>upload profile picture</label>
         <input type="file" id="profile-file-input" class="setting-input" accept="image/*" />
       </div>
       <div class="setting-group">
-        <label>Or Paste Image URL</label>
+        <label>or paste image url</label>
         <input type="text" id="profile-pfp" class="setting-input" placeholder="https://..." />
       </div>
       <div class="setting-group">
-        <label>Chat Message Font</label>
+        <label>chat message font</label>
         <select id="profile-font" class="setting-input">
-          <option value="Arial, sans-serif">Standard (Arial)</option>
-          <option value="'Orbitron', sans-serif">Sci-Fi (Orbitron)</option>
-          <option value="'Press Start 2P', monospace">Press Start 2P (Retro)</option>
-          <option value="'Rajdhani', sans-serif">Rajdhani (Futuristic)</option>
-          <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
-          <option value="'Inter', sans-serif">Inter Clean</option>
+          <option value="Arial, sans-serif">standard (arial)</option>
+          <option value="'Orbitron', sans-serif">sci-fi (orbitron)</option>
+          <option value="'Press Start 2P', monospace">press start 2p (retro)</option>
+          <option value="'Rajdhani', sans-serif">rajdhani (futuristic)</option>
+          <option value="'Share Tech Mono', monospace">share tech mono</option>
+          <option value="'Inter', sans-serif">inter clean</option>
         </select>
       </div>
       <div class="setting-group">
-        <label>Username Color</label>
+        <label>username animation style</label>
+        <select id="profile-anim" class="setting-input">
+          <option value="none">none</option>
+          <option value="wavy">wavy (animated)</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <label>username color</label>
         <input type="color" id="profile-color" class="setting-input" value="#ffffff" style="height: 40px; padding: 2px; cursor: pointer;" />
       </div>
-      <button class="action-btn" id="save-profile">Save Profile & Preferences</button>
+      <button class="action-btn" id="save-profile">save profile & preferences</button>
     </div>
   </div>
 
