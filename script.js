@@ -8,13 +8,14 @@ if ('serviceWorker' in navigator) {
 if (!localStorage.getItem('verbos_user_name')) {
   const randNum = Math.floor(1000 + Math.random() * 9000);
   localStorage.setItem('verbos_user_name', 'verbosuser-' + randNum);
-  localStorage.setItem('verbos_user_bio', 'Exploring the web with Verbos.');
+  localStorage.setItem('verbos_user_bio', 'exploring the web with verbos.');
   localStorage.setItem('verbos_user_pfp', '⭐');
-  localStorage.setItem('verbos_user_color', '#6366f1');
-  localStorage.setItem('verbos_chat_font', 'Inter, sans-serif');
+  localStorage.setItem('verbos_user_color', '#ffffff');
+  localStorage.setItem('verbos_chat_font', 'Arial, sans-serif');
+  localStorage.setItem('verbos_username_anim', 'none');
 }
 
-let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
+let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
 let currentChatRoom = 'global';
 let dmUsers = [];
@@ -73,7 +74,7 @@ function switchTab(id) {
   renderTabs();
 }
 
-function addTab(url = '', src = 'about:blank', title = 'New Tab') {
+function addTab(url = '', src = 'about:blank', title = 'new tab') {
   const newId = Date.now();
   tabs.push({ id: newId, title, url, src });
   switchTab(newId);
@@ -81,7 +82,7 @@ function addTab(url = '', src = 'about:blank', title = 'New Tab') {
 
 window.closeTab = function(id) {
   if (tabs.length === 1) {
-    tabs[0] = { id: Date.now(), title: 'New Tab', url: '', src: 'about:blank' };
+    tabs[0] = { id: Date.now(), title: 'new tab', url: '', src: 'about:blank' };
     switchTab(tabs[0].id);
     return;
   }
@@ -109,12 +110,11 @@ function triggerSwipeTransition(callback) {
     swipeOverlay.className = 'swipe-overlay animate-exit';
     setTimeout(() => {
       swipeOverlay.className = 'swipe-overlay';
-    }, 400);
-  }, 350);
+    }, 350);
+  }, 300);
 }
 
 document.getElementById('sb-home').addEventListener('click', () => {
-  stopChatPolling();
   triggerSwipeTransition(() => {
     hideAllPages();
     bottomNavWrapper.classList.remove('hidden');
@@ -130,12 +130,11 @@ document.getElementById('sb-chat').addEventListener('click', () => {
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-chat').classList.add('active');
     fetchChat(true);
-    startChatPolling();
+    if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 2000);
   });
 });
 
 document.getElementById('sb-games').addEventListener('click', () => {
-  stopChatPolling();
   triggerSwipeTransition(() => {
     hideAllPages();
     gamesPageView.classList.add('active');
@@ -145,7 +144,6 @@ document.getElementById('sb-games').addEventListener('click', () => {
 });
 
 document.getElementById('sb-settings').addEventListener('click', () => {
-  stopChatPolling();
   triggerSwipeTransition(() => {
     hideAllPages();
     settingsPageView.classList.add('active');
@@ -196,7 +194,6 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
-  stopChatPolling();
   showSpinner();
   const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
   
@@ -219,32 +216,20 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Rock-Solid Stable Chat System --- */
+/* --- Stable Chat System --- */
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
-let lastMessageCount = 0;
-
-function startChatPolling() {
-  if (chatPoll) clearInterval(chatPoll);
-  chatPoll = setInterval(() => fetchChat(false), 2000);
-}
-
-function stopChatPolling() {
-  if (chatPoll) {
-    clearInterval(chatPoll);
-    chatPoll = null;
-  }
-}
+let lastMessageTime = 0;
+let lastKnownCount = 0;
 
 document.querySelectorAll('.room-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentChatRoom = btn.getAttribute('data-room');
-    document.getElementById('current-room-title').textContent = currentChatRoom === 'global' ? '# global-chat' : `DM: @${currentChatRoom}`;
-    lastMessageCount = 0; // Reset cache count for room switch
+    document.getElementById('current-room-title').textContent = currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
     fetchChat(true);
   });
 });
@@ -261,19 +246,20 @@ async function fetchChat(forceScroll = false) {
              (m.user === currentChatRoom && m.recipient === localStorage.getItem('verbos_user_name'));
     });
 
-    if (filteredData.length !== lastMessageCount || forceScroll) {
-      lastMessageCount = filteredData.length;
+    if (filteredData.length !== lastKnownCount || forceScroll) {
+      lastKnownCount = filteredData.length;
 
       chatMessages.innerHTML = '';
       if (filteredData.length === 0) {
-        chatMessages.innerHTML = `<div style="text-align:center; color:var(--subtext); margin-top:auto; margin-bottom:auto;">No messages in this chat yet. Say hello! 👋</div>`;
+        chatMessages.innerHTML = `<div style="text-align:center; color:var(--subtext); margin-top:40px; text-transform:lowercase;">no messages here yet. say something!</div>`;
         return;
       }
 
       filteredData.forEach(m => {
         const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
         const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-        const msgFont = m.font || 'Inter, sans-serif';
+        const msgFont = m.font || 'Arial, sans-serif';
+        const animClass = m.anim === 'wavy' ? 'chat-msg-username wavy' : 'chat-msg-username';
 
         const itemEl = document.createElement('div');
         itemEl.className = 'chat-msg-item';
@@ -281,7 +267,7 @@ async function fetchChat(forceScroll = false) {
         const pfpDiv = document.createElement('div');
         pfpDiv.className = 'chat-msg-pfp';
         pfpDiv.innerHTML = pfpHTML;
-        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'Exploring the web with Verbos.');
+        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with verbos.');
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'chat-msg-content';
@@ -290,10 +276,10 @@ async function fetchChat(forceScroll = false) {
         headerDiv.className = 'chat-msg-header';
 
         const userSpan = document.createElement('span');
-        userSpan.className = 'chat-msg-username';
+        userSpan.className = animClass;
         userSpan.style.color = m.color || '#ffffff';
         userSpan.textContent = m.user;
-        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'Exploring the web with Verbos.');
+        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with verbos.');
 
         const timeSpan = document.createElement('span');
         timeSpan.className = 'chat-msg-time';
@@ -324,17 +310,22 @@ async function sendChat() {
   const text = chatInput.value.trim();
   if (!text) return;
 
+  const now = Date.now();
+  if (now - lastMessageTime < 1000) return;
+  lastMessageTime = now;
+
   const user = localStorage.getItem('verbos_user_name');
   const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
-  const bio = localStorage.getItem('verbos_user_bio') || 'Exploring the web with Verbos.';
-  const color = localStorage.getItem('verbos_user_color') || '#6366f1';
-  const font = localStorage.getItem('verbos_chat_font') || 'Inter, sans-serif';
+  const bio = localStorage.getItem('verbos_user_bio') || 'exploring the web with verbos.';
+  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
+  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
+  const anim = localStorage.getItem('verbos_username_anim') || 'none';
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, bio, color, font, recipient: currentChatRoom })
+      body: JSON.stringify({ user, text, pfp, bio, color, font, anim, recipient: currentChatRoom })
     });
     if (res.ok) { 
       chatInput.value = ''; 
@@ -359,7 +350,7 @@ window.openUserDashboard = function(username, pfp, bio) {
   const pfpContainer = document.getElementById('ud-pfp-container');
   const isImg = pfp && (pfp.startsWith('http') || pfp.startsWith('data:image'));
   if (isImg) {
-    pfpContainer.innerHTML = `<img src="${pfp}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;" />`;
+    pfpContainer.innerHTML = `<img src="${pfp}" alt="avatar" style="width:100%; height:100%; object-fit:cover;" />`;
   } else {
     pfpContainer.textContent = pfp || username.charAt(0).toUpperCase();
   }
@@ -371,7 +362,7 @@ document.getElementById('ud-message-btn').addEventListener('click', () => {
   if (!selectedDashboardUser) return;
   const myName = localStorage.getItem('verbos_user_name');
   if (selectedDashboardUser === myName) {
-    alert("You cannot message yourself!");
+    alert("you cannot message yourself!");
     return;
   }
 
@@ -387,7 +378,7 @@ document.getElementById('ud-message-btn').addEventListener('click', () => {
 function renderDmList() {
   const container = document.getElementById('dm-rooms-list');
   container.innerHTML = dmUsers.map(user => `
-    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}"><span>@${user}</span></button>
+    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}">@${user}</button>
   `).join('');
 
   container.querySelectorAll('.room-btn').forEach(btn => {
@@ -395,20 +386,19 @@ function renderDmList() {
       document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentChatRoom = btn.getAttribute('data-room');
-      document.getElementById('current-room-title').textContent = `DM: @${currentChatRoom}`;
-      lastMessageCount = 0;
+      document.getElementById('current-room-title').textContent = `dm: @${currentChatRoom}`;
       fetchChat(true);
     });
   });
 }
 
 document.getElementById('add-friend-btn').addEventListener('click', async () => {
-  const friendName = prompt("Enter username to start a Direct Message:");
+  const friendName = prompt("enter username to start a direct message:");
   if (!friendName) return;
   const clean = friendName.trim();
   const myName = localStorage.getItem('verbos_user_name');
   if (clean === myName) {
-    alert("That's you!");
+    alert("that's you!");
     return;
   }
   if (!dmUsers.includes(clean)) {
@@ -420,7 +410,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
 
 /* --- Themes & Customization --- */
 const DARK_THEMES = {
-  obsidian: { bg: '#070709', panel: '#111116', border: '#24242c', accent: '#6366f1', hover: '#1b1b22' },
+  obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
   emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
   amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
@@ -455,18 +445,6 @@ bgSelect.addEventListener('change', () => {
   initBackground(bgSelect.value);
 });
 
-const searchSelect = document.getElementById('search-style-select');
-const searchContainer = document.getElementById('search-pill-container');
-searchSelect.value = localStorage.getItem('verbos_search_style') || 'pill';
-function applySearchStyle(style) {
-  searchContainer.className = 'bottom-nav-pill style-' + style;
-}
-searchSelect.addEventListener('change', () => {
-  localStorage.setItem('verbos_search_style', searchSelect.value);
-  applySearchStyle(searchSelect.value);
-});
-applySearchStyle(localStorage.getItem('verbos_search_style') || 'pill');
-
 /* --- Modals Handling --- */
 const profileModal = document.getElementById('profile-modal');
 const bookmarksModal = document.getElementById('bookmarks-modal');
@@ -483,6 +461,7 @@ const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
 const profileFileInput = document.getElementById('profile-file-input');
 const profileFontSelect = document.getElementById('profile-font');
+const profileAnimSelect = document.getElementById('profile-anim');
 const profileColorInput = document.getElementById('profile-color');
 const pfpInitial = document.getElementById('pfp-initial');
 const pfpImg = document.getElementById('pfp-img');
@@ -492,12 +471,14 @@ function loadProfile() {
   const bio = localStorage.getItem('verbos_user_bio');
   const pfp = localStorage.getItem('verbos_user_pfp');
   const font = localStorage.getItem('verbos_chat_font');
+  const anim = localStorage.getItem('verbos_username_anim') || 'none';
   const color = localStorage.getItem('verbos_user_color');
 
   profileNameInput.value = name;
   profileBioInput.value = bio;
   if (!pfp.startsWith('data:')) profilePfpInput.value = pfp;
   profileFontSelect.value = font;
+  profileAnimSelect.value = anim;
   profileColorInput.value = color;
 
   if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
@@ -515,7 +496,7 @@ profileFileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
     if (file.size > 200 * 1024) {
-      alert("Image is too large! Please choose an image smaller than 200KB.");
+      alert("image is too large! choose an image under 200kb.");
       return;
     }
     const reader = new FileReader();
@@ -529,7 +510,7 @@ profileFileInput.addEventListener('change', (e) => {
 document.getElementById('save-profile').addEventListener('click', async () => {
   const name = profileNameInput.value.trim();
   if (!name) {
-    alert("Display name cannot be empty!");
+    alert("display name cannot be empty!");
     return;
   }
   
@@ -539,21 +520,23 @@ document.getElementById('save-profile').addEventListener('click', async () => {
       const users = await res.json();
       const currentStoredName = localStorage.getItem('verbos_user_name');
       if (users.includes(name) && name !== currentStoredName) {
-        alert("This display name is already taken! Please choose another.");
+        alert("this display name is already taken!");
         return;
       }
     }
   } catch (e) {}
 
-  const bio = profileBioInput.value.trim() || 'Exploring the web with Verbos.';
+  const bio = profileBioInput.value.trim() || 'exploring the web with verbos.';
   const pfp = profilePfpInput.value.trim() || '⭐';
   const font = profileFontSelect.value;
+  const anim = profileAnimSelect.value;
   const color = profileColorInput.value;
 
   localStorage.setItem('verbos_user_name', name);
   localStorage.setItem('verbos_user_bio', bio);
   localStorage.setItem('verbos_user_pfp', pfp);
   localStorage.setItem('verbos_chat_font', font);
+  localStorage.setItem('verbos_username_anim', anim);
   localStorage.setItem('verbos_user_color', color);
 
   loadProfile();
@@ -615,7 +598,7 @@ function initBackground(style) {
 }
 initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
 
-// Star Logo
+// Star Logo (Clean solid white, no inversion)
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
