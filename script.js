@@ -4,14 +4,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Auto-assign default verbosuser-<random numbers> on first visit
+// Auto-assign unique verbosuser-<random> on first load
 if (!localStorage.getItem('verbos_user_name')) {
   const randNum = Math.floor(1000 + Math.random() * 9000);
   localStorage.setItem('verbos_user_name', 'verbosuser-' + randNum);
   localStorage.setItem('verbos_user_bio', 'Exploring the web with Verbos.');
   localStorage.setItem('verbos_user_pfp', '⭐');
-  localStorage.setItem('verbos_user_color', '#ffffff');
-  localStorage.setItem('verbos_chat_font', 'Arial, sans-serif');
+  localStorage.setItem('verbos_user_color', '#6366f1');
+  localStorage.setItem('verbos_chat_font', 'Inter, sans-serif');
 }
 
 let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
@@ -30,6 +30,7 @@ const settingsPageView = document.getElementById('settings-page-view');
 const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
 const loadingSpinner = document.getElementById('loading-spinner');
+const swipeOverlay = document.getElementById('swipe-overlay');
 
 function showSpinner() { loadingSpinner.classList.remove('hidden'); }
 function hideSpinner() { loadingSpinner.classList.add('hidden'); }
@@ -100,56 +101,21 @@ function hideAllPages() {
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
 }
 
-/* --- Pixel Dust & Randomized Swipe Transitions --- */
-function triggerPixelDustTransition(callback) {
-  const canvas = document.getElementById('dust-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.style.display = 'block';
-
-  const directions = ['left', 'right', 'up', 'down'];
-  const chosenDir = directions[Math.floor(Math.random() * directions.length)];
-
-  let particles = [];
-  for (let i = 0; i < 300; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: chosenDir === 'left' ? -Math.random() * 25 - 5 : chosenDir === 'right' ? Math.random() * 25 + 5 : (Math.random() - 0.5) * 15,
-      vy: chosenDir === 'up' ? -Math.random() * 25 - 5 : chosenDir === 'down' ? Math.random() * 25 + 5 : (Math.random() - 0.5) * 15,
-      size: Math.random() * 4 + 1,
-      alpha: Math.random() * 0.8 + 0.2
-    });
-  }
-
-  let frame = 0;
-  function animateDust() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#ffffff';
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      ctx.globalAlpha = p.alpha;
-      ctx.fillRect(p.x, p.y, p.size, p.size);
-    });
-
-    frame++;
-    if (frame === 15) {
-      callback();
-    }
-    if (frame < 30) {
-      requestAnimationFrame(animateDust);
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      canvas.style.display = 'none';
-    }
-  }
-  animateDust();
+/* --- Animated Swipe Transitions --- */
+function triggerSwipeTransition(callback) {
+  swipeOverlay.className = 'swipe-overlay animate-left';
+  setTimeout(() => {
+    callback();
+    swipeOverlay.className = 'swipe-overlay animate-exit';
+    setTimeout(() => {
+      swipeOverlay.className = 'swipe-overlay';
+    }, 400);
+  }, 350);
 }
 
 document.getElementById('sb-home').addEventListener('click', () => {
-  triggerPixelDustTransition(() => {
+  stopChatPolling();
+  triggerSwipeTransition(() => {
     hideAllPages();
     bottomNavWrapper.classList.remove('hidden');
     homeView.classList.remove('hidden');
@@ -158,18 +124,19 @@ document.getElementById('sb-home').addEventListener('click', () => {
 });
 
 document.getElementById('sb-chat').addEventListener('click', () => {
-  triggerPixelDustTransition(() => {
+  triggerSwipeTransition(() => {
     hideAllPages();
     chatPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-chat').classList.add('active');
     fetchChat(true);
-    if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 3000);
+    startChatPolling();
   });
 });
 
 document.getElementById('sb-games').addEventListener('click', () => {
-  triggerPixelDustTransition(() => {
+  stopChatPolling();
+  triggerSwipeTransition(() => {
     hideAllPages();
     gamesPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
@@ -178,7 +145,8 @@ document.getElementById('sb-games').addEventListener('click', () => {
 });
 
 document.getElementById('sb-settings').addEventListener('click', () => {
-  triggerPixelDustTransition(() => {
+  stopChatPolling();
+  triggerSwipeTransition(() => {
     hideAllPages();
     settingsPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
@@ -228,6 +196,7 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
+  stopChatPolling();
   showSpinner();
   const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
   
@@ -250,13 +219,24 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- Chat System --- */
+/* --- Rock-Solid Stable Chat System --- */
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 let chatPoll = null;
-let lastMessageTime = 0;
-let lastKnownCount = 0;
+let lastMessageCount = 0;
+
+function startChatPolling() {
+  if (chatPoll) clearInterval(chatPoll);
+  chatPoll = setInterval(() => fetchChat(false), 2000);
+}
+
+function stopChatPolling() {
+  if (chatPoll) {
+    clearInterval(chatPoll);
+    chatPoll = null;
+  }
+}
 
 document.querySelectorAll('.room-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -264,6 +244,7 @@ document.querySelectorAll('.room-btn').forEach(btn => {
     btn.classList.add('active');
     currentChatRoom = btn.getAttribute('data-room');
     document.getElementById('current-room-title').textContent = currentChatRoom === 'global' ? '# global-chat' : `DM: @${currentChatRoom}`;
+    lastMessageCount = 0; // Reset cache count for room switch
     fetchChat(true);
   });
 });
@@ -280,14 +261,19 @@ async function fetchChat(forceScroll = false) {
              (m.user === currentChatRoom && m.recipient === localStorage.getItem('verbos_user_name'));
     });
 
-    if (filteredData.length !== lastKnownCount || forceScroll) {
-      lastKnownCount = filteredData.length;
+    if (filteredData.length !== lastMessageCount || forceScroll) {
+      lastMessageCount = filteredData.length;
 
       chatMessages.innerHTML = '';
+      if (filteredData.length === 0) {
+        chatMessages.innerHTML = `<div style="text-align:center; color:var(--subtext); margin-top:auto; margin-bottom:auto;">No messages in this chat yet. Say hello! 👋</div>`;
+        return;
+      }
+
       filteredData.forEach(m => {
         const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
         const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-        const msgFont = m.font || 'Arial, sans-serif';
+        const msgFont = m.font || 'Inter, sans-serif';
 
         const itemEl = document.createElement('div');
         itemEl.className = 'chat-msg-item';
@@ -338,17 +324,11 @@ async function sendChat() {
   const text = chatInput.value.trim();
   if (!text) return;
 
-  const now = Date.now();
-  if (now - lastMessageTime < 1500) {
-    return;
-  }
-  lastMessageTime = now;
-
-  const user = localStorage.getItem('verbos_user_name') || 'VerbosUser';
+  const user = localStorage.getItem('verbos_user_name');
   const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
   const bio = localStorage.getItem('verbos_user_bio') || 'Exploring the web with Verbos.';
-  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
-  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
+  const color = localStorage.getItem('verbos_user_color') || '#6366f1';
+  const font = localStorage.getItem('verbos_chat_font') || 'Inter, sans-serif';
 
   try {
     const res = await fetch('/api/chat', {
@@ -407,7 +387,7 @@ document.getElementById('ud-message-btn').addEventListener('click', () => {
 function renderDmList() {
   const container = document.getElementById('dm-rooms-list');
   container.innerHTML = dmUsers.map(user => `
-    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}">@${user}</button>
+    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}"><span>@${user}</span></button>
   `).join('');
 
   container.querySelectorAll('.room-btn').forEach(btn => {
@@ -416,6 +396,7 @@ function renderDmList() {
       btn.classList.add('active');
       currentChatRoom = btn.getAttribute('data-room');
       document.getElementById('current-room-title').textContent = `DM: @${currentChatRoom}`;
+      lastMessageCount = 0;
       fetchChat(true);
     });
   });
@@ -439,7 +420,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
 
 /* --- Themes & Customization --- */
 const DARK_THEMES = {
-  obsidian: { bg: '#000000', panel: '#0a0a0a', border: '#262626', accent: '#ffffff', hover: '#1a1a1a' },
+  obsidian: { bg: '#070709', panel: '#111116', border: '#24242c', accent: '#6366f1', hover: '#1b1b22' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
   emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
   amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
@@ -496,7 +477,7 @@ document.getElementById('close-bookmarks').addEventListener('click', () => bookm
 document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
 document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
 
-// Profile Logic with Unique Name Check
+// Profile Logic
 const profileNameInput = document.getElementById('profile-name');
 const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
