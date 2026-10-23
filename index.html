@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">Verbos - Dashboard</title>
+  <title id="tab-title">Verbos - Welcome</title>
   <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --gui-scale: 1.15;
-      --bg: #000000;
-      --panel: #0a0a0a;
-      --border: #262626;
+      --bg: #070709;
+      --panel: #111116;
+      --border: #24242c;
       --text: #ffffff;
-      --subtext: #888888;
-      --accent: #ffffff;
-      --hover: #1a1a1a;
-      --font: Arial, Helvetica, sans-serif;
+      --subtext: #9ca3af;
+      --accent: #6366f1;
+      --hover: #1b1b22;
+      --font: 'Inter', Arial, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
@@ -31,31 +31,33 @@
 
     .home-view {
       position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
-      width: 100%; height: 100%;
+      width: 100%; height: 100%; gap: 12px;
     }
     .home-view.hidden { display: none; }
-    .star-text { color: var(--text); font-size: 2rem; font-weight: bold; letter-spacing: 2.5px; text-transform: lowercase; user-select: none; text-align: center; }
+    .star-text { color: var(--text); font-size: 2.5rem; font-weight: 700; letter-spacing: -0.5px; text-transform: lowercase; user-select: none; text-align: center; }
+    .home-subtitle { color: var(--subtext); font-size: 1.05rem; font-weight: 400; letter-spacing: 0.3px; }
 
-    canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; mix-blend-mode: difference; }
+    canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; opacity: 0.85; mix-blend-mode: screen; }
 
-    /* Sidebar */
+    /* Sidebar Taskbar */
     .sidebar {
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column;
       align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
-      gap: calc(14px * var(--gui-scale)); z-index: 1200;
+      gap: calc(14px * var(--gui-scale)); z-index: 1200; box-shadow: 4px 0 25px rgba(0,0,0,0.6);
     }
     .sidebar-btn {
-      background: transparent; border: 1px solid transparent; color: var(--text);
+      background: transparent; border: 1px solid transparent; color: var(--subtext);
       width: calc(42px * var(--gui-scale)); height: calc(42px * var(--gui-scale)); border-radius: 12px;
       display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;
     }
-    .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--accent); }
+    .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--text); }
     .profile-avatar-btn {
       margin-top: auto; width: calc(40px * var(--gui-scale)); height: calc(40px * var(--gui-scale));
       border-radius: 50%; border: 1px solid var(--border); background: var(--bg); display: flex;
-      align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
+      align-items: center; justify-content: center; overflow: hidden; cursor: pointer; transition: transform 0.2s;
     }
+    .profile-avatar-btn:hover { transform: scale(1.08); }
     .profile-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
     .svg-icon { width: calc(20px * var(--gui-scale)); height: calc(20px * var(--gui-scale)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -70,55 +72,65 @@
       border-radius: 10px 10px 0 0; font-size: calc(0.85rem * var(--gui-scale)); cursor: grab; display: flex; align-items: center; gap: 10px; max-width: 180px; white-space: nowrap; user-select: none;
       transition: background 0.2s ease, color 0.2s ease;
     }
-    .tab-item.active { background: var(--panel); color: var(--text); border-bottom-color: var(--panel); }
+    .tab-item.active { background: var(--panel); color: var(--text); border-bottom-color: var(--panel); border-top: 2px solid var(--accent); }
     .tab-close { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 1rem; }
     .tab-close:hover { color: var(--text); }
     .add-tab-btn {
-      background: transparent; border: 1px dashed var(--border); color: var(--text); width: calc(32px * var(--gui-scale)); height: calc(32px * var(--gui-scale));
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      background: transparent; border: 1px dashed var(--border); color: var(--subtext); width: calc(32px * var(--gui-scale)); height: calc(32px * var(--gui-scale));
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
     }
+    .add-tab-btn:hover { background: var(--hover); color: var(--text); border-color: var(--accent); }
 
-    .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; }
+    .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.8rem; z-index: 1300; user-select: none; }
 
-    /* Full Page Views (Chat, Games, Settings) */
+    /* Full Page Views with Swipe Transitions */
     .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     }
     .page-view.active { display: flex; }
 
-    /* Chat View Layout */
+    /* Swipe Overlay for Transitions */
+    .swipe-overlay {
+      position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
+      height: calc(100vh - 46px * var(--gui-scale)); background: var(--panel); z-index: 5000; pointer-events: none; opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+      transform: translateX(100%);
+    }
+    .swipe-overlay.animate-left { transform: translateX(0); opacity: 1; }
+    .swipe-overlay.animate-exit { transform: translateX(-100%); opacity: 1; }
+
+    /* Chat Layout */
     .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; }
-    .chat-sidebar { width: 240px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 10px; }
-    .chat-sidebar h4 { font-size: 0.9rem; color: var(--subtext); margin-bottom: 5px; }
-    .room-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.85rem; }
+    .chat-sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; gap: 10px; }
+    .chat-sidebar h4 { font-size: 0.8rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .room-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 10px; cursor: pointer; text-align: left; font-size: 0.9rem; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
     .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
 
-    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; }
+    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 25px; gap: 16px; background: var(--bg); }
     .chat-messages-container {
-      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 14px; box-shadow: inset 0 2px 12px rgba(0,0,0,0.6);
     }
-    .chat-msg-item { display: flex; gap: 12px; align-items: flex-start; }
-    .chat-msg-pfp { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; cursor: pointer; }
+    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-msg-pfp { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
     .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
-    .chat-msg-username { font-weight: bold; font-size: 0.9rem; cursor: pointer; }
+    .chat-msg-username { font-weight: 600; font-size: 0.95rem; cursor: pointer; }
     .chat-msg-username:hover { text-decoration: underline; }
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .chat-msg-text { font-size: 0.95rem; color: #dddddd; word-break: break-word; }
-    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 6px 16px; margin-bottom: 10px; }
+    .chat-msg-text { font-size: 0.98rem; color: #f3f4f6; word-break: break-word; line-height: 1.45; }
+    .chat-input-bar { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 35px; padding: 8px 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
 
     /* Games Hub Layout */
-    .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; }
-    .games-frame { width: 100%; flex: 1; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+    .games-container { flex: 1; display: flex; flex-direction: column; padding: 25px; gap: 15px; }
+    .games-frame { width: 100%; flex: 1; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: 0 10px 35px rgba(0,0,0,0.7); }
 
     /* Settings Page Layout */
-    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; overflow-y: auto; }
-
-    /* Pixel Dust Transition Canvas */
-    canvas#dust-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5000; display: none; }
+    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 40px; gap: 24px; max-width: 650px; margin: 0 auto; width: 100%; overflow-y: auto; }
 
     /* Bottom Search Bar */
     .bottom-nav-wrapper {
@@ -130,18 +142,18 @@
     .bottom-nav-pill {
       background: var(--panel); border: 1px solid var(--border); border-radius: calc(35px * var(--gui-scale));
       padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8); width: 100%; transition: all 0.3s ease;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85); width: 100%; transition: all 0.3s ease;
     }
     .pill-input { flex: 1; background: transparent; border: none; outline: none; padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(1rem * var(--gui-scale)); color: var(--text); }
     .pill-input::placeholder { color: var(--subtext); }
     .go-btn {
-      background: var(--text); border: none; width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%;
-      color: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+      background: var(--accent); border: none; width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%;
+      color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s;
     }
-    .go-btn:hover { background: var(--accent); transform: scale(1.05); }
+    .go-btn:hover { transform: scale(1.08); }
 
-    .nav-btn { background: transparent; border: none; color: var(--text); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .nav-btn:hover { background: var(--hover); color: var(--accent); }
+    .nav-btn { background: transparent; border: none; color: var(--subtext); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: color 0.2s; }
+    .nav-btn:hover { background: var(--hover); color: var(--text); }
     .pill-btn-toggle {
       background: var(--hover); border: 1px solid var(--border); color: var(--text); border-radius: calc(18px * var(--gui-scale));
       padding: calc(6px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(0.78rem * var(--gui-scale)); cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap;
@@ -167,43 +179,44 @@
     }
     .proxy-viewer.active { display: flex; }
     .screen-panel { flex: 1; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
-    .device-viewport { width: 100%; height: 100%; background: #ffffff; }
+    .device-viewport { width: 100%; height: 100%; background: #ffffff; border-radius: 12px; overflow: hidden; }
     .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
 
     .loading-overlay {
       position: absolute; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); right: 0; bottom: calc(85px * var(--gui-scale));
-      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(2px); z-index: 1500; display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); z-index: 1500; display: flex; align-items: center; justify-content: center;
     }
     .loading-overlay.hidden { display: none; }
     .spinner-ring {
-      width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--text); border-radius: 50%;
+      width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Modals */
     .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px);
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px);
       z-index: 3000; display: flex; align-items: center; justify-content: center;
     }
     .modal-overlay.hidden { display: none; }
     .modal-box {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 440px; padding: 24px;
-      display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); max-height: 85vh; overflow-y: auto;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 18px; width: 90%; max-width: 440px; padding: 28px;
+      display: flex; flex-direction: column; gap: 18px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); max-height: 85vh; overflow-y: auto;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: bold; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; font-weight: 600; font-size: 1.1rem; }
     .setting-group { display: flex; flex-direction: column; gap: 8px; }
-    .setting-group label { font-size: 0.82rem; color: var(--subtext); }
-    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+    .setting-group label { font-size: 0.85rem; color: var(--subtext); font-weight: 500; }
+    .setting-input { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: var(--text); outline: none; width: 100%; transition: border-color 0.2s; }
+    .setting-input:focus { border-color: var(--accent); }
 
-    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .theme-card {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;
     }
     .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
-    .theme-color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); }
+    .theme-color-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); }
 
-    .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; }
+    .action-btn { background: var(--accent); border: none; border-radius: 10px; padding: 12px; font-weight: 600; color: #fff; cursor: pointer; transition: opacity 0.2s; }
     .action-btn:hover { opacity: 0.9; }
 
     .hidden { display: none !important; }
@@ -214,18 +227,19 @@
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
-      <div class="star-text">*welcome to verbos</div>
+      <div class="star-text">welcome to verbos</div>
+      <div class="home-subtitle">your secure gateway to the web & community</div>
     </div>
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
-  <canvas id="dust-canvas"></canvas>
+  <div class="swipe-overlay" id="swipe-overlay"></div>
 
   <div class="loading-overlay hidden" id="loading-spinner">
     <div class="spinner-ring"></div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- Sidebar Taskbar -->
   <div class="sidebar">
     <button class="sidebar-btn active" id="sb-home" title="Home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -260,18 +274,18 @@
     <div class="chat-layout">
       <div class="chat-sidebar">
         <h4>💬 Channels & DMs</h4>
-        <button class="room-btn active" data-room="global"># global-chat</button>
+        <button class="room-btn active" data-room="global"><span># global-chat</span></button>
         <h4 style="margin-top: 15px;">Direct Messages</h4>
-        <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 5px;"></div>
+        <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
       </div>
       <div class="chat-main-area">
-        <div style="font-weight: bold; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-weight: 600; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center;">
           <span id="current-room-title"># global-chat</span>
-          <button class="action-btn" id="add-friend-btn" style="padding: 6px 12px; font-size: 0.8rem;">+ Add Friend</button>
+          <button class="action-btn" id="add-friend-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ Add DM</button>
         </div>
         <div class="chat-messages-container" id="chat-messages"></div>
         <div class="chat-input-bar">
-          <input type="text" id="chat-input" class="pill-input" placeholder="Type a message safely..." autocomplete="off" />
+          <input type="text" id="chat-input" class="pill-input" placeholder="Say something nice to everyone..." autocomplete="off" />
           <button class="go-btn" id="chat-send" title="Send">
             <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
@@ -283,7 +297,7 @@
   <!-- Games Hub Page View -->
   <div class="page-view" id="games-page-view">
     <div class="games-container">
-      <div style="font-weight: bold; font-size: 1.2rem;">gn-math or something ion know</div>
+      <div style="font-weight: 600; font-size: 1.25rem;">🎮 Verbos Games Hub</div>
       <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
     </div>
   </div>
@@ -291,7 +305,7 @@
   <!-- Settings Page View -->
   <div class="page-view" id="settings-page-view">
     <div class="settings-container">
-      <div style="font-weight: bold; font-size: 1.2rem;">⚙️ Theme & Preferences</div>
+      <div style="font-weight: 600; font-size: 1.25rem;">⚙️ Theme & Preferences</div>
       <div class="setting-group">
         <label>Select Color Scheme</label>
         <div class="theme-grid">
@@ -371,7 +385,7 @@
       <button class="pill-btn-toggle" id="device-toggle-btn"><span id="current-device-label">Desktop</span> ▾</button>
       <button class="pill-btn-toggle" id="vpn-toggle-btn"><span id="current-vpn-label">US-East</span> ▾</button>
 
-      <input type="text" id="proxy-input" class="pill-input" placeholder="Enter URL..." autocomplete="off" autofocus />
+      <input type="text" id="proxy-input" class="pill-input" placeholder="Search or type URL (e.g. youtube.com)..." autocomplete="off" autofocus />
       <button class="go-btn" id="proxy-go"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
     </div>
   </div>
