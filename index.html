@@ -25,9 +25,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
+    /* Inversion effect container using mix-blend-mode difference */
     .star-blend-container {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
       display: flex; align-items: center; justify-content: center; background: #000000;
+      mix-blend-mode: difference;
     }
     canvas#bg-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
@@ -36,7 +38,7 @@
       width: 100%; height: 100%; background: transparent;
     }
     .home-view.hidden { display: none; }
-    .star-text { color: var(--text); font-size: 2rem; font-weight: bold; letter-spacing: 2.5px; text-transform: lowercase; user-select: none; text-align: center; }
+    .star-text { color: #ffffff; font-size: 2rem; font-weight: bold; letter-spacing: 2.5px; text-transform: lowercase; user-select: none; text-align: center; }
 
     canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; background: transparent; }
 
@@ -228,6 +230,7 @@
 </head>
 <body>
 
+  <!-- Restored Inversion Effect Container -->
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
