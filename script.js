@@ -13,6 +13,8 @@ if (!localStorage.getItem('verbos_user_name')) {
   localStorage.setItem('verbos_user_color', '#ffffff');
   localStorage.setItem('verbos_chat_font', 'Arial, sans-serif');
   localStorage.setItem('verbos_username_anim', 'none');
+  localStorage.setItem('verbos_gui_scale', '1.15');
+  localStorage.setItem('verbos_ui_formatting', 'standard');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
@@ -166,20 +168,14 @@ let currentVpn = 'us-east';
 
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
-const currentModeLabel = document.getElementById('current-mode-label');
-
 const deviceToggleBtn = document.getElementById('device-toggle-btn');
 const deviceMenu = document.getElementById('device-menu');
-const currentDeviceLabel = document.getElementById('current-device-label');
-
 const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
 const vpnMenu = document.getElementById('vpn-menu');
-const currentVpnLabel = document.getElementById('current-vpn-label');
 
 modeToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); modeMenu.classList.toggle('active'); });
 deviceToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); vpnMenu.classList.remove('active'); deviceMenu.classList.toggle('active'); });
 vpnToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.toggle('active'); });
-
 document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); });
 
 function processUrl(rawInput) {
@@ -234,6 +230,19 @@ document.querySelectorAll('.room-btn').forEach(btn => {
   });
 });
 
+function createWavySpan(text) {
+  const container = document.createElement('span');
+  container.className = 'chat-msg-username';
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'wavy-letter';
+    span.textContent = text[i];
+    span.style.animationDelay = `${i * 0.08}s`;
+    container.appendChild(span);
+  }
+  return container;
+}
+
 async function fetchChat(forceScroll = false) {
   try {
     const res = await fetch('/api/chat');
@@ -259,7 +268,6 @@ async function fetchChat(forceScroll = false) {
         const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
         const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
         const msgFont = m.font || 'Arial, sans-serif';
-        const animClass = m.anim === 'wavy' ? 'chat-msg-username wavy' : 'chat-msg-username';
 
         const itemEl = document.createElement('div');
         itemEl.className = 'chat-msg-item';
@@ -275,10 +283,15 @@ async function fetchChat(forceScroll = false) {
         const headerDiv = document.createElement('div');
         headerDiv.className = 'chat-msg-header';
 
-        const userSpan = document.createElement('span');
-        userSpan.className = animClass;
+        let userSpan;
+        if (m.anim === 'wavy') {
+          userSpan = createWavySpan(m.user);
+        } else {
+          userSpan = document.createElement('span');
+          userSpan.className = 'chat-msg-username';
+          userSpan.textContent = m.user;
+        }
         userSpan.style.color = m.color || '#ffffff';
-        userSpan.textContent = m.user;
         userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with verbos.');
 
         const timeSpan = document.createElement('span');
@@ -408,14 +421,16 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
 });
 
-/* --- Themes & Customization --- */
+/* --- Themes, Formatting & GUI Scale --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
   emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
   amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
   amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
-  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' }
+  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' },
+  cyberpunk: { bg: '#030712', panel: '#0f172a', border: '#06b6d4', accent: '#06b6d4', hover: '#1e293b' },
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#22c55e', accent: '#22c55e', hover: '#0d2e1a' }
 };
 
 function applyTheme(key) {
@@ -437,6 +452,39 @@ document.querySelectorAll('.theme-card').forEach(card => {
   });
 });
 applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
+
+// UI Formatting Style (Standard, Borderless, Minimalistic)
+const uiFormattingSelect = document.getElementById('ui-formatting-select');
+function applyUiFormatting(style) {
+  const root = document.documentElement;
+  if (style === 'borderless') {
+    root.style.setProperty('--border-radius', '20px');
+    root.style.setProperty('--panel-border', '1px solid rgba(255, 255, 255, 0.08)');
+  } else if (style === 'minimalistic') {
+    root.style.setProperty('--border-radius', '4px');
+    root.style.setProperty('--panel-border', '1px solid rgba(255, 255, 255, 0.4)');
+  } else {
+    root.style.setProperty('--border-radius', '12px');
+    root.style.setProperty('--panel-border', '1px solid var(--border)');
+  }
+  localStorage.setItem('verbos_ui_formatting', style);
+}
+uiFormattingSelect.value = localStorage.getItem('verbos_ui_formatting') || 'standard';
+applyUiFormatting(uiFormattingSelect.value);
+uiFormattingSelect.addEventListener('change', () => applyUiFormatting(uiFormattingSelect.value));
+
+// GUI Scale Slider
+const guiScaleSlider = document.getElementById('gui-scale-slider');
+const guiScaleVal = document.getElementById('gui-scale-val');
+function applyGuiScale(val) {
+  document.documentElement.style.setProperty('--gui-scale', val);
+  guiScaleVal.textContent = val;
+  localStorage.setItem('verbos_gui_scale', val);
+}
+const savedScale = localStorage.getItem('verbos_gui_scale') || '1.15';
+guiScaleSlider.value = savedScale;
+applyGuiScale(savedScale);
+guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
 
 const bgSelect = document.getElementById('bg-style-select');
 bgSelect.value = localStorage.getItem('verbos_bg_style') || 'stars';
