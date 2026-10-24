@@ -98,9 +98,9 @@
 
     /* Chat Layout */
     .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); }
-    .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 10px; }
-    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); text-transform: lowercase; margin-bottom: 5px; }
-    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 10px 14px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.9rem; text-transform: lowercase; }
+    .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 8px; overflow-y: auto; }
+    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); text-transform: lowercase; margin-top: 5px; margin-bottom: 2px; }
+    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.88rem; text-transform: lowercase; }
     .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
 
     .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; background: var(--bg); }
@@ -147,7 +147,7 @@
     .bottom-nav-pill {
       background: var(--panel); border: var(--panel-border); border-radius: calc(35px * var(--gui-scale));
       padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
-      width: 100%; transition: all 0.3s ease;
+      width: 100%; transition: all 0.3s ease; position: relative;
     }
     .pill-input { flex: 1; background: transparent; border: none; outline: none; padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(1rem * var(--gui-scale)); color: var(--text); }
     .pill-input::placeholder { color: var(--subtext); text-transform: lowercase; }
@@ -276,8 +276,11 @@
   <div class="page-view" id="chat-page-view">
     <div class="chat-layout">
       <div class="chat-sidebar">
-        <h4>channels & dms</h4>
+        <h4>servers</h4>
         <button class="room-btn active" data-room="global"># global-chat</button>
+        <button class="room-btn" data-room="general-1"># general-1</button>
+        <button class="room-btn" data-room="general-2"># general-2</button>
+        <button class="room-btn" data-room="general-3"># general-3</button>
         <h4 style="margin-top: 15px;">direct messages</h4>
         <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
       </div>
@@ -368,12 +371,13 @@
 
   <!-- Bottom Search Bar -->
   <div class="bottom-nav-wrapper" id="bottom-nav-wrapper">
+    <!-- Proxy Dropdown Menus -->
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>fast mode</span></button>
       <button class="mode-row-btn" data-mode="strong"><span>strong mode</span></button>
     </div>
 
-    <div class="device-menu-table" id="device-menu">
+    <div class="device-menu-table" id="device-menu" style="left: 105px;">
       <button class="mode-row-btn" data-device="desktop"><span>desktop (chrome)</span></button>
       <button class="mode-row-btn" data-device="tablet"><span>tablet (ipad)</span></button>
       <button class="mode-row-btn" data-device="mobile"><span>mobile (iphone)</span></button>
@@ -382,7 +386,7 @@
       <button class="mode-row-btn" data-device="smarttv"><span>smart tv</span></button>
     </div>
 
-    <div class="device-menu-table" id="vpn-menu" style="right: 120px;">
+    <div class="device-menu-table" id="vpn-menu" style="left: 215px;">
       <button class="mode-row-btn" data-vpn="direct"><span>direct proxy (standard)</span></button>
       <button class="mode-row-btn" data-vpn="us-east"><span>us-east (virginia)</span></button>
       <button class="mode-row-btn" data-vpn="eu-west"><span>eu-west (frankfurt)</span></button>
