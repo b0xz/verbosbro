@@ -49,7 +49,13 @@ export default async function handler(req, res) {
   try {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
-    const vpnXForwarded = vpn === 'eu-west' ? '85.214.132.11' : vpn === 'asia-sec' ? '202.12.29.11' : '54.240.196.18';
+    
+    // Privacy gateway IPs to mask client origin and prevent IP/view logging
+    const privacyPool = [
+      '54.240.196.18', '85.214.132.11', '202.12.29.11', 
+      '198.51.100.42', '203.0.113.195', '192.0.2.14'
+    ];
+    const maskedIp = privacyPool[Math.floor(Math.random() * privacyPool.length)];
 
     const headers = {
       'user-agent': selectedUA,
@@ -58,15 +64,14 @@ export default async function handler(req, res) {
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
-      'x-forwarded-for': vpnXForwarded,
-      'x-real-ip': vpnXForwarded,
+      'x-forwarded-for': maskedIp,
+      'x-real-ip': maskedIp,
+      'forwarded': `for=${maskedIp};proto=https`,
+      'via': '1.1 verions-secure-gateway',
       'upgrade-insecure-requests': '1',
-      'dnt': '1'
+      'dnt': '1',
+      'sec-gpc': '1'
     };
-
-    if (req.headers.cookie) headers.cookie = req.headers.cookie;
-    if (req.headers['authorization']) headers.authorization = req.headers['authorization'];
-    if (req.headers['range']) headers.range = req.headers['range'];
 
     const fetchOptions = {
       method: req.method,
@@ -98,10 +103,8 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core-x10');
-    res.setHeader('x-target-url', targetUrl);
-    res.setHeader('x-target-origin', baseUrl);
-    res.setHeader('x-vpn-node', vpn);
+    res.setHeader('x-proxied-by', 'verbo-quantum-core-shield');
+    res.setHeader('referrer-policy', 'no-referrer');
 
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
@@ -148,7 +151,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // High-performance streaming for non-HTML assets (images, video, WASM, etc.)
     if (!isHTML && !isCSS && !isJS) {
       res.status(response.status);
       try { res.removeHeader('content-length'); } catch (e) {}
