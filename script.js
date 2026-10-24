@@ -168,14 +168,47 @@ let currentVpn = 'us-east';
 
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
+const currentModeLabel = document.getElementById('current-mode-label');
+
 const deviceToggleBtn = document.getElementById('device-toggle-btn');
 const deviceMenu = document.getElementById('device-menu');
+const currentDeviceLabel = document.getElementById('current-device-label');
+
 const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
 const vpnMenu = document.getElementById('vpn-menu');
+const currentVpnLabel = document.getElementById('current-vpn-label');
 
 modeToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); modeMenu.classList.toggle('active'); });
 deviceToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); vpnMenu.classList.remove('active'); deviceMenu.classList.toggle('active'); });
 vpnToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.toggle('active'); });
+
+document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentMode = btn.getAttribute('data-mode');
+    currentModeLabel.textContent = currentMode;
+    modeMenu.classList.remove('active');
+  });
+});
+
+document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentDevice = btn.getAttribute('data-device');
+    currentDeviceLabel.textContent = currentDevice;
+    deviceMenu.classList.remove('active');
+  });
+});
+
+document.querySelectorAll('#vpn-menu .mode-row-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentVpn = btn.getAttribute('data-vpn');
+    currentVpnLabel.textContent = currentVpn;
+    vpnMenu.classList.remove('active');
+  });
+});
+
 document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); });
 
 function processUrl(rawInput) {
@@ -225,7 +258,7 @@ document.querySelectorAll('.room-btn').forEach(btn => {
     document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentChatRoom = btn.getAttribute('data-room');
-    document.getElementById('current-room-title').textContent = currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
+    document.getElementById('current-room-title').textContent = currentChatRoom.startsWith('general-') ? `# ${currentChatRoom}` : currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
     fetchChat(true);
   });
 });
@@ -251,6 +284,7 @@ async function fetchChat(forceScroll = false) {
     
     const filteredData = data.filter(m => {
       if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
+      if (currentChatRoom.startsWith('general-')) return m.recipient === currentChatRoom;
       return (m.recipient === currentChatRoom && m.user === localStorage.getItem('verbos_user_name')) ||
              (m.user === currentChatRoom && m.recipient === localStorage.getItem('verbos_user_name'));
     });
@@ -453,7 +487,6 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
 
-// UI Formatting Style (Standard, Borderless, Minimalistic)
 const uiFormattingSelect = document.getElementById('ui-formatting-select');
 function applyUiFormatting(style) {
   const root = document.documentElement;
@@ -473,7 +506,6 @@ uiFormattingSelect.value = localStorage.getItem('verbos_ui_formatting') || 'stan
 applyUiFormatting(uiFormattingSelect.value);
 uiFormattingSelect.addEventListener('change', () => applyUiFormatting(uiFormattingSelect.value));
 
-// GUI Scale Slider
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 function applyGuiScale(val) {
@@ -503,7 +535,6 @@ document.getElementById('close-bookmarks').addEventListener('click', () => bookm
 document.getElementById('sb-profile').addEventListener('click', () => profileModal.classList.remove('hidden'));
 document.getElementById('close-profile').addEventListener('click', () => profileModal.classList.add('hidden'));
 
-// Profile Logic
 const profileNameInput = document.getElementById('profile-name');
 const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
@@ -646,7 +677,7 @@ function initBackground(style) {
 }
 initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
 
-// Star Logo (Clean solid white, no inversion)
+// Star Logo
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
