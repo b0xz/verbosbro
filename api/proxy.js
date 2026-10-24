@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core');
+    res.setHeader('x-proxied-by', 'verbo-quantum-core-x10');
     res.setHeader('x-target-url', targetUrl);
     res.setHeader('x-target-origin', baseUrl);
     res.setHeader('x-vpn-node', vpn);
@@ -148,6 +148,7 @@ export default async function handler(req, res) {
       }
     }
 
+    // High-performance streaming for non-HTML assets (images, video, WASM, etc.)
     if (!isHTML && !isCSS && !isJS) {
       res.status(response.status);
       try { res.removeHeader('content-length'); } catch (e) {}
