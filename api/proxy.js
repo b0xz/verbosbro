@@ -262,14 +262,56 @@ export default async function handler(req, res) {
     return res.status(200).send(body);
 
   } catch (error) {
-    return res.status(500).send(`
+  return res.status(500).send(`
       <!DOCTYPE html>
-      <html>
-      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
-        <h2>proxy connection error</h2>
-        <p>failed to retrieve resource: ${error.message}</p>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>satura — connection error</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          }
+          .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            max-width: 420px;
+            padding: 20px;
+          }
+          .error-text {
+            font-size: 0.95rem;
+            color: #888888;
+            line-height: 1.5;
+            text-transform: lowercase;
+          }
+          .error-face {
+            font-size: 1.5rem;
+            margin-top: 8px;
+            color: #ffffff;
+            user-select: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="error-container">
+          <div class="error-text">sorry, either we couldn't find this website or the web can't be viewed in our proxy!</div>
+          <div class="error-face">:(</div>
+        </div>
       </body>
       </html>
     `);
-  }
 }
