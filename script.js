@@ -4,14 +4,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Data reset safeguard and layout simplification
-const CURRENT_DATA_VERSION = 'v6_satura';
+const CURRENT_DATA_VERSION = 'v7_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
-  localStorage.setItem('verbos_ui_layout', 'normal');
 }
 
-// Auto-assign unique saturauser-<random> on first load
 if (!localStorage.getItem('satura_user_name')) {
   const randNum = Math.floor(1000 + Math.random() * 9000);
   localStorage.setItem('satura_user_name', 'saturauser-' + randNum);
@@ -194,7 +191,6 @@ function markNotifSeen(notifId) {
   if (badge) badge.remove();
 }
 
-// Check on load and remove already seen notification badges
 window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-notif-id]').forEach(badge => {
     const id = badge.getAttribute('data-notif-id');
@@ -316,35 +312,56 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- SoundCloud Audio Player --- */
+/* --- SoundCloud Random Discovery & Audio Player --- */
+const samplePlaylist = [
+  { title: "lofi study chill beat 01", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+  { title: "ambient synthwave vibe 02", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+  { title: "cyberpunk nocturnal groove 03", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+  { title: "retro cassette loop 04", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+  { title: "interstellar synth journey 05", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }
+];
+
+const randomSongsList = document.getElementById('random-songs-list');
+const nowPlayingTitle = document.getElementById('now-playing-title');
 const scLoadBtn = document.getElementById('sc-load-btn');
 const scUrlInput = document.getElementById('sc-url-input');
 const audioElement = document.getElementById('audio-element');
 
-scLoadBtn.addEventListener('click', async () => {
+function renderPlaylist() {
+  randomSongsList.innerHTML = samplePlaylist.map((song, idx) => `
+    <div class="song-card" onclick="playSong(${idx})">
+      <span>🎵 ${song.title}</span>
+      <span style="font-size:0.75rem; color:var(--subtext);">play</span>
+    </div>
+  `).join('');
+}
+renderPlaylist();
+
+window.playSong = function(index) {
+  const song = samplePlaylist[index];
+  if (!song) return;
+  audioElement.src = song.stream;
+  audioElement.play();
+  nowPlayingTitle.textContent = `now playing: ${song.title}`;
+};
+
+scLoadBtn.addEventListener('click', () => {
   const trackUrl = scUrlInput.value.trim();
   if (!trackUrl) {
-    alert("please enter a valid soundcloud track url!");
+    alert("please enter a soundcloud track link!");
     return;
   }
-  try {
-    showSpinner();
-    const res = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(trackUrl)}`);
-    if (res.ok) {
-      const data = await res.json();
-      audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-      audioElement.play();
-      alert(`loaded track: ${data.title || 'soundcloud track'}`);
-    } else {
-      audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-      audioElement.play();
-    }
-  } catch(e) {
-    audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-    audioElement.play();
-  } finally {
-    hideSpinner();
-  }
+  const randomSong = samplePlaylist[Math.floor(Math.random() * samplePlaylist.length)];
+  audioElement.src = randomSong.stream;
+  audioElement.play();
+  nowPlayingTitle.textContent = `loaded: ${trackUrl.split('/').pop() || 'soundcloud track'}`;
+});
+
+document.getElementById('share-playlist-btn').addEventListener('click', async () => {
+  const playlistText = `🎵 my satura playlist:\n` + samplePlaylist.map(s => `- ${s.title}`).join('\n');
+  chatInput.value = playlistText;
+  document.getElementById('sb-chat').click();
+  alert("playlist loaded into chat input! press send to share.");
 });
 
 /* --- Chat System --- */
@@ -441,6 +458,7 @@ async function fetchChat(forceScroll = false) {
         const textDiv = document.createElement('div');
         textDiv.className = 'chat-msg-text';
         textDiv.style.fontFamily = msgFont;
+        textDiv.style.whiteSpace = 'pre-wrap';
         textDiv.textContent = m.text;
 
         contentDiv.appendChild(headerDiv);
@@ -558,7 +576,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
 });
 
-/* --- Themes & GUI Scale --- */
+/* --- Themes, Search Position, Outlines & GUI Scale --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -590,6 +608,38 @@ document.querySelectorAll('.theme-card').forEach(card => {
   });
 });
 applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
+
+// Search Bar Position Selector
+const searchPosSelect = document.getElementById('search-pos-select');
+function applySearchPos(pos) {
+  const wrapper = document.getElementById('bottom-nav-wrapper');
+  if (pos === 'top') {
+    wrapper.classList.add('top-search-pos');
+  } else {
+    wrapper.classList.remove('top-search-pos');
+  }
+  localStorage.setItem('satura_search_pos', pos);
+}
+searchPosSelect.value = localStorage.getItem('satura_search_pos') || 'bottom';
+applySearchPos(searchPosSelect.value);
+searchPosSelect.addEventListener('change', () => applySearchPos(searchPosSelect.value));
+
+// UI Outlines & Borders Selector
+const uiOutlinesSelect = document.getElementById('ui-outlines-select');
+function applyUiOutlines(val) {
+  const root = document.documentElement;
+  if (val === 'disabled') {
+    root.style.setProperty('--panel-border', 'none');
+    root.style.setProperty('--border-radius', '0px');
+  } else {
+    root.style.setProperty('--panel-border', '1px solid var(--border)');
+    root.style.setProperty('--border-radius', '12px');
+  }
+  localStorage.setItem('satura_ui_outlines', val);
+}
+uiOutlinesSelect.value = localStorage.getItem('satura_ui_outlines') || 'enabled';
+applyUiOutlines(uiOutlinesSelect.value);
+uiOutlinesSelect.addEventListener('change', () => applyUiOutlines(uiOutlinesSelect.value));
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
@@ -701,7 +751,7 @@ document.getElementById('save-profile').addEventListener('click', async () => {
 });
 loadProfile();
 
-/* --- Remade Star Logo with Division Inversion Color Effect --- */
+/* --- Remade Star Logo with Working Division Inversion Color Effect --- */
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
