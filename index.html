@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tab-title">satura</title>
-  <link id="tab-favicon" rel="icon" type="image/x-icon" href="https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico">
+  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><path d='M50 80 C50 60, 45 40, 35 30 M50 60 C55 45, 65 35, 75 25' stroke='%23fff' stroke-width='4' fill='none'/><circle cx='35' cy='30' r='6' fill='%23ffb7c5'/><circle cx='75' cy='25' r='8' fill='%23ffb7c5'/><circle cx='45' cy='20' r='5' fill='%23ffb7c5'/><circle cx='60' cy='40' r='6' fill='%23ffb7c5'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
@@ -25,15 +25,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
-    /* Truly Working Division Inversion Effect Container using mix-blend-mode difference + inversion filter */
+    /* True Mathematical Inversion Canvas Engine */
     .star-blend-container {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
       display: flex; align-items: center; justify-content: center; background: #000000;
-    }
-
-    .inversion-viewport {
-      position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-      mix-blend-mode: difference; filter: invert(1);
     }
 
     .home-view {
@@ -50,7 +45,12 @@
       cursor: default; pointer-events: auto;
     }
 
-    canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; background: transparent; }
+    .star-mask-wrapper {
+      position: absolute; width: 380px; height: 380px; display: flex; align-items: center; justify-content: center;
+      mix-blend-mode: difference; pointer-events: none; z-index: 4;
+    }
+
+    canvas#star-canvas { width: 100%; height: 100%; background: transparent; }
 
     /* Tooltip System */
     .custom-tooltip {
@@ -65,14 +65,13 @@
     }
     .badge-wip { font-size: 0.75rem; margin-left: 6px; cursor: pointer; display: inline-flex; align-items: center; }
 
-    /* Sidebar with Filled Icons */
+    /* Sidebar */
     .sidebar {
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column;
       align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
       gap: calc(14px * var(--gui-scale)); z-index: 1200; transition: all 0.3s ease;
     }
-    .sidebar.hidden-sidebar { display: none !important; }
 
     .sidebar-btn {
       background: transparent; border: 1px solid transparent; color: var(--text);
@@ -97,7 +96,6 @@
       background: var(--panel); border-bottom: var(--panel-border); display: flex; align-items: center;
       padding: 0 calc(14px * var(--gui-scale)); gap: calc(8px * var(--gui-scale)); z-index: 1100; overflow-x: auto;
     }
-    .tab-bar-container.top-full { left: 0 !important; }
 
     .tab-item {
       background: var(--bg); border: var(--panel-border); color: var(--subtext); padding: calc(8px * var(--gui-scale)) calc(14px * var(--gui-scale));
@@ -118,7 +116,6 @@
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
     }
-    .page-view.full-view { left: 0 !important; width: 100vw !important; }
     .page-view.active { display: flex; }
 
     .swipe-container {
@@ -177,7 +174,6 @@
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
     .bottom-nav-wrapper.top-search-pos { bottom: auto !important; top: calc(55px * var(--gui-scale)) !important; }
-    .bottom-nav-wrapper.full-center { left: 50% !important; }
     .bottom-nav-wrapper.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
     .bottom-nav-pill {
       background: var(--panel); border: var(--panel-border); border-radius: calc(35px * var(--gui-scale));
@@ -217,7 +213,6 @@
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1000; display: none; align-items: center; justify-content: space-between;
       padding-bottom: calc(85px * var(--gui-scale)); gap: 12px; padding-left: 12px; padding-right: 12px;
     }
-    .proxy-viewer.full-view { left: 0 !important; width: 100vw !important; }
     .proxy-viewer.active { display: flex; }
     .screen-panel { flex: 1; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
     .device-viewport { width: 100%; height: 100%; background: #ffffff; }
@@ -259,6 +254,13 @@
     .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; text-transform: lowercase; }
     .action-btn:hover { opacity: 0.9; }
 
+    /* Cloak overlay notice */
+    #cloak-notice {
+      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; z-index: 99999;
+      pointer-events: none; user-select: none; display: none; text-transform: lowercase;
+    }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -267,12 +269,12 @@
   <!-- Tooltip Element -->
   <div class="custom-tooltip" id="global-tooltip"></div>
 
-  <!-- True Working Division Inversion Container -->
+  <!-- Mathematical Inversion Container -->
   <div class="star-blend-container">
-    <div class="inversion-viewport">
-      <div class="home-view" id="home-view">
-        <div class="satura-title" id="satura-title-el">satura</div>
-      </div>
+    <div class="home-view" id="home-view">
+      <div class="satura-title" id="satura-title-el">satura</div>
+    </div>
+    <div class="star-mask-wrapper">
       <canvas id="star-canvas" width="380" height="380"></canvas>
     </div>
   </div>
@@ -401,6 +403,34 @@
         </div>
 
         <div class="setting-group">
+          <label>tab & favicon cloak presets</label>
+          <select id="tab-cloak-preset" class="setting-input">
+            <option value="satura">satura (default cherry blossom)</option>
+            <option value="google">google search</option>
+            <option value="khan">khan academy</option>
+            <option value="drive">google drive</option>
+            <option value="canvas">canvas lms</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label>custom page title</label>
+          <input type="text" id="custom-title-input" class="setting-input" placeholder="e.g. Dashboard" />
+        </div>
+
+        <div class="setting-group">
+          <label>simulated IP & region</label>
+          <div style="display:flex; gap:10px;">
+            <select id="ip-region-select" class="setting-input" style="flex:1;">
+              <option value="us">US - Virginia (192.168.1.102)</option>
+              <option value="eu">EU - Frankfurt (185.220.101.5)</option>
+              <option value="asia">Asia - Tokyo (103.208.220.1)</option>
+            </select>
+            <button class="action-btn" id="randomize-ip-btn" style="padding: 8px 12px; font-size: 0.8rem;">randomize IP</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
           <label>search bar position</label>
           <select id="search-pos-select" class="setting-input">
             <option value="bottom">bottom screen (default)</option>
@@ -420,11 +450,15 @@
           <label>gui scale size (<span id="gui-scale-val">1.15</span>x)</label>
           <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="3.0" step="0.05" value="1.15" style="padding: 0; cursor: pointer;" />
         </div>
+
+        <div class="setting-group" style="margin-top: 10px;">
+          <button class="action-btn" id="manual-cloak-btn" style="background:#ef4444; color:#fff;">cloak view now (or press \)</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- User Dashboard Modal -->
+  <!-- User Dashboard Modal with Quick DMing -->
   <div class="modal-overlay hidden" id="user-dashboard-modal">
     <div class="modal-box" style="align-items: center; text-align: center;">
       <div class="modal-header" style="width: 100%;">
@@ -437,7 +471,7 @@
         <label>user bio / status</label>
         <div id="ud-bio" class="setting-input" style="min-height: 60px; background: var(--bg); color: #ccc;">exploring the web with satura.</div>
       </div>
-      <button class="action-btn" id="ud-message-btn" style="width: 100%;">direct message user</button>
+      <button class="action-btn" id="ud-message-btn" style="width: 100%; background: #ffffff; color: #000000; font-weight: 800; border: none; font-size: 1rem; border-radius: 25px; cursor: pointer; padding: 12px 0;">Dm</button>
     </div>
   </div>
 
@@ -548,6 +582,8 @@
       <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe></div>
     </div>
   </div>
+
+  <div id="cloak-notice">double tap screen to uncloak</div>
 
   <script src="script.js"></script>
 </body>
