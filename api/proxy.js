@@ -1,52 +1,70 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
+  // Enterprise CORS & School Gateway Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
   res.setHeader('access-control-allow-credentials', 'true');
   res.setHeader('timing-allow-origin', '*');
+  res.setHeader('x-content-type-options', 'nosniff');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   let targetUrl = req.query.url || (req.body && req.body.url);
+  const token = req.query.token;
   const mode = req.query.mode || 'fast';
   const device = req.query.device || 'desktop';
   const vpn = req.query.vpn || 'us-east';
+  const simIp = req.query.sim_ip || '192.168.1.102';
+
+  // Decode obfuscated token if present
+  if (token && !targetUrl) {
+    try {
+      let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+      targetUrl = decodeURIComponent(atob(base64));
+    } catch (e) {
+      return res.status(400).send('Invalid proxy token.');
+    }
+  }
 
   if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
 
+  // Multi-layer URL decoding & unwrapping nested proxy loops
   try {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  while (targetUrl.includes('/api/proxy?url=')) {
+  while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
-      const parts = targetUrl.split('/api/proxy?url=');
-      targetUrl = decodeURIComponent(parts[parts.length - 1]);
+      if (targetUrl.includes('token=')) {
+        const tParam = targetUrl.split('token=')[1].split('&')[0];
+        let base64 = tParam.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) { base64 += '='; }
+        targetUrl = decodeURIComponent(atob(base64));
+        break;
+      } else {
+        const parts = targetUrl.split('/api/proxy?url=');
+        targetUrl = decodeURIComponent(parts[parts.length - 1]);
+      }
     } catch (e) {
       break;
     }
   }
 
-  try {
-    const tempUrlObj = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
-    if (tempUrlObj.hostname.includes('youtube.com') && tempUrlObj.pathname === '/watch') {
-      const videoId = tempUrlObj.searchParams.get('v');
-      if (videoId) {
-        targetUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&raw=1`;
-      }
-    }
-  } catch (e) {}
-
+  // Smart URL normalization for search terms and protocol-less inputs
   if (!/^https?:\/\//i.test(targetUrl)) {
-    try {
-      targetUrl = new URL(targetUrl, 'https://example.com').href;
-    } catch (e) {
-      return res.status(400).send('Invalid target URL parameter.');
+    if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
+      targetUrl = 'https://' + targetUrl;
+    } else {
+      targetUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(targetUrl);
     }
   }
 
+  // Advanced Device User-Agent profiles to prevent school device fingerprint blocks
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -61,52 +79,51 @@ export default async function handler(req, res) {
   try {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
-    
-    const privacyPool = [
-      '54.240.196.18', '85.214.132.11', '202.12.29.11', 
-      '198.51.100.42', '203.0.113.195', '192.0.2.14'
-    ];
-    const maskedIp = privacyPool[Math.floor(Math.random() * privacyPool.length)];
 
-    const headers = {
+    // School filter evasion headers
+    const evasionHeaders = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
-      'x-forwarded-for': maskedIp,
-      'x-real-ip': maskedIp,
-      'forwarded': `for=${maskedIp};proto=https`,
-      'via': '1.1 verions-secure-gateway',
+      'x-forwarded-for': simIp,
+      'x-real-ip': simIp,
+      'forwarded': `for=${simIp};proto=https`,
+      'via': '1.1 secure-cloudflare-gateway',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
       'upgrade-insecure-requests': '1',
       'dnt': '1',
       'sec-gpc': '1'
     };
 
     if (req.headers.range) {
-      headers['range'] = req.headers.range;
+      evasionHeaders['range'] = req.headers.range;
     }
 
     const fetchOptions = {
       method: req.method,
-      headers,
+      headers: evasionHeaders,
       redirect: 'manual',
       compress: true
     };
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
-      if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+      if (req.headers['content-type']) evasionHeaders['content-type'] = req.headers['content-type'];
       if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
     }
 
     const response = await fetch(targetUrl, fetchOptions);
 
+    // Handle redirects through token chain
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
         const absoluteRedirectUrl = new URL(locationHeader, targetUrl).href;
-        const proxiedRedirect = `/api/proxy?url=${encodeURIComponent(absoluteRedirectUrl)}&mode=${mode}&device=${device}&vpn=${vpn}`;
+        const encodedToken = btoa(encodeURIComponent(absoluteRedirectUrl)).replace(/=/g, '');
+        const proxiedRedirect = `/api/proxy?token=${encodedToken}&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}`;
         return res.redirect(302, proxiedRedirect);
       }
     }
@@ -118,7 +135,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'verbo-quantum-core-shield');
+    res.setHeader('x-proxied-by', 'satura-quantum-shield-v4');
     res.setHeader('referrer-policy', 'no-referrer');
 
     const setCookie = response.headers.get('set-cookie');
@@ -157,10 +174,11 @@ export default async function handler(req, res) {
         if (!val || typeof val !== 'string') return val;
         let trimmed = val.trim();
         if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
-        if (trimmed.includes('/api/proxy?url=')) return val;
+        if (trimmed.includes('/api/proxy?token=')) return val;
         
         const absUrl = new URL(trimmed, targetUrl).href;
-        return `/api/proxy?url=` + encodeURIComponent(absUrl) + `&mode=${mode}&device=${device}&vpn=${vpn}`;
+        const encoded = btoa(encodeURIComponent(absUrl)).replace(/=/g, '');
+        return `/api/proxy?token=` + encoded + `&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}`;
       } catch (e) {
         return val;
       }
@@ -213,20 +231,16 @@ export default async function handler(req, res) {
         <base href="${baseUrl}/">
         <script>
           (function() {
-            const proxyBase = '/api/proxy?mode=${mode}&device=${device}&vpn=${vpn}&url=';
-            function proxify(url) {
+            function encodeProxyUrl(url) {
               try {
                 if (!url || typeof url !== 'string') return url;
                 let trimmed = url.trim();
                 if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
-                if (trimmed.includes('/api/proxy?url=')) return url;
-                const abs = new URL(trimmed, document.baseURI).href;
+                if (trimmed.includes('/api/proxy?token=')) return url;
                 
-                if (window.parent && window.parent !== window) {
-                  window.parent.postMessage({ type: 'verbos-navigate', url: abs }, '*');
-                }
-
-                return proxyBase + encodeURIComponent(abs);
+                const abs = new URL(trimmed, document.baseURI).href;
+                const encoded = btoa(encodeURIComponent(abs)).replace(/=/g, '');
+                return '/api/proxy?token=' + encoded + '&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}';
               } catch(e) { return url; }
             }
 
@@ -234,14 +248,14 @@ export default async function handler(req, res) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
                 e.preventDefault();
-                window.location.href = proxify(anchor.href);
+                window.location.href = encodeProxyUrl(anchor.href);
               }
             }, true);
 
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
-                form.action = proxify(form.action);
+                form.action = encodeProxyUrl(form.action);
               }
             }, true);
           })();
@@ -302,6 +316,8 @@ export default async function handler(req, res) {
             margin-top: 4px;
             color: #ffffff;
             font-family: monospace;
+            white-space: pre;
+            line-height: 1.2;
             user-select: none;
           }
         </style>
@@ -309,7 +325,12 @@ export default async function handler(req, res) {
       <body>
         <div class="error-container">
           <div class="error-text">sorry, we couldn't load your site. maybe because im too stupid or the site isn't actually a real thing</div>
-          <div class="error-face">:(</div>
+          <div class="error-face">
+&nbsp;&nbsp;__<br>
+&nbsp;&nbsp;/ &nbsp;\\<br>
+| &nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;\\__/
+          </div>
         </div>
       </body>
       </html>
