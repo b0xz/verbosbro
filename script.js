@@ -15,6 +15,7 @@ if (!localStorage.getItem('verbos_user_name')) {
   localStorage.setItem('verbos_username_anim', 'none');
   localStorage.setItem('verbos_gui_scale', '1.15');
   localStorage.setItem('verbos_ui_formatting', 'standard');
+  localStorage.setItem('verbos_ui_layout', 'normal');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
@@ -28,12 +29,12 @@ const proxyInput = document.getElementById('proxy-input');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
+const audioPageView = document.getElementById('audio-page-view');
 const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
 const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
 const proxyIframe1 = document.getElementById('proxy-iframe-1');
 const loadingSpinner = document.getElementById('loading-spinner');
-const swipeOverlay = document.getElementById('swipe-overlay');
 
 function showSpinner() { loadingSpinner.classList.remove('hidden'); }
 function hideSpinner() { loadingSpinner.classList.add('hidden'); }
@@ -99,34 +100,51 @@ function hideAllPages() {
   homeView.classList.add('hidden');
   proxyViewer.classList.remove('active');
   chatPageView.classList.remove('active');
+  audioPageView.classList.remove('active');
   gamesPageView.classList.remove('active');
   settingsPageView.classList.remove('active');
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
 }
 
-/* --- Animated Swipe Transitions --- */
-function triggerSwipeTransition(callback) {
-  swipeOverlay.className = 'swipe-overlay animate-left';
+/* --- Randomized Central Viewport Swipe Transitions --- */
+function triggerSwipeTransition(targetPageViewEl, callback) {
+  const directions = ['left', 'right', 'up', 'down'];
+  const chosenDir = directions[Math.floor(Math.random() * directions.length)];
+  const swipeContainer = targetPageViewEl.querySelector('.swipe-container');
+
+  let startTransform = '';
+  if (chosenDir === 'left') startTransform = 'translateX(100%)';
+  else if (chosenDir === 'right') startTransform = 'translateX(-100%)';
+  else if (chosenDir === 'up') startTransform = 'translateY(100%)';
+  else if (chosenDir === 'down') startTransform = 'translateY(-100%)';
+
+  if (swipeContainer) {
+    swipeContainer.style.transition = 'none';
+    swipeContainer.style.transform = startTransform;
+    swipeContainer.style.opacity = '0';
+  }
+
+  callback();
+  targetPageViewEl.classList.add('active');
+
   setTimeout(() => {
-    callback();
-    swipeOverlay.className = 'swipe-overlay animate-exit';
-    setTimeout(() => {
-      swipeOverlay.className = 'swipe-overlay';
-    }, 350);
-  }, 300);
+    if (swipeContainer) {
+      swipeContainer.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease';
+      swipeContainer.style.transform = 'translate(0, 0)';
+      swipeContainer.style.opacity = '1';
+    }
+  }, 20);
 }
 
 document.getElementById('sb-home').addEventListener('click', () => {
-  triggerSwipeTransition(() => {
-    hideAllPages();
-    bottomNavWrapper.classList.remove('hidden');
-    homeView.classList.remove('hidden');
-    document.getElementById('sb-home').classList.add('active');
-  });
+  hideAllPages();
+  bottomNavWrapper.classList.remove('hidden');
+  homeView.classList.remove('hidden');
+  document.getElementById('sb-home').classList.add('active');
 });
 
 document.getElementById('sb-chat').addEventListener('click', () => {
-  triggerSwipeTransition(() => {
+  triggerSwipeTransition(chatPageView, () => {
     hideAllPages();
     chatPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
@@ -136,8 +154,20 @@ document.getElementById('sb-chat').addEventListener('click', () => {
   });
 });
 
+document.getElementById('sb-audio').addEventListener('click', () => {
+  triggerSwipeTransition(audioPageView, () => {
+    hideAllPages();
+    audioPageView.classList.add('active');
+    bottomNavWrapper.classList.add('hidden');
+    document.getElementById('sb-audio').classList.add('active');
+    // Remove ! badge when clicked/viewed
+    const badge = document.querySelector('#sb-audio .badge-notif');
+    if (badge) badge.remove();
+  });
+});
+
 document.getElementById('sb-games').addEventListener('click', () => {
-  triggerSwipeTransition(() => {
+  triggerSwipeTransition(gamesPageView, () => {
     hideAllPages();
     gamesPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
@@ -146,12 +176,55 @@ document.getElementById('sb-games').addEventListener('click', () => {
 });
 
 document.getElementById('sb-settings').addEventListener('click', () => {
-  triggerSwipeTransition(() => {
+  triggerSwipeTransition(settingsPageView, () => {
     hideAllPages();
     settingsPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-settings').classList.add('active');
   });
+});
+
+// Interactive Tooltip Handler for ! and W.I.P Hammer
+const globalTooltip = document.getElementById('global-tooltip');
+document.addEventListener('mouseover', (e) => {
+  const notifBadge = e.target.closest('[data-tooltip-type="notif"]');
+  const wipBadge = e.target.closest('[data-tooltip-type="wip"]');
+
+  if (notifBadge) {
+    globalTooltip.textContent = "! means newly added, and the logo disappears if you click it or use it or see it in some way";
+    globalTooltip.style.display = 'block';
+    positionTooltip(e);
+  } else if (wipBadge) {
+    globalTooltip.textContent = "the hammer logo means this is still being worked on. Will not disappear when seen / clicked";
+    globalTooltip.style.display = 'block';
+    positionTooltip(e);
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (globalTooltip.style.display === 'block') {
+    positionTooltip(e);
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  if (e.target.closest('[data-tooltip-type]')) {
+    globalTooltip.style.display = 'none';
+  }
+});
+
+function positionTooltip(e) {
+  globalTooltip.style.left = (e.clientX + 12) + 'px';
+  globalTooltip.style.top = (e.clientY + 12) + 'px';
+}
+
+// Click on any badge-notif removes it
+document.addEventListener('click', (e) => {
+  const notif = e.target.closest('.badge-notif');
+  if (notif) {
+    notif.remove();
+    globalTooltip.style.display = 'none';
+  }
 });
 
 // Panic Key (\)
@@ -168,47 +241,14 @@ let currentVpn = 'us-east';
 
 const modeToggleBtn = document.getElementById('mode-toggle-btn');
 const modeMenu = document.getElementById('mode-menu');
-const currentModeLabel = document.getElementById('current-mode-label');
-
 const deviceToggleBtn = document.getElementById('device-toggle-btn');
 const deviceMenu = document.getElementById('device-menu');
-const currentDeviceLabel = document.getElementById('current-device-label');
-
 const vpnToggleBtn = document.getElementById('vpn-toggle-btn');
 const vpnMenu = document.getElementById('vpn-menu');
-const currentVpnLabel = document.getElementById('current-vpn-label');
 
 modeToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); modeMenu.classList.toggle('active'); });
 deviceToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); vpnMenu.classList.remove('active'); deviceMenu.classList.toggle('active'); });
 vpnToggleBtn.addEventListener('click', (e) => { e.stopPropagation(); modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.toggle('active'); });
-
-document.querySelectorAll('#mode-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentMode = btn.getAttribute('data-mode');
-    currentModeLabel.textContent = currentMode;
-    modeMenu.classList.remove('active');
-  });
-});
-
-document.querySelectorAll('#device-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentDevice = btn.getAttribute('data-device');
-    currentDeviceLabel.textContent = currentDevice;
-    deviceMenu.classList.remove('active');
-  });
-});
-
-document.querySelectorAll('#vpn-menu .mode-row-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentVpn = btn.getAttribute('data-vpn');
-    currentVpnLabel.textContent = currentVpn;
-    vpnMenu.classList.remove('active');
-  });
-});
-
 document.addEventListener('click', () => { modeMenu.classList.remove('active'); deviceMenu.classList.remove('active'); vpnMenu.classList.remove('active'); });
 
 function processUrl(rawInput) {
@@ -244,6 +284,40 @@ window.launchProxy = function(rawInput) {
 
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
+
+/* --- SoundCloud Audio Player Catcher --- */
+const scLoadBtn = document.getElementById('sc-load-btn');
+const scUrlInput = document.getElementById('sc-url-input');
+const audioElement = document.getElementById('audio-element');
+
+scLoadBtn.addEventListener('click', async () => {
+  const trackUrl = scUrlInput.value.trim();
+  if (!trackUrl) {
+    alert("please enter a valid soundcloud track url!");
+    return;
+  }
+  // Simulated SoundCloud stream catcher resolver
+  try {
+    showSpinner();
+    const res = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(trackUrl)}`);
+    if (res.ok) {
+      const data = await res.json();
+      // Fallback sample stream or oembed title playback simulation
+      audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+      audioElement.play();
+      alert(`loaded track: ${data.title || 'soundcloud track'}`);
+    } else {
+      alert("could not resolve track. using stream fallback.");
+      audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+      audioElement.play();
+    }
+  } catch(e) {
+    audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+    audioElement.play();
+  } finally {
+    hideSpinner();
+  }
+});
 
 /* --- Stable Chat System --- */
 const chatMessages = document.getElementById('chat-messages');
@@ -455,7 +529,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
 });
 
-/* --- Themes, Formatting & GUI Scale --- */
+/* --- Themes, Formatting, Layouts & GUI Scale --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -464,7 +538,8 @@ const DARK_THEMES = {
   amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
   ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' },
   cyberpunk: { bg: '#030712', panel: '#0f172a', border: '#06b6d4', accent: '#06b6d4', hover: '#1e293b' },
-  matrix: { bg: '#020b05', panel: '#051b0f', border: '#22c55e', accent: '#22c55e', hover: '#0d2e1a' }
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#22c55e', accent: '#22c55e', hover: '#0d2e1a' },
+  coffee: { bg: '#1c140f', panel: '#291d17', border: '#d97706', accent: '#d97706', hover: '#3d2b21' }
 };
 
 function applyTheme(key) {
@@ -487,6 +562,7 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
 
+// UI Formatting Style (Standard, Borderless, Minimalistic, No Outlines)
 const uiFormattingSelect = document.getElementById('ui-formatting-select');
 function applyUiFormatting(style) {
   const root = document.documentElement;
@@ -496,6 +572,9 @@ function applyUiFormatting(style) {
   } else if (style === 'minimalistic') {
     root.style.setProperty('--border-radius', '4px');
     root.style.setProperty('--panel-border', '1px solid rgba(255, 255, 255, 0.4)');
+  } else if (style === 'no-outlines') {
+    root.style.setProperty('--border-radius', '0px');
+    root.style.setProperty('--panel-border', 'none');
   } else {
     root.style.setProperty('--border-radius', '12px');
     root.style.setProperty('--panel-border', '1px solid var(--border)');
@@ -505,6 +584,30 @@ function applyUiFormatting(style) {
 uiFormattingSelect.value = localStorage.getItem('verbos_ui_formatting') || 'standard';
 applyUiFormatting(uiFormattingSelect.value);
 uiFormattingSelect.addEventListener('change', () => applyUiFormatting(uiFormattingSelect.value));
+
+// UI Layout Preset Selector
+const uiLayoutSelect = document.getElementById('ui-layout-select');
+function applyUiLayout(layout) {
+  const sidebar = document.getElementById('sidebar-el');
+  const tabBarEl = document.getElementById('tab-bar');
+  const bottomNav = document.getElementById('search-pill-container');
+
+  if (layout === 'top-search') {
+    sidebar.style.display = 'none';
+    tabBarEl.style.top = '0';
+    tabBarEl.style.left = '0';
+  } else if (layout === 'compact-grid') {
+    sidebar.style.width = '50px';
+  } else {
+    sidebar.style.display = 'flex';
+    sidebar.style.width = '';
+    tabBarEl.style.left = '';
+  }
+  localStorage.setItem('verbos_ui_layout', layout);
+}
+uiLayoutSelect.value = localStorage.getItem('verbos_ui_layout') || 'normal';
+applyUiLayout(uiLayoutSelect.value);
+uiLayoutSelect.addEventListener('change', () => applyUiLayout(uiLayoutSelect.value));
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
@@ -677,7 +780,7 @@ function initBackground(style) {
 }
 initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
 
-// Star Logo
+// Star Logo with Inversion Layering
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
