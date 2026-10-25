@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v15_satura';
+const CURRENT_DATA_VERSION = 'v16_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
 }
@@ -164,11 +164,16 @@ document.getElementById('sb-settings')?.addEventListener('click', () => {
   document.getElementById('sb-settings').classList.add('active');
 });
 
-/* Proxy Execution */
-let currentMode = 'fast';
-let currentDevice = 'desktop';
-let currentVpn = 'us-east';
+/* Refresh Button Action */
+document.getElementById('btn-reload')?.addEventListener('click', () => {
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab && currentTab.src !== 'about:blank') {
+    showSpinner();
+    proxyViewer.src = currentTab.src;
+  }
+});
 
+/* Proxy Execution */
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
@@ -186,7 +191,7 @@ window.launchProxy = function(rawInput) {
   const simIp = currentTab ? currentTab.ipObj.ip : '192.168.1.102';
   
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
-  const proxyUrl = `/api/proxy?token=${encodedToken}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}&sim_ip=${simIp}`;
+  const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}`;
   
   if (currentTab) {
     currentTab.url = targetUrl;
@@ -213,55 +218,101 @@ if (proxyInput) {
   });
 }
 
-/* Background Canvas Modes (Stars vs 3D Shader) */
-const bgModeSelect = document.getElementById('bg-mode-select');
-const shaderCanvas = document.getElementById('shader-canvas');
-const starCanvas = document.getElementById('star-canvas');
+/* Profile Modal & Settings Management */
+const profileModal = document.getElementById('profile-modal');
+document.getElementById('sb-profile')?.addEventListener('click', () => profileModal.classList.remove('hidden'));
+document.getElementById('close-profile')?.addEventListener('click', () => profileModal.classList.add('hidden'));
 
-function applyBgMode(mode) {
-  localStorage.setItem('satura_bg_mode', mode);
-  if (mode === 'shader') {
-    if (starCanvas) starCanvas.style.display = 'none';
-    if (shaderCanvas) {
-      shaderCanvas.style.display = 'block';
-      initShaderCanvas();
+const profileNameInput = document.getElementById('profile-name');
+const profileBioInput = document.getElementById('profile-bio');
+const profilePfpInput = document.getElementById('profile-pfp');
+const profileFontSelect = document.getElementById('profile-font');
+const profileAnimSelect = document.getElementById('profile-anim');
+const profileColorInput = document.getElementById('profile-color');
+const pfpInitial = document.getElementById('pfp-initial');
+const pfpImg = document.getElementById('pfp-img');
+
+function loadProfile() {
+  const name = localStorage.getItem('satura_user_name') || 'saturauser';
+  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
+  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
+  const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
+  const anim = localStorage.getItem('satura_username_anim') || 'none';
+  const color = localStorage.getItem('satura_user_color') || '#ffffff';
+
+  if (profileNameInput) profileNameInput.value = name;
+  if (profileBioInput) profileBioInput.value = bio;
+  if (profilePfpInput && !pfp.startsWith('data:')) profilePfpInput.value = pfp;
+  if (profileFontSelect) profileFontSelect.value = font;
+  if (profileAnimSelect) profileAnimSelect.value = anim;
+  if (profileColorInput) profileColorInput.value = color;
+
+  if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
+    if (pfpImg) {
+      pfpImg.src = pfp;
+      pfpImg.classList.remove('hidden');
     }
+    if (pfpInitial) pfpInitial.classList.add('hidden');
   } else {
-    if (shaderCanvas) shaderCanvas.style.display = 'none';
-    if (starCanvas) starCanvas.style.display = 'block';
+    if (pfpInitial) {
+      pfpInitial.textContent = name.charAt(0).toUpperCase();
+      pfpInitial.classList.remove('hidden');
+    }
+    if (pfpImg) pfpImg.classList.add('hidden');
   }
 }
 
-if (bgModeSelect) {
-  bgModeSelect.addEventListener('change', (e) => applyBgMode(e.target.value));
-  bgModeSelect.value = localStorage.getItem('satura_bg_mode') || 'stars';
-}
-applyBgMode(localStorage.getItem('satura_bg_mode') || 'stars');
+document.getElementById('save-profile')?.addEventListener('click', () => {
+  const name = profileNameInput.value.trim();
+  if (!name) {
+    alert("display name cannot be empty!");
+    return;
+  }
 
-/* Star Engine */
+  const bio = profileBioInput.value.trim() || 'exploring the web with satura.';
+  const pfp = profilePfpInput.value.trim() || '⭐';
+  const font = profileFontSelect.value;
+  const anim = profileAnimSelect.value;
+  const color = profileColorInput.value;
+
+  localStorage.setItem('satura_user_name', name);
+  localStorage.setItem('satura_user_bio', bio);
+  localStorage.setItem('satura_user_pfp', pfp);
+  localStorage.setItem('satura_chat_font', font);
+  localStorage.setItem('satura_username_anim', anim);
+  localStorage.setItem('satura_user_color', color);
+
+  loadProfile();
+  profileModal.classList.add('hidden');
+});
+loadProfile();
+
+/* Fullscreen Star Background Engine */
+const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas ? starCanvas.getContext('2d') : null;
 let angle = 0, floatTime = 0;
-const backgroundStars = Array.from({ length: 60 }, () => ({
-  x: Math.random() * 550,
-  y: Math.random() * 550,
+
+const backgroundStars = Array.from({ length: 90 }, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight,
   radius: Math.random() * 2 + 1,
   speed: Math.random() * 1.5 + 0.5
 }));
 
 function drawStarEngine() {
-  if (!starCanvas || starCanvas.style.display === 'none') {
-    requestAnimationFrame(drawStarEngine);
-    return;
+  if (!starCanvas || !starCtx) return;
+
+  if (starCanvas.width !== window.innerWidth || starCanvas.height !== window.innerHeight) {
+    starCanvas.width = window.innerWidth;
+    starCanvas.height = window.innerHeight;
   }
 
-  starCanvas.width = 550;
-  starCanvas.height = 550;
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
   starCtx.save();
 
   floatTime += 0.012;
-  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 6;
-  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 6;
+  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 8;
+  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 8;
   const starRadius = 54;
 
   backgroundStars.forEach(star => {
@@ -301,109 +352,4 @@ function drawStarEngine() {
   requestAnimationFrame(drawStarEngine);
 }
 drawStarEngine();
-
-/* Interactive 3D Shader Engine */
-let shaderInitialized = false;
-let draggableObjects = [];
-let isDragging = false;
-let draggedObj = null;
-
-function initShaderCanvas() {
-  if (shaderInitialized || !shaderCanvas) return;
-  shaderInitialized = true;
-
-  const ctx = shaderCanvas.getContext('2d');
-  shaderCanvas.width = 550;
-  shaderCanvas.height = 550;
-
-  draggableObjects = [
-    { x: 275, y: 220, r: 45, color: '#ffffff', label: 'sphere' },
-    { x: 180, y: 320, r: 25, color: '#06b6d4', label: 'orb' }
-  ];
-
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
-
-  shaderCanvas.onmousedown = (e) => {
-    const rect = shaderCanvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    draggableObjects.forEach(obj => {
-      const dist = Math.hypot(mx - obj.x, my - obj.y);
-      if (dist < obj.r) {
-        isDragging = true;
-        draggedObj = obj;
-        dragOffsetX = mx - obj.x;
-        dragOffsetY = my - obj.y;
-      }
-    });
-  };
-
-  shaderCanvas.onmousemove = (e) => {
-    if (!isDragging || !draggedObj) return;
-    const rect = shaderCanvas.getBoundingClientRect();
-    draggedObj.x = e.clientX - rect.left - dragOffsetX;
-    draggedObj.y = e.clientY - rect.top - dragOffsetY;
-  };
-
-  window.onmouseup = () => {
-    isDragging = false;
-    draggedObj = null;
-  };
-
-  function renderShader() {
-    if (!shaderCanvas || shaderCanvas.style.display === 'none') {
-      requestAnimationFrame(renderShader);
-      return;
-    }
-
-    ctx.clearRect(0, 0, shaderCanvas.width, shaderCanvas.height);
-
-    const groundGrad = ctx.createLinearGradient(0, 340, 0, 550);
-    groundGrad.addColorStop(0, '#1f2937');
-    groundGrad.addColorStop(1, '#030712');
-    ctx.fillStyle = groundGrad;
-    ctx.fillRect(0, 340, 550, 210);
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 550; i += 40) {
-      ctx.beginPath();
-      ctx.moveTo(i, 340);
-      ctx.lineTo((i - 275) * 2 + 275, 550);
-      ctx.stroke();
-    }
-
-    ctx.font = '900 48px Inter, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.fillText("satura", 320, 265);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText("satura", 318, 260);
-
-    draggableObjects.forEach(obj => {
-      const grad = ctx.createRadialGradient(
-        obj.x - obj.r * 0.3,
-        obj.y - obj.r * 0.3,
-        obj.r * 0.1,
-        obj.x,
-        obj.y,
-        obj.r
-      );
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, obj.color);
-      grad.addColorStop(1, '#000000');
-
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    requestAnimationFrame(renderShader);
-  }
-
-  renderShader();
-}
-
 renderTabs();
