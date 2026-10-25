@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
@@ -27,6 +29,17 @@ export default async function handler(req, res) {
     }
   }
 
+  // YouTube Optimization: Redirect standard watch links to embed stream format for complete loading
+  try {
+    const tempUrlObj = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
+    if (tempUrlObj.hostname.includes('youtube.com') && tempUrlObj.pathname === '/watch') {
+      const videoId = tempUrlObj.searchParams.get('v');
+      if (videoId) {
+        targetUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&raw=1`;
+      }
+    }
+  } catch (e) {}
+
   if (!/^https?:\/\//i.test(targetUrl)) {
     try {
       targetUrl = new URL(targetUrl, 'https://example.com').href;
@@ -50,7 +63,6 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
     
-    // Privacy gateway IPs to mask client origin and prevent IP/view logging
     const privacyPool = [
       '54.240.196.18', '85.214.132.11', '202.12.29.11', 
       '198.51.100.42', '203.0.113.195', '192.0.2.14'
@@ -72,6 +84,10 @@ export default async function handler(req, res) {
       'dnt': '1',
       'sec-gpc': '1'
     };
+
+    if (req.headers.range) {
+      headers['range'] = req.headers.range;
+    }
 
     const fetchOptions = {
       method: req.method,
