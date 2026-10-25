@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
@@ -29,17 +27,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // YouTube Optimization: Redirect standard watch links to embed stream format for complete loading
-  try {
-    const tempUrlObj = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
-    if (tempUrlObj.hostname.includes('youtube.com') && tempUrlObj.pathname === '/watch') {
-      const videoId = tempUrlObj.searchParams.get('v');
-      if (videoId) {
-        targetUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&raw=1`;
-      }
-    }
-  } catch (e) {}
-
   if (!/^https?:\/\//i.test(targetUrl)) {
     try {
       targetUrl = new URL(targetUrl, 'https://example.com').href;
@@ -63,6 +50,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
     
+    // Privacy gateway IPs to mask client origin and prevent IP/view logging
     const privacyPool = [
       '54.240.196.18', '85.214.132.11', '202.12.29.11', 
       '198.51.100.42', '203.0.113.195', '192.0.2.14'
@@ -84,10 +72,6 @@ export default async function handler(req, res) {
       'dnt': '1',
       'sec-gpc': '1'
     };
-
-    if (req.headers.range) {
-      headers['range'] = req.headers.range;
-    }
 
     const fetchOptions = {
       method: req.method,
@@ -262,56 +246,14 @@ export default async function handler(req, res) {
     return res.status(200).send(body);
 
   } catch (error) {
-  return res.status(500).send(`
+    return res.status(500).send(`
       <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>satura — connection error</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-          body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000000;
-            color: #ffffff;
-            font-family: 'Inter', Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          .error-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            max-width: 420px;
-            padding: 20px;
-          }
-          .error-text {
-            font-size: 0.95rem;
-            color: #888888;
-            line-height: 1.5;
-            text-transform: lowercase;
-          }
-          .error-face {
-            font-size: 1.5rem;
-            margin-top: 8px;
-            color: #ffffff;
-            user-select: none;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="error-container">
-          <div class="error-text">sorry, either we couldn't find this website or the web can't be viewed in our proxy!</div>
-          <div class="error-face">:(</div>
-        </div>
+      <html>
+      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
+        <h2>proxy connection error</h2>
+        <p>failed to retrieve resource: ${error.message}</p>
       </body>
       </html>
     `);
+  }
 }
