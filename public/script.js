@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v16_satura';
+const CURRENT_DATA_VERSION = 'v17_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
 }
@@ -44,12 +44,32 @@ const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
 const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
+const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
 const loadingSpinner = document.getElementById('loading-spinner');
+const onlineCounterDisplay = document.getElementById('online-counter-display');
 
 function showSpinner() { if (loadingSpinner) loadingSpinner.classList.remove('hidden'); }
 function hideSpinner() { if (loadingSpinner) loadingSpinner.classList.add('hidden'); }
 
 if (proxyViewer) proxyViewer.addEventListener('load', hideSpinner);
+
+/* Poll online user count */
+async function updateOnlineCount() {
+  try {
+    const res = await fetch('/api/chat?type=users_status');
+    if (res.ok) {
+      const users = await res.json();
+      const onlineCount = users.filter(u => u.isOnline).length;
+      if (onlineCounterDisplay) {
+        onlineCounterDisplay.textContent = `${onlineCount + 1} people online`;
+      }
+    }
+  } catch (e) {
+    if (onlineCounterDisplay) onlineCounterDisplay.textContent = `1 person online`;
+  }
+}
+setInterval(updateOnlineCount, 4000);
+updateOnlineCount();
 
 /* Top-Right IP Widget */
 const ipWidgetToggle = document.getElementById('ip-widget-toggle');
@@ -99,10 +119,12 @@ function switchTab(id) {
     if (tab.src === 'about:blank' || !tab.url) {
       if (proxyViewerContainer) proxyViewerContainer.classList.remove('active');
       if (homeView) homeView.classList.remove('hidden');
+      if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
       if (proxyViewer) proxyViewer.src = 'about:blank';
     } else {
       if (homeView) homeView.classList.add('hidden');
       if (proxyViewerContainer) proxyViewerContainer.classList.add('active');
+      if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
       if (proxyViewer) proxyViewer.src = tab.src;
     }
   }
@@ -142,12 +164,14 @@ function hideAllPages() {
 document.getElementById('sb-home')?.addEventListener('click', () => {
   hideAllPages();
   if (homeView) homeView.classList.remove('hidden');
+  if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
   document.getElementById('sb-home').classList.add('active');
 });
 
 document.getElementById('sb-chat')?.addEventListener('click', () => {
   hideAllPages();
   if (chatPageView) chatPageView.classList.add('active');
+  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden'); // Hide search bar in chat!
   document.getElementById('sb-chat').classList.add('active');
   if (window.initChat) window.initChat();
 });
@@ -155,22 +179,40 @@ document.getElementById('sb-chat')?.addEventListener('click', () => {
 document.getElementById('sb-games')?.addEventListener('click', () => {
   hideAllPages();
   if (gamesPageView) gamesPageView.classList.add('active');
+  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden');
   document.getElementById('sb-games').classList.add('active');
 });
 
 document.getElementById('sb-settings')?.addEventListener('click', () => {
   hideAllPages();
   if (settingsPageView) settingsPageView.classList.add('active');
+  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden');
   document.getElementById('sb-settings').classList.add('active');
 });
 
-/* Refresh Button Action */
+document.getElementById('sb-bookmarks')?.addEventListener('click', () => {
+  document.getElementById('bookmarks-modal')?.classList.remove('hidden');
+});
+
+document.getElementById('close-bookmarks')?.addEventListener('click', () => {
+  document.getElementById('bookmarks-modal')?.classList.add('hidden');
+});
+
+/* Navigation Bar Actions (<, >, Refresh) */
 document.getElementById('btn-reload')?.addEventListener('click', () => {
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab && currentTab.src !== 'about:blank') {
     showSpinner();
     proxyViewer.src = currentTab.src;
   }
+});
+
+document.getElementById('btn-back')?.addEventListener('click', () => {
+  try { proxyViewer.contentWindow.history.back(); } catch (e) {}
+});
+
+document.getElementById('btn-forward')?.addEventListener('click', () => {
+  try { proxyViewer.contentWindow.history.forward(); } catch (e) {}
 });
 
 /* Proxy Execution */
@@ -202,6 +244,7 @@ window.launchProxy = function(rawInput) {
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
   if (proxyViewerContainer) proxyViewerContainer.classList.add('active');
+  if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
   if (proxyViewer) proxyViewer.src = proxyUrl;
   renderTabs();
 };
@@ -218,7 +261,108 @@ if (proxyInput) {
   });
 }
 
-/* Profile Modal & Settings Management */
+/* --- Themes & Settings Preferences --- */
+const DARK_THEMES = {
+  obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
+  emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
+  amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
+  amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
+  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' },
+  cyberpunk: { bg: '#030712', panel: '#0f172a', border: '#06b6d4', accent: '#06b6d4', hover: '#1e293b' },
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#22c55e', accent: '#22c55e', hover: '#0d2e1a' },
+  coffee: { bg: '#1c140f', panel: '#291d17', border: '#d97706', accent: '#d97706', hover: '#3d2b21' }
+};
+
+function applyTheme(key) {
+  const t = DARK_THEMES[key] || DARK_THEMES.obsidian;
+  const root = document.documentElement;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--panel', t.panel);
+  root.style.setProperty('--border', t.border);
+  root.style.setProperty('--accent', t.accent);
+  root.style.setProperty('--hover', t.hover);
+  localStorage.setItem('satura_theme', key);
+}
+
+document.querySelectorAll('.theme-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    applyTheme(card.getAttribute('data-theme'));
+  });
+});
+applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
+
+/* GUI Scale Slider */
+const guiScaleSlider = document.getElementById('gui-scale-slider');
+const guiScaleVal = document.getElementById('gui-scale-val');
+function applyGuiScale(val) {
+  document.documentElement.style.setProperty('--gui-scale', val);
+  if (guiScaleVal) guiScaleVal.textContent = val;
+  localStorage.setItem('satura_gui_scale', val);
+}
+if (guiScaleSlider) {
+  const savedScale = localStorage.getItem('satura_gui_scale') || '1.15';
+  guiScaleSlider.value = savedScale;
+  applyGuiScale(savedScale);
+  guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
+}
+
+/* Search Bar Position */
+const searchPosSelect = document.getElementById('search-pos-select');
+function applySearchPos(pos) {
+  const wrapper = document.getElementById('bottom-nav-wrapper');
+  if (pos === 'top') wrapper.classList.add('top-search-pos');
+  else wrapper.classList.remove('top-search-pos');
+  localStorage.setItem('satura_search_pos', pos);
+}
+if (searchPosSelect) {
+  searchPosSelect.value = localStorage.getItem('satura_search_pos') || 'bottom';
+  applySearchPos(searchPosSelect.value);
+  searchPosSelect.addEventListener('change', () => applySearchPos(searchPosSelect.value));
+}
+
+/* Cloak & Stealth Handling */
+let isCloaked = false;
+let lastTapTime = 0;
+const cloakNotice = document.getElementById('cloak-notice');
+
+function toggleCloak(forceState) {
+  isCloaked = typeof forceState === 'boolean' ? forceState : !isCloaked;
+  if (isCloaked) {
+    document.body.style.opacity = '0';
+    if (cloakNotice) cloakNotice.style.display = 'block';
+  } else {
+    document.body.style.opacity = '1';
+    if (cloakNotice) cloakNotice.style.display = 'none';
+  }
+}
+
+document.getElementById('sb-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
+document.getElementById('manual-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === '\\') {
+    e.preventDefault();
+    toggleCloak();
+  }
+});
+
+const tabCloakPreset = document.getElementById('tab-cloak-preset');
+if (tabCloakPreset) {
+  tabCloakPreset.addEventListener('change', (e) => {
+    const val = e.target.value;
+    const titleEl = document.getElementById('tab-title');
+    if (val === 'google') { if (titleEl) titleEl.textContent = 'Google'; }
+    else if (val === 'khan') { if (titleEl) titleEl.textContent = 'Dashboard | Khan Academy'; }
+    else if (val === 'drive') { if (titleEl) titleEl.textContent = 'My Drive - Google Drive'; }
+    else if (val === 'canvas') { if (titleEl) titleEl.textContent = 'Dashboard - Canvas'; }
+    else { if (titleEl) titleEl.textContent = 'satura'; }
+  });
+}
+
+/* Profile Modal & Automatic Letter PFPs */
 const profileModal = document.getElementById('profile-modal');
 document.getElementById('sb-profile')?.addEventListener('click', () => profileModal.classList.remove('hidden'));
 document.getElementById('close-profile')?.addEventListener('click', () => profileModal.classList.add('hidden'));
@@ -242,7 +386,7 @@ function loadProfile() {
 
   if (profileNameInput) profileNameInput.value = name;
   if (profileBioInput) profileBioInput.value = bio;
-  if (profilePfpInput && !pfp.startsWith('data:')) profilePfpInput.value = pfp;
+  if (profilePfpInput) profilePfpInput.value = pfp;
   if (profileFontSelect) profileFontSelect.value = font;
   if (profileAnimSelect) profileAnimSelect.value = anim;
   if (profileColorInput) profileColorInput.value = color;
@@ -254,8 +398,9 @@ function loadProfile() {
     }
     if (pfpInitial) pfpInitial.classList.add('hidden');
   } else {
+    // Automatic Letter PFP or Emoji fallback
     if (pfpInitial) {
-      pfpInitial.textContent = name.charAt(0).toUpperCase();
+      pfpInitial.textContent = pfp.length <= 2 ? pfp : name.charAt(0).toUpperCase();
       pfpInitial.classList.remove('hidden');
     }
     if (pfpImg) pfpImg.classList.add('hidden');
@@ -270,7 +415,7 @@ document.getElementById('save-profile')?.addEventListener('click', () => {
   }
 
   const bio = profileBioInput.value.trim() || 'exploring the web with satura.';
-  const pfp = profilePfpInput.value.trim() || '⭐';
+  const pfp = profilePfpInput.value.trim() || name.charAt(0).toUpperCase();
   const font = profileFontSelect.value;
   const anim = profileAnimSelect.value;
   const color = profileColorInput.value;
@@ -292,7 +437,7 @@ const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas ? starCanvas.getContext('2d') : null;
 let angle = 0, floatTime = 0;
 
-const backgroundStars = Array.from({ length: 90 }, () => ({
+const backgroundStars = Array.from({ length: 100 }, () => ({
   x: Math.random() * window.innerWidth,
   y: Math.random() * window.innerHeight,
   radius: Math.random() * 2 + 1,
