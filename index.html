@@ -25,7 +25,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
-    /* True Mathematical Inversion Canvas Engine */
+    /* Inversion Canvas Container */
     .star-blend-container {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
       display: flex; align-items: center; justify-content: center; background: #000000;
@@ -40,19 +40,18 @@
     .satura-title {
       font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; text-transform: lowercase; user-select: none; text-align: center;
       background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       cursor: default; pointer-events: auto;
     }
 
+    /* Bigger Canvas Mask Wrapper */
     .star-mask-wrapper {
-      position: absolute; width: 380px; height: 380px; display: flex; align-items: center; justify-content: center;
+      position: absolute; width: 550px; height: 550px; display: flex; align-items: center; justify-content: center;
       mix-blend-mode: difference; pointer-events: none; z-index: 4;
     }
 
     canvas#star-canvas { width: 100%; height: 100%; background: transparent; }
 
-    /* Tooltip System */
     .custom-tooltip {
       position: fixed; background: #222; color: #fff; padding: 8px 12px; border-radius: 4px;
       font-family: 'Press Start 2P', monospace; font-size: 0.55rem; z-index: 9999; pointer-events: none;
@@ -65,7 +64,7 @@
     }
     .badge-wip { font-size: 0.75rem; margin-left: 6px; cursor: pointer; display: inline-flex; align-items: center; }
 
-    /* Sidebar */
+    /* Sidebar Taskbar */
     .sidebar {
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column;
@@ -90,7 +89,6 @@
     
     .svg-icon { width: calc(20px * var(--gui-scale)); height: calc(20px * var(--gui-scale)); fill: currentColor; stroke: none; }
 
-    /* Top Tab Bar */
     .tab-bar-container {
       position: fixed; top: 0; left: calc(64px * var(--gui-scale)); right: 0; height: calc(46px * var(--gui-scale));
       background: var(--panel); border-bottom: var(--panel-border); display: flex; align-items: center;
@@ -111,7 +109,6 @@
 
     .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; text-transform: lowercase; }
 
-    /* Full Page Views */
     .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
@@ -143,17 +140,14 @@
     .chat-msg-username { font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: lowercase; }
     .chat-msg-username:hover { text-decoration: underline; }
     
-    @keyframes letterWave {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
+    @keyframes letterWave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .wavy-letter { display: inline-block; animation: letterWave 1s ease-in-out infinite; }
 
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
     .chat-msg-text { font-size: 0.98rem; color: #ffffff; word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
 
-    /* Audio Player & Playlist */
+    /* Audio Player */
     .audio-container { flex: 1; display: flex; flex-direction: row; padding: 20px; gap: 20px; background: var(--bg); overflow: hidden; }
     .audio-player-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; }
     .playlist-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 20px; width: 320px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
@@ -207,7 +201,6 @@
     }
     .mode-row-btn:hover { background: var(--hover); border-color: var(--accent); }
 
-    /* Proxy Viewport */
     .proxy-viewer {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1000; display: none; align-items: center; justify-content: space-between;
@@ -229,7 +222,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Modals */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85);
       z-index: 3000; display: flex; align-items: center; justify-content: center;
@@ -254,7 +246,6 @@
     .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; text-transform: lowercase; }
     .action-btn:hover { opacity: 0.9; }
 
-    /* Cloak overlay notice */
     #cloak-notice {
       position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
       color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; z-index: 99999;
@@ -266,16 +257,16 @@
 </head>
 <body>
 
-  <!-- Tooltip Element -->
   <div class="custom-tooltip" id="global-tooltip"></div>
 
-  <!-- Mathematical Inversion Container -->
+  <!-- Inversion Star Engine Container -->
   <div class="star-blend-container">
     <div class="home-view" id="home-view">
       <div class="satura-title" id="satura-title-el">satura</div>
     </div>
+    <!-- Canvas size expanded to 550x550 -->
     <div class="star-mask-wrapper">
-      <canvas id="star-canvas" width="380" height="380"></canvas>
+      <canvas id="star-canvas" width="550" height="550"></canvas>
     </div>
   </div>
 
@@ -283,7 +274,7 @@
     <div class="spinner-ring"></div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- Sidebar Taskbar -->
   <div class="sidebar" id="sidebar-el">
     <button class="sidebar-btn active" id="sb-home" title="home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -304,13 +295,17 @@
     <button class="sidebar-btn" id="sb-settings" title="theme & settings">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     </button>
+    <!-- New Cloak Logo Button directly under Settings -->
+    <button class="sidebar-btn" id="sb-cloak-btn" title="stealth cloak (press \)">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+    </button>
+
     <div class="profile-avatar-btn" id="sb-profile" title="account & profile">
       <span id="pfp-initial" style="font-weight:bold; font-size:0.9rem;">?</span>
       <img id="pfp-img" src="" class="hidden" alt="profile" />
     </div>
   </div>
 
-  <!-- Top Tab Bar -->
   <div class="tab-bar-container" id="tab-bar">
     <button class="add-tab-btn" id="add-tab-btn" title="new tab">+</button>
   </div>
@@ -347,7 +342,7 @@
     </div>
   </div>
 
-  <!-- Audio Player & Playlist Page View -->
+  <!-- Audio Player Page View -->
   <div class="page-view" id="audio-page-view">
     <div class="swipe-container" id="audio-swipe">
       <div class="audio-container">
@@ -355,16 +350,18 @@
           <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase; display: flex; align-items: center; justify-content: center;">
             soundcloud player <span class="badge-wip" data-tooltip-type="wip">🛠️</span>
           </div>
-          <p id="now-playing-title" style="color: var(--subtext); font-size: 0.9rem;">select a track or paste link</p>
+          <p id="now-playing-title" style="color: var(--subtext); font-size: 0.9rem;">paste any soundcloud track link below</p>
           <input type="text" id="sc-url-input" class="setting-input" placeholder="https://soundcloud.com/artist/track" />
           <div style="display: flex; gap: 10px;">
-            <button class="action-btn" id="sc-load-btn" style="flex: 1;">load track</button>
-            <button class="action-btn" id="share-playlist-btn" style="flex: 1; background: var(--hover); border: var(--panel-border); color: var(--text);">share playlist in chat</button>
+            <button class="action-btn" id="sc-load-btn" style="flex: 1;">load track embed</button>
+            <button class="action-btn" id="share-playlist-btn" style="flex: 1; background: var(--hover); border: var(--panel-border); color: var(--text);">share link in chat</button>
           </div>
-          <audio id="audio-element" controls style="width: 100%; margin-top: 10px;"></audio>
+          <div id="sc-embed-container" style="width: 100%; height: 166px; margin-top: 10px; display: flex; align-items: center; justify-content: center; background: #000000; border-radius: 8px; border: var(--panel-border); overflow: hidden;">
+            <p style="color: var(--subtext); font-size: 0.85rem;">no soundcloud track loaded yet</p>
+          </div>
         </div>
         <div class="playlist-box">
-          <div style="font-weight: bold; font-size: 1rem; text-transform: lowercase; border-bottom: var(--panel-border); padding-bottom: 8px;">discover soundcloud tracks</div>
+          <div style="font-weight: bold; font-size: 1rem; text-transform: lowercase; border-bottom: var(--panel-border); padding-bottom: 8px;">featured tracks</div>
           <div id="random-songs-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1;"></div>
         </div>
       </div>
@@ -458,7 +455,7 @@
     </div>
   </div>
 
-  <!-- User Dashboard Modal with Quick DMing -->
+  <!-- User Profile Dashboard -->
   <div class="modal-overlay hidden" id="user-dashboard-modal">
     <div class="modal-box" style="align-items: center; text-align: center;">
       <div class="modal-header" style="width: 100%;">
@@ -586,5 +583,6 @@
   <div id="cloak-notice">double tap screen to uncloak</div>
 
   <script src="script.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>
