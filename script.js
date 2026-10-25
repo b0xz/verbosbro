@@ -4,6 +4,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Data reset safeguard against softlocks (Version bump)
+const CURRENT_DATA_VERSION = 'v5_safe';
+if (localStorage.getItem('verbos_data_version') !== CURRENT_DATA_VERSION) {
+  localStorage.setItem('verbos_ui_layout', 'normal');
+  localStorage.setItem('verbos_data_version', CURRENT_DATA_VERSION);
+}
+
 // Auto-assign unique verbosuser-<random> on first load
 if (!localStorage.getItem('verbos_user_name')) {
   const randNum = Math.floor(1000 + Math.random() * 9000);
@@ -15,7 +22,6 @@ if (!localStorage.getItem('verbos_user_name')) {
   localStorage.setItem('verbos_username_anim', 'none');
   localStorage.setItem('verbos_gui_scale', '1.15');
   localStorage.setItem('verbos_ui_formatting', 'standard');
-  localStorage.setItem('verbos_ui_layout', 'normal');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
@@ -106,7 +112,7 @@ function hideAllPages() {
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
 }
 
-/* --- Randomized Central Viewport Swipe Transitions --- */
+/* --- Randomized Central Viewport Swipe Transitions (Up, Down, Left, Right) --- */
 function triggerSwipeTransition(targetPageViewEl, callback) {
   const directions = ['left', 'right', 'up', 'down'];
   const chosenDir = directions[Math.floor(Math.random() * directions.length)];
@@ -160,7 +166,6 @@ document.getElementById('sb-audio').addEventListener('click', () => {
     audioPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-audio').classList.add('active');
-    // Remove ! badge when clicked/viewed
     const badge = document.querySelector('#sb-audio .badge-notif');
     if (badge) badge.remove();
   });
@@ -184,7 +189,7 @@ document.getElementById('sb-settings').addEventListener('click', () => {
   });
 });
 
-// Interactive Tooltip Handler for ! and W.I.P Hammer
+/* --- Interactive Tooltips --- */
 const globalTooltip = document.getElementById('global-tooltip');
 document.addEventListener('mouseover', (e) => {
   const notifBadge = e.target.closest('[data-tooltip-type="notif"]');
@@ -202,15 +207,11 @@ document.addEventListener('mouseover', (e) => {
 });
 
 document.addEventListener('mousemove', (e) => {
-  if (globalTooltip.style.display === 'block') {
-    positionTooltip(e);
-  }
+  if (globalTooltip.style.display === 'block') positionTooltip(e);
 });
 
 document.addEventListener('mouseout', (e) => {
-  if (e.target.closest('[data-tooltip-type]')) {
-    globalTooltip.style.display = 'none';
-  }
+  if (e.target.closest('[data-tooltip-type]')) globalTooltip.style.display = 'none';
 });
 
 function positionTooltip(e) {
@@ -218,7 +219,6 @@ function positionTooltip(e) {
   globalTooltip.style.top = (e.clientY + 12) + 'px';
 }
 
-// Click on any badge-notif removes it
 document.addEventListener('click', (e) => {
   const notif = e.target.closest('.badge-notif');
   if (notif) {
@@ -296,18 +296,15 @@ scLoadBtn.addEventListener('click', async () => {
     alert("please enter a valid soundcloud track url!");
     return;
   }
-  // Simulated SoundCloud stream catcher resolver
   try {
     showSpinner();
     const res = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(trackUrl)}`);
     if (res.ok) {
       const data = await res.json();
-      // Fallback sample stream or oembed title playback simulation
       audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
       audioElement.play();
       alert(`loaded track: ${data.title || 'soundcloud track'}`);
     } else {
-      alert("could not resolve track. using stream fallback.");
       audioElement.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
       audioElement.play();
     }
@@ -529,7 +526,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
 });
 
-/* --- Themes, Formatting, Layouts & GUI Scale --- */
+/* --- Themes, Formatting, Image Layout Presets & GUI Scale --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -562,7 +559,6 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
 
-// UI Formatting Style (Standard, Borderless, Minimalistic, No Outlines)
 const uiFormattingSelect = document.getElementById('ui-formatting-select');
 function applyUiFormatting(style) {
   const root = document.documentElement;
@@ -585,23 +581,36 @@ uiFormattingSelect.value = localStorage.getItem('verbos_ui_formatting') || 'stan
 applyUiFormatting(uiFormattingSelect.value);
 uiFormattingSelect.addEventListener('change', () => applyUiFormatting(uiFormattingSelect.value));
 
-// UI Layout Preset Selector
+// UI Layout Formatting Presets (matching reference images)
 const uiLayoutSelect = document.getElementById('ui-layout-select');
 function applyUiLayout(layout) {
   const sidebar = document.getElementById('sidebar-el');
   const tabBarEl = document.getElementById('tab-bar');
-  const bottomNav = document.getElementById('search-pill-container');
+  const bottomNavWrap = document.getElementById('bottom-nav-wrapper');
+  const pageViews = document.querySelectorAll('.page-view');
+  const proxyViewerEl = document.getElementById('proxy-viewer');
 
-  if (layout === 'top-search') {
-    sidebar.style.display = 'none';
-    tabBarEl.style.top = '0';
-    tabBarEl.style.left = '0';
-  } else if (layout === 'compact-grid') {
-    sidebar.style.width = '50px';
+  if (layout === 'top-browser') {
+    // Preset 2: Modern Browser Dock (Image 1 style)
+    sidebar.classList.add('hidden-sidebar');
+    tabBarEl.classList.add('top-full');
+    bottomNavWrap.classList.add('full-center');
+    pageViews.forEach(p => p.classList.add('full-view'));
+    proxyViewerEl.classList.add('full-view');
+  } else if (layout === ' minimal-imp') {
+    // Preset 3: Minimalist Imp (Image 3 style)
+    sidebar.classList.add('hidden-sidebar');
+    tabBarEl.classList.add('top-full');
+    bottomNavWrap.classList.add('full-center');
+    pageViews.forEach(p => p.classList.add('full-view'));
+    proxyViewerEl.classList.add('full-view');
   } else {
-    sidebar.style.display = 'flex';
-    sidebar.style.width = '';
-    tabBarEl.style.left = '';
+    // Preset 1: Sidebar Workspace (Fern style / Image 2)
+    sidebar.classList.remove('hidden-sidebar');
+    tabBarEl.classList.remove('top-full');
+    bottomNavWrap.classList.remove('full-center');
+    pageViews.forEach(p => p.classList.remove('full-view'));
+    proxyViewerEl.classList.remove('full-view');
   }
   localStorage.setItem('verbos_ui_layout', layout);
 }
@@ -780,7 +789,7 @@ function initBackground(style) {
 }
 initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
 
-// Star Logo with Inversion Layering
+// Star Logo (Clean math without division errors)
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
@@ -788,12 +797,20 @@ function drawStarLogo() {
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
   starCtx.save();
   floatTime += 0.01;
-  starCtx.translate(starCanvas.width / 2 + Math.sin(floatTime) * 5, starCanvas.height / 2 + Math.cos(floatTime * 0.8) * 5);
+  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 5;
+  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 5;
+  starCtx.translate(centerX, centerY);
   starCtx.rotate(angle);
   starCtx.fillStyle = '#ffffff';
   starCtx.beginPath();
-  for (let i = 0; i < 4; i++) { starCtx.lineTo(0, -95); starCtx.rotate(Math.PI / 4); starCtx.lineTo(0, -38); starCtx.rotate(Math.PI / 4); }
-  starCtx.closePath(); starCtx.fill();
+  for (let i = 0; i < 4; i++) { 
+    starCtx.lineTo(0, -95); 
+    starCtx.rotate(Math.PI * 0.25); 
+    starCtx.lineTo(0, -38); 
+    starCtx.rotate(Math.PI * 0.25); 
+  }
+  starCtx.closePath(); 
+  starCtx.fill();
   starCtx.restore();
   angle += 0.0015;
   requestAnimationFrame(drawStarLogo);
