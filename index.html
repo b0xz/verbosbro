@@ -28,7 +28,7 @@
     /* Fixed Inversion Effect Container using mix-blend-mode difference */
     .star-blend-container {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
-      display: flex; align-items: center; justify-content: center; background: #000000;
+      display: flex; align-items: center; justify-content: center; background: #ffffff;
       mix-blend-mode: difference;
     }
     canvas#bg-stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
@@ -42,19 +42,37 @@
 
     canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; background: transparent; }
 
+    /* Tooltip System */
+    .custom-tooltip {
+      position: fixed; background: #222; color: #fff; padding: 8px 12px; border-radius: 4px;
+      font-family: 'Press Start 2P', monospace; font-size: 0.55rem; z-index: 9999; pointer-events: none;
+      border: 1px solid #fff; max-width: 250px; line-height: 1.4; display: none;
+    }
+
+    /* Notification Badge */
+    .badge-notif {
+      background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 2px 6px;
+      border-radius: 50px; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; cursor: pointer;
+    }
+    .badge-wip {
+      font-size: 0.75rem; margin-left: 6px; cursor: pointer; display: inline-flex; align-items: center;
+    }
+
     /* Sidebar */
     .sidebar {
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column;
       align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
-      gap: calc(14px * var(--gui-scale)); z-index: 1200;
+      gap: calc(14px * var(--gui-scale)); z-index: 1200; transition: all 0.3s ease;
     }
     .sidebar-btn {
       background: transparent; border: 1px solid transparent; color: var(--text);
       width: calc(42px * var(--gui-scale)); height: calc(42px * var(--gui-scale)); border-radius: var(--border-radius);
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; position: relative;
     }
     .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--accent); }
+    .sidebar-btn .badge-notif { position: absolute; top: -4px; right: -4px; font-size: 0.5rem; padding: 1px 4px; }
+
     .profile-avatar-btn {
       margin-top: auto; width: calc(40px * var(--gui-scale)); height: calc(40px * var(--gui-scale));
       border-radius: 50%; border: var(--panel-border); background: var(--bg); display: flex;
@@ -83,20 +101,17 @@
 
     .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; text-transform: lowercase; }
 
-    /* Full Page Views */
+    /* Full Page Views with Central Viewport Swiping */
     .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
     }
     .page-view.active { display: flex; }
 
-    .swipe-overlay {
-      position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
-      height: calc(100vh - 46px * var(--gui-scale)); background: var(--panel); z-index: 5000; pointer-events: none; opacity: 0;
-      transition: transform 0.35s ease, opacity 0.35s ease; transform: translateX(100%);
+    .swipe-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     }
-    .swipe-overlay.animate-left { transform: translateX(0); opacity: 1; }
-    .swipe-overlay.animate-exit { transform: translateX(-100%); opacity: 1; }
 
     /* Chat Layout */
     .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); }
@@ -118,19 +133,19 @@
     .chat-msg-username { font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: lowercase; }
     .chat-msg-username:hover { text-decoration: underline; }
     
-    /* Letter-by-Letter Wavy Animation */
     @keyframes letterWave {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
     }
-    .wavy-letter {
-      display: inline-block;
-      animation: letterWave 1s ease-in-out infinite;
-    }
+    .wavy-letter { display: inline-block; animation: letterWave 1s ease-in-out infinite; }
 
     .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
     .chat-msg-text { font-size: 0.98rem; color: #ffffff; word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
+
+    /* Audio Player Page View */
+    .audio-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; align-items: center; justify-content: center; background: var(--bg); }
+    .audio-player-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 30px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; text-align: center; }
 
     /* Games Hub */
     .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; background: var(--bg); }
@@ -230,23 +245,23 @@
 </head>
 <body>
 
-  <!-- Restored Inversion Effect with mix-blend-mode difference -->
+  <!-- Tooltip Element -->
+  <div class="custom-tooltip" id="global-tooltip"></div>
+
   <div class="star-blend-container">
     <canvas id="bg-stars"></canvas>
     <div class="home-view" id="home-view">
-      <div class="star-text">*welcome to verbos</div>
+      <div class="star-text">welcome to verbos</div>
     </div>
     <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
-
-  <div class="swipe-overlay" id="swipe-overlay"></div>
 
   <div class="loading-overlay hidden" id="loading-spinner">
     <div class="spinner-ring"></div>
   </div>
 
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar-el">
     <button class="sidebar-btn active" id="sb-home" title="home">
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
@@ -259,8 +274,13 @@
     <button class="sidebar-btn" id="sb-games" title="games hub">
       <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m10-2h.01M16 10h.01"></path></svg>
     </button>
+    <!-- Audio Player Sidebar Button with ! and W.I.P Hammer -->
+    <button class="sidebar-btn" id="sb-audio" title="audio player">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+      <span class="badge-notif" data-tooltip-type="notif">!</span>
+    </button>
     <button class="sidebar-btn" id="sb-settings" title="theme & settings">
-      <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
     <div class="profile-avatar-btn" id="sb-profile" title="account & profile">
       <span id="pfp-initial" style="font-weight:bold; font-size:0.9rem;">?</span>
@@ -277,27 +297,46 @@
 
   <!-- Chat Page View -->
   <div class="page-view" id="chat-page-view">
-    <div class="chat-layout">
-      <div class="chat-sidebar">
-        <h4>servers</h4>
-        <button class="room-btn active" data-room="global"># global-chat</button>
-        <button class="room-btn" data-room="general-1"># general-1</button>
-        <button class="room-btn" data-room="general-2"># general-2</button>
-        <button class="room-btn" data-room="general-3"># general-3</button>
-        <h4 style="margin-top: 15px;">direct messages</h4>
-        <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
-      </div>
-      <div class="chat-main-area">
-        <div style="font-weight: bold; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center; text-transform: lowercase;">
-          <span id="current-room-title"># global-chat</span>
-          <button class="action-btn" id="add-friend-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ add dm</button>
+    <div class="swipe-container" id="chat-swipe">
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <h4>servers</h4>
+          <button class="room-btn active" data-room="global"># global-chat</button>
+          <button class="room-btn" data-room="general-1"># general-1</button>
+          <button class="room-btn" data-room="general-2"># general-2</button>
+          <button class="room-btn" data-room="general-3"># general-3</button>
+          <h4 style="margin-top: 15px;">direct messages</h4>
+          <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
-        <div class="chat-messages-container" id="chat-messages"></div>
-        <div class="chat-input-bar">
-          <input type="text" id="chat-input" class="pill-input" placeholder="type a message..." autocomplete="off" />
-          <button class="go-btn" id="chat-send" title="send">
-            <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-          </button>
+        <div class="chat-main-area">
+          <div style="font-weight: bold; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center; text-transform: lowercase;">
+            <span id="current-room-title"># global-chat</span>
+            <button class="action-btn" id="add-friend-btn" style="padding: 6px 14px; font-size: 0.85rem;">+ add dm</button>
+          </div>
+          <div class="chat-messages-container" id="chat-messages"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="chat-input" class="pill-input" placeholder="type a message..." autocomplete="off" />
+            <button class="go-btn" id="chat-send" title="send">
+              <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Player Page View -->
+  <div class="page-view" id="audio-page-view">
+    <div class="swipe-container" id="audio-swipe">
+      <div class="audio-container">
+        <div class="audio-player-box">
+          <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase; display: flex; align-items: center; justify-content: center;">
+            soundcloud player <span class="badge-wip" data-tooltip-type="wip">🛠️</span>
+          </div>
+          <p style="color: var(--subtext); font-size: 0.85rem;">paste soundcloud track link below</p>
+          <input type="text" id="sc-url-input" class="setting-input" placeholder="https://soundcloud.com/artist/track" />
+          <button class="action-btn" id="sc-load-btn">load track</button>
+          <audio id="audio-element" controls style="width: 100%; margin-top: 10px;"></audio>
         </div>
       </div>
     </div>
@@ -305,52 +344,69 @@
 
   <!-- Games Hub Page View -->
   <div class="page-view" id="games-page-view">
-    <div class="games-container">
-      <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">🎮 verbos games hub</div>
-      <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
+    <div class="swipe-container" id="games-swipe">
+      <div class="games-container">
+        <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">🎮 verbos games hub</div>
+        <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
+      </div>
     </div>
   </div>
 
   <!-- Settings Page View -->
   <div class="page-view" id="settings-page-view">
-    <div class="settings-container">
-      <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">⚙️ theme & preferences</div>
-      
-      <div class="setting-group">
-        <label>select color scheme</label>
-        <div class="theme-grid">
-          <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>obsidian</span></div>
-          <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>crimson</span></div>
-          <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>emerald</span></div>
-          <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>amethyst</span></div>
-          <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>amber</span></div>
-          <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>ghost</span></div>
-          <div class="theme-card" data-theme="cyberpunk"><div class="theme-color-preview" style="background:#06b6d4;"></div><span>cyberpunk</span></div>
-          <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#22c55e;"></div><span>matrix</span></div>
+    <div class="swipe-container" id="settings-swipe">
+      <div class="settings-container">
+        <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">⚙️ theme & preferences</div>
+        
+        <div class="setting-group">
+          <label>select color scheme</label>
+          <div class="theme-grid">
+            <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>obsidian</span></div>
+            <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>crimson</span></div>
+            <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>emerald</span></div>
+            <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>amethyst</span></div>
+            <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>amber</span></div>
+            <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>ghost</span></div>
+            <div class="theme-card" data-theme="cyberpunk"><div class="theme-color-preview" style="background:#06b6d4;"></div><span>cyberpunk</span></div>
+            <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#22c55e;"></div><span>matrix</span></div>
+            <!-- Coffee Theme with ! -->
+            <div class="theme-card" data-theme="coffee"><div class="theme-color-preview" style="background:#d97706;"></div><span>coffee <span class="badge-notif" data-tooltip-type="notif">!</span></span></div>
+          </div>
         </div>
-      </div>
 
-      <div class="setting-group">
-        <label>ui formatting style</label>
-        <select id="ui-formatting-select" class="setting-input">
-          <option value="standard">standard bordered</option>
-          <option value="borderless">borderless glass</option>
-          <option value="minimalistic">ultra minimalistic</option>
-        </select>
-      </div>
+        <!-- UI Layout Selector with ! -->
+        <div class="setting-group">
+          <label>ui layout preset <span class="badge-notif" data-tooltip-type="notif">!</span></label>
+          <select id="ui-layout-select" class="setting-input">
+            <option value="normal">normal (sidebar & bottom bar)</option>
+            <option value="top-search">search on top with tabs on very top</option>
+            <option value="compact-grid">compact grid view</option>
+          </select>
+        </div>
 
-      <div class="setting-group">
-        <label>gui scale size (<span id="gui-scale-val">1.15</span>x)</label>
-        <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="3.0" step="0.05" value="1.15" style="padding: 0; cursor: pointer;" />
-      </div>
+        <div class="setting-group">
+          <label>ui styling / borders</label>
+          <select id="ui-formatting-select" class="setting-input">
+            <option value="standard">standard bordered</option>
+            <option value="borderless">borderless glass</option>
+            <option value="minimalistic">ultra minimalistic</option>
+            <option value="no-outlines">no outlines, no vfx or tiny details <span class="badge-notif" data-tooltip-type="notif">!</span></option>
+          </select>
+        </div>
 
-      <div class="setting-group">
-        <label>background animation style</label>
-        <select id="bg-style-select" class="setting-input">
-          <option value="stars">starfield particles</option>
-          <option value="matrix">matrix code rain</option>
-          <option value="void">minimalist void</option>
-        </select>
+        <div class="setting-group">
+          <label>gui scale size (<span id="gui-scale-val">1.15</span>x)</label>
+          <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="3.0" step="0.05" value="1.15" style="padding: 0; cursor: pointer;" />
+        </div>
+
+        <div class="setting-group">
+          <label>background animation style</label>
+          <select id="bg-style-select" class="setting-input">
+            <option value="stars">starfield particles</option>
+            <option value="matrix">matrix code rain</option>
+            <option value="void">minimalist void</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -374,7 +430,6 @@
 
   <!-- Bottom Search Bar -->
   <div class="bottom-nav-wrapper" id="bottom-nav-wrapper">
-    <!-- Proxy Dropdown Menus -->
     <div class="mode-menu-table" id="mode-menu">
       <button class="mode-row-btn" data-mode="fast"><span>fast mode</span></button>
       <button class="mode-row-btn" data-mode="strong"><span>strong mode</span></button>
