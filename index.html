@@ -25,11 +25,15 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
-    /* Working Inversion Effect Container using mix-blend-mode difference */
+    /* Truly Working Division Inversion Effect Container using mix-blend-mode difference + inversion filter */
     .star-blend-container {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
       display: flex; align-items: center; justify-content: center; background: #000000;
-      mix-blend-mode: difference;
+    }
+
+    .inversion-viewport {
+      position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      mix-blend-mode: difference; filter: invert(1);
     }
 
     .home-view {
@@ -38,13 +42,12 @@
     }
     .home-view.hidden { display: none; }
 
-    /* Satura Title matching reference style with gradient */
     .satura-title {
       font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; text-transform: lowercase; user-select: none; text-align: center;
       background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      cursor: default;
+      cursor: default; pointer-events: auto;
     }
 
     canvas#star-canvas { position: absolute; width: 380px; height: 380px; z-index: 4; background: transparent; }
@@ -67,8 +70,10 @@
       position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
       background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column;
       align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
-      gap: calc(14px * var(--gui-scale)); z-index: 1200;
+      gap: calc(14px * var(--gui-scale)); z-index: 1200; transition: all 0.3s ease;
     }
+    .sidebar.hidden-sidebar { display: none !important; }
+
     .sidebar-btn {
       background: transparent; border: 1px solid transparent; color: var(--text);
       width: calc(42px * var(--gui-scale)); height: calc(42px * var(--gui-scale)); border-radius: var(--border-radius);
@@ -84,7 +89,6 @@
     }
     .profile-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
     
-    /* Filled Icon SVG Styles */
     .svg-icon { width: calc(20px * var(--gui-scale)); height: calc(20px * var(--gui-scale)); fill: currentColor; stroke: none; }
 
     /* Top Tab Bar */
@@ -93,6 +97,8 @@
       background: var(--panel); border-bottom: var(--panel-border); display: flex; align-items: center;
       padding: 0 calc(14px * var(--gui-scale)); gap: calc(8px * var(--gui-scale)); z-index: 1100; overflow-x: auto;
     }
+    .tab-bar-container.top-full { left: 0 !important; }
+
     .tab-item {
       background: var(--bg); border: var(--panel-border); color: var(--subtext); padding: calc(8px * var(--gui-scale)) calc(14px * var(--gui-scale));
       border-radius: var(--border-radius) var(--border-radius) 0 0; font-size: calc(0.85rem * var(--gui-scale)); cursor: grab; display: flex; align-items: center; gap: 10px; max-width: 180px; white-space: nowrap; user-select: none;
@@ -107,11 +113,12 @@
 
     .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; text-transform: lowercase; }
 
-    /* Full Page Views with Central Viewport Swiping */
+    /* Full Page Views */
     .page-view {
       position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
     }
+    .page-view.full-view { left: 0 !important; width: 100vw !important; }
     .page-view.active { display: flex; }
 
     .swipe-container {
@@ -149,9 +156,12 @@
     .chat-msg-text { font-size: 0.98rem; color: #ffffff; word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
 
-    /* Audio Player */
-    .audio-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; align-items: center; justify-content: center; background: var(--bg); }
-    .audio-player-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 30px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; text-align: center; }
+    /* Audio Player & Playlist */
+    .audio-container { flex: 1; display: flex; flex-direction: row; padding: 20px; gap: 20px; background: var(--bg); overflow: hidden; }
+    .audio-player-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+    .playlist-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 20px; width: 320px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+    .song-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; text-transform: lowercase; }
+    .song-card:hover { border-color: var(--accent); background: var(--hover); }
 
     /* Games Hub */
     .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; background: var(--bg); }
@@ -166,6 +176,8 @@
       width: 90%; max-width: calc(750px * var(--gui-scale)); z-index: 1300; display: flex; flex-direction: column; gap: 6px; align-items: center;
       transition: opacity 0.2s ease, transform 0.2s ease;
     }
+    .bottom-nav-wrapper.top-search-pos { bottom: auto !important; top: calc(55px * var(--gui-scale)) !important; }
+    .bottom-nav-wrapper.full-center { left: 50% !important; }
     .bottom-nav-wrapper.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
     .bottom-nav-pill {
       background: var(--panel); border: var(--panel-border); border-radius: calc(35px * var(--gui-scale));
@@ -205,6 +217,7 @@
       height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1000; display: none; align-items: center; justify-content: space-between;
       padding-bottom: calc(85px * var(--gui-scale)); gap: 12px; padding-left: 12px; padding-right: 12px;
     }
+    .proxy-viewer.full-view { left: 0 !important; width: 100vw !important; }
     .proxy-viewer.active { display: flex; }
     .screen-panel { flex: 1; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
     .device-viewport { width: 100%; height: 100%; background: #ffffff; }
@@ -254,43 +267,39 @@
   <!-- Tooltip Element -->
   <div class="custom-tooltip" id="global-tooltip"></div>
 
-  <!-- Inversion Container with mix-blend-mode difference -->
+  <!-- True Working Division Inversion Container -->
   <div class="star-blend-container">
-    <div class="home-view" id="home-view">
-      <div class="satura-title" id="satura-title-el">satura</div>
+    <div class="inversion-viewport">
+      <div class="home-view" id="home-view">
+        <div class="satura-title" id="satura-title-el">satura</div>
+      </div>
+      <canvas id="star-canvas" width="380" height="380"></canvas>
     </div>
-    <canvas id="star-canvas" width="380" height="380"></canvas>
   </div>
 
   <div class="loading-overlay hidden" id="loading-spinner">
     <div class="spinner-ring"></div>
   </div>
 
-  <!-- Sidebar with Filled Icons -->
+  <!-- Sidebar -->
   <div class="sidebar" id="sidebar-el">
     <button class="sidebar-btn active" id="sb-home" title="home">
-      <!-- Filled Home Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     </button>
     <button class="sidebar-btn" id="sb-bookmarks" title="bookmarks & notes">
-      <!-- Filled Bookmark Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
     </button>
     <button class="sidebar-btn" id="sb-chat" title="satura chat">
-      <!-- Filled Chat Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     </button>
     <button class="sidebar-btn" id="sb-games" title="games hub">
-      <!-- Filled Games/Gamepad Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
     </button>
     <button class="sidebar-btn" id="sb-audio" title="audio player">
-      <!-- Filled Music/Audio Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
       <span class="badge-notif" data-notif-id="audio-badge" data-tooltip-type="notif">!</span>
     </button>
     <button class="sidebar-btn" id="sb-settings" title="theme & settings">
-      <!-- Filled Settings Gear Icon -->
       <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     </button>
     <div class="profile-avatar-btn" id="sb-profile" title="account & profile">
@@ -336,7 +345,7 @@
     </div>
   </div>
 
-  <!-- Audio Player Page View -->
+  <!-- Audio Player & Playlist Page View -->
   <div class="page-view" id="audio-page-view">
     <div class="swipe-container" id="audio-swipe">
       <div class="audio-container">
@@ -344,10 +353,17 @@
           <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase; display: flex; align-items: center; justify-content: center;">
             soundcloud player <span class="badge-wip" data-tooltip-type="wip">🛠️</span>
           </div>
-          <p style="color: var(--subtext); font-size: 0.85rem;">paste soundcloud track link below</p>
+          <p id="now-playing-title" style="color: var(--subtext); font-size: 0.9rem;">select a track or paste link</p>
           <input type="text" id="sc-url-input" class="setting-input" placeholder="https://soundcloud.com/artist/track" />
-          <button class="action-btn" id="sc-load-btn">load track</button>
+          <div style="display: flex; gap: 10px;">
+            <button class="action-btn" id="sc-load-btn" style="flex: 1;">load track</button>
+            <button class="action-btn" id="share-playlist-btn" style="flex: 1; background: var(--hover); border: var(--panel-border); color: var(--text);">share playlist in chat</button>
+          </div>
           <audio id="audio-element" controls style="width: 100%; margin-top: 10px;"></audio>
+        </div>
+        <div class="playlist-box">
+          <div style="font-weight: bold; font-size: 1rem; text-transform: lowercase; border-bottom: var(--panel-border); padding-bottom: 8px;">discover soundcloud tracks</div>
+          <div id="random-songs-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1;"></div>
         </div>
       </div>
     </div>
@@ -382,6 +398,22 @@
             <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#22c55e;"></div><span>matrix</span></div>
             <div class="theme-card" data-theme="coffee"><div class="theme-color-preview" style="background:#d97706;"></div><span>coffee <span class="badge-notif" data-notif-id="coffee-badge" data-tooltip-type="notif">!</span></span></div>
           </div>
+        </div>
+
+        <div class="setting-group">
+          <label>search bar position</label>
+          <select id="search-pos-select" class="setting-input">
+            <option value="bottom">bottom screen (default)</option>
+            <option value="top">top of screen (below tabs)</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label>ui outlines & borders</label>
+          <select id="ui-outlines-select" class="setting-input">
+            <option value="enabled">enabled (standard borders)</option>
+            <option value="disabled">disabled (no outlines / borderless)</option>
+          </select>
         </div>
 
         <div class="setting-group">
