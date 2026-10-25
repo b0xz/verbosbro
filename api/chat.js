@@ -1,24 +1,33 @@
 let currentChatRoom = 'global';
 let dmUsers = [];
-let dmSentCounts = {}; // One-message limit until reply
+let dmSentCounts = {};
 let chatPoll = null;
 let lastMessageTime = 0;
 let lastKnownCount = 0;
 
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const chatSend = document.getElementById('chat-send');
-const userDashboardModal = document.getElementById('user-dashboard-modal');
+function getChatElements() {
+  return {
+    chatMessages: document.getElementById('chat-messages'),
+    chatInput: document.getElementById('chat-input'),
+    chatSend: document.getElementById('chat-send'),
+    userDashboardModal: document.getElementById('user-dashboard-modal')
+  };
+}
 
-document.querySelectorAll('.room-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentChatRoom = btn.getAttribute('data-room');
-    document.getElementById('current-room-title').textContent = currentChatRoom.startsWith('general-') ? `# ${currentChatRoom}` : currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
-    fetchChat(true);
+function initRoomButtons() {
+  document.querySelectorAll('.room-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentChatRoom = btn.getAttribute('data-room');
+      const titleEl = document.getElementById('current-room-title');
+      if (titleEl) {
+        titleEl.textContent = currentChatRoom.startsWith('general-') ? `# ${currentChatRoom}` : currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
+      }
+      fetchChat(true);
+    });
   });
-});
+}
 
 function createWavySpan(text) {
   const container = document.createElement('span');
@@ -34,11 +43,15 @@ function createWavySpan(text) {
 }
 
 window.initChat = function() {
+  initRoomButtons();
   fetchChat(true);
   if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 2000);
 };
 
 async function fetchChat(forceScroll = false) {
+  const { chatMessages } = getChatElements();
+  if (!chatMessages) return;
+
   try {
     const res = await fetch('/api/chat');
     if (!res.ok) return;
@@ -46,7 +59,7 @@ async function fetchChat(forceScroll = false) {
     
     const myName = localStorage.getItem('satura_user_name');
     
-    if (!currentChatRoom.startsWith('#') && currentChatRoom !== 'global') {
+    if (!currentChatRoom.startsWith('general-') && currentChatRoom !== 'global') {
       const recipientHasReplied = data.some(m => m.user === currentChatRoom && m.recipient === myName);
       if (recipientHasReplied) {
         dmSentCounts[currentChatRoom] = 0;
@@ -126,6 +139,8 @@ async function fetchChat(forceScroll = false) {
 }
 
 async function sendChat() {
+  const { chatInput } = getChatElements();
+  if (!chatInput) return;
   const text = chatInput.value.trim();
   if (!text) return;
 
@@ -164,14 +179,60 @@ async function sendChat() {
   } catch (e) {}
 }
 
-if (chatSend) chatSend.addEventListener('click', sendChat);
-if (chatInput) chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
+window.addEventListener('DOMContentLoaded', () => {
+  const { chatSend, chatInput } = getChatElements();
+  if (chatSend) chatSend.addEventListener('click', sendChat);
+  if (chatInput) chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
 
-/* --- User Dashboard & White "Dm" Button --- */
-const closeUserDashboardBtn = document.getElementById('close-user-dashboard');
-if (closeUserDashboardBtn) {
-  closeUserDashboardBtn.addEventListener('click', () => userDashboardModal.classList.add('hidden'));
-}
+  const closeDashboardBtn = document.getElementById('close-user-dashboard');
+  if (closeDashboardBtn) {
+    closeDashboardBtn.addEventListener('click', () => {
+      document.getElementById('user-dashboard-modal').classList.add('hidden');
+    });
+  }
+
+  const udMessageBtn = document.getElementById('ud-message-btn');
+  if (udMessageBtn) {
+    udMessageBtn.addEventListener('click', () => {
+      if (!selectedDashboardUser) return;
+      const myName = localStorage.getItem('satura_user_name');
+      if (selectedDashboardUser === myName) {
+        alert("you cannot message yourself!");
+        return;
+      }
+
+      if (!dmUsers.includes(selectedDashboardUser)) {
+        dmUsers.push(selectedDashboardUser);
+        renderDmList();
+      }
+
+      document.getElementById('user-dashboard-modal').classList.add('hidden');
+      document.getElementById('sb-chat').click();
+      setTimeout(() => {
+        document.querySelector(`.room-btn[data-room="${selectedDashboardUser}"]`)?.click();
+      }, 100);
+    });
+  }
+
+  const addFriendBtn = document.getElementById('add-friend-btn');
+  if (addFriendBtn) {
+    addFriendBtn.addEventListener('click', async () => {
+      const friendName = prompt("enter username to start a direct message:");
+      if (!friendName) return;
+      const clean = friendName.trim();
+      const myName = localStorage.getItem('satura_user_name');
+      if (clean === myName) {
+        alert("that's you!");
+        return;
+      }
+      if (!dmUsers.includes(clean)) {
+        dmUsers.push(clean);
+        renderDmList();
+      }
+      document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
+    });
+  }
+});
 
 let selectedDashboardUser = '';
 window.openUserDashboard = function(username, pfp, bio) {
@@ -187,31 +248,8 @@ window.openUserDashboard = function(username, pfp, bio) {
     pfpContainer.textContent = pfp || username.charAt(0).toUpperCase();
   }
 
-  userDashboardModal.classList.remove('hidden');
+  document.getElementById('user-dashboard-modal').classList.remove('hidden');
 };
-
-const udMessageBtn = document.getElementById('ud-message-btn');
-if (udMessageBtn) {
-  udMessageBtn.addEventListener('click', () => {
-    if (!selectedDashboardUser) return;
-    const myName = localStorage.getItem('satura_user_name');
-    if (selectedDashboardUser === myName) {
-      alert("you cannot message yourself!");
-      return;
-    }
-
-    if (!dmUsers.includes(selectedDashboardUser)) {
-      dmUsers.push(selectedDashboardUser);
-      renderDmList();
-    }
-
-    userDashboardModal.classList.add('hidden');
-    document.getElementById('sb-chat').click();
-    setTimeout(() => {
-      document.querySelector(`.room-btn[data-room="${selectedDashboardUser}"]`)?.click();
-    }, 100);
-  });
-}
 
 function renderDmList() {
   const container = document.getElementById('dm-rooms-list');
@@ -228,24 +266,5 @@ function renderDmList() {
       document.getElementById('current-room-title').textContent = `dm: @${currentChatRoom}`;
       fetchChat(true);
     });
-  });
-}
-
-const addFriendBtn = document.getElementById('add-friend-btn');
-if (addFriendBtn) {
-  addFriendBtn.addEventListener('click', async () => {
-    const friendName = prompt("enter username to start a direct message:");
-    if (!friendName) return;
-    const clean = friendName.trim();
-    const myName = localStorage.getItem('satura_user_name');
-    if (clean === myName) {
-      alert("that's you!");
-      return;
-    }
-    if (!dmUsers.includes(clean)) {
-      dmUsers.push(clean);
-      renderDmList();
-    }
-    document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
   });
 }
