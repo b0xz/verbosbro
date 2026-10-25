@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v10_satura';
+const CURRENT_DATA_VERSION = 'v13_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
 }
@@ -181,23 +181,7 @@ document.getElementById('sb-settings').addEventListener('click', () => {
   });
 });
 
-/* --- Persistent Notifications --- */
-function markNotifSeen(notifId) {
-  localStorage.setItem(`satura_seen_${notifId}`, 'true');
-  const badge = document.querySelector(`[data-notif-id="${notifId}"]`);
-  if (badge) badge.remove();
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-notif-id]').forEach(badge => {
-    const id = badge.getAttribute('data-notif-id');
-    if (localStorage.getItem(`satura_seen_${id}`) === 'true') {
-      badge.remove();
-    }
-  });
-});
-
-/* --- Cloak & Mobile Double Tap Uncloak --- */
+/* --- Cloak & Stealth Handling --- */
 let isCloaked = false;
 let lastTapTime = 0;
 const cloakNotice = document.getElementById('cloak-notice');
@@ -213,6 +197,7 @@ function toggleCloak(forceState) {
   }
 }
 
+document.getElementById('sb-cloak-btn').addEventListener('click', () => toggleCloak(true));
 document.getElementById('manual-cloak-btn').addEventListener('click', () => toggleCloak(true));
 
 document.addEventListener('keydown', (e) => {
@@ -231,7 +216,21 @@ document.addEventListener('touchend', () => {
   lastTapTime = currentTime;
 });
 
-/* --- Tooltips & Satura Hover Effect --- */
+function markNotifSeen(notifId) {
+  localStorage.setItem(`satura_seen_${notifId}`, 'true');
+  const badge = document.querySelector(`[data-notif-id="${notifId}"]`);
+  if (badge) badge.remove();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-notif-id]').forEach(badge => {
+    const id = badge.getAttribute('data-notif-id');
+    if (localStorage.getItem(`satura_seen_${id}`) === 'true') {
+      badge.remove();
+    }
+  });
+});
+
 const globalTooltip = document.getElementById('global-tooltip');
 const saturaTitleEl = document.getElementById('satura-title-el');
 
@@ -247,43 +246,10 @@ saturaTitleEl.addEventListener('mouseout', () => {
   globalTooltip.style.display = 'none';
 });
 
-document.addEventListener('mouseover', (e) => {
-  const notifBadge = e.target.closest('[data-tooltip-type="notif"]');
-  const wipBadge = e.target.closest('[data-tooltip-type="wip"]');
-
-  if (notifBadge) {
-    globalTooltip.textContent = "! means newly added, and the logo disappears if you click it or use it or see it in some way";
-    globalTooltip.style.display = 'block';
-    positionTooltip(e);
-  } else if (wipBadge) {
-    globalTooltip.textContent = "the hammer logo means this is still being worked on. Will not disappear when seen / clicked";
-    globalTooltip.style.display = 'block';
-    positionTooltip(e);
-  }
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (globalTooltip.style.display === 'block' && e.target !== saturaTitleEl) positionTooltip(e);
-});
-
-document.addEventListener('mouseout', (e) => {
-  if (e.target.closest('[data-tooltip-type]')) globalTooltip.style.display = 'none';
-});
-
 function positionTooltip(e) {
   globalTooltip.style.left = (e.clientX + 12) + 'px';
   globalTooltip.style.top = (e.clientY + 12) + 'px';
 }
-
-document.addEventListener('click', (e) => {
-  const notif = e.target.closest('.badge-notif');
-  if (notif) {
-    const id = notif.getAttribute('data-notif-id');
-    if (id) markNotifSeen(id);
-    else notif.remove();
-    globalTooltip.style.display = 'none';
-  }
-});
 
 let currentMode = 'fast';
 let currentDevice = 'desktop';
@@ -336,61 +302,69 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- SoundCloud Discovery & Audio Player --- */
+/* --- Enhanced SoundCloud Player & Templates --- */
 const samplePlaylist = [
-  { title: "lofi study chill beat 01", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-  { title: "ambient synthwave vibe 02", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-  { title: "cyberpunk nocturnal groove 03", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-  { title: "retro cassette loop 04", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-  { title: "interstellar synth journey 05", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }
+  { title: "david sanya - my love", url: "https://soundcloud.com/david_sanya/my-love" },
+  { title: "forss - flickermood", url: "https://soundcloud.com/forss/flickermood" },
+  { title: "chillhop lofi radio", url: "https://soundcloud.com/chillhopmusic/lofi-hip-hop-radio" }
 ];
 
 const randomSongsList = document.getElementById('random-songs-list');
 const nowPlayingTitle = document.getElementById('now-playing-title');
 const scLoadBtn = document.getElementById('sc-load-btn');
 const scUrlInput = document.getElementById('sc-url-input');
-const audioElement = document.getElementById('audio-element');
+const scEmbedContainer = document.getElementById('sc-embed-container');
 
 function renderPlaylist() {
   if (!randomSongsList) return;
-  randomSongsList.innerHTML = samplePlaylist.map((song, idx) => `
-    <div class="song-card" onclick="playSong(${idx})">
+  randomSongsList.innerHTML = samplePlaylist.map((song) => `
+    <div class="song-card" onclick="loadSoundCloudUrl('${song.url}')">
       <span>🎵 ${song.title}</span>
-      <span style="font-size:0.75rem; color:var(--subtext);">play</span>
+      <span style="font-size:0.75rem; color:var(--subtext);">load track</span>
     </div>
   `).join('');
 }
 renderPlaylist();
 
-window.playSong = function(index) {
-  const song = samplePlaylist[index];
-  if (!song) return;
-  audioElement.src = song.stream;
-  audioElement.play();
-  nowPlayingTitle.textContent = `now playing: ${song.title}`;
-};
-
-scLoadBtn.addEventListener('click', () => {
-  const trackUrl = scUrlInput.value.trim();
+async function loadSoundCloudUrl(trackUrl) {
   if (!trackUrl) {
-    alert("please enter a soundcloud track link!");
+    alert("please enter a valid soundcloud track URL!");
     return;
   }
-  const randomSong = samplePlaylist[Math.floor(Math.random() * samplePlaylist.length)];
-  audioElement.src = randomSong.stream;
-  audioElement.play();
-  nowPlayingTitle.textContent = `loaded: ${trackUrl.split('/').pop() || 'soundcloud track'}`;
-});
+
+  nowPlayingTitle.textContent = "resolving soundcloud track...";
+  scEmbedContainer.innerHTML = `<p style="color: var(--subtext); font-size: 0.85rem;">embedding player...</p>`;
+
+  try {
+    const oembedEndpoint = `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(trackUrl)}`;
+    const res = await fetch(oembedEndpoint);
+    if (!res.ok) throw new Error("oembed fetch failed");
+    
+    const data = await res.json();
+    scEmbedContainer.innerHTML = data.html;
+    nowPlayingTitle.textContent = `now playing: ${data.title || trackUrl}`;
+  } catch (err) {
+    scEmbedContainer.innerHTML = `<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=${encodeURIComponent(trackUrl)}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>`;
+    nowPlayingTitle.textContent = `playing: ${trackUrl.split('/').pop() || 'soundcloud track'}`;
+  }
+}
+
+window.loadSoundCloudUrl = loadSoundCloudUrl;
+
+if (scLoadBtn) {
+  scLoadBtn.addEventListener('click', () => loadSoundCloudUrl(scUrlInput.value.trim()));
+}
 
 document.getElementById('share-playlist-btn').addEventListener('click', async () => {
-  const playlistText = `🎵 my satura playlist:\n` + samplePlaylist.map(s => `- ${s.title}`).join('\n');
+  const currentUrl = scUrlInput.value.trim() || "https://soundcloud.com/david_sanya/my-love";
+  const playlistText = `🎵 listen on satura:\n${currentUrl}`;
   const chatInput = document.getElementById('chat-input');
   if (chatInput) chatInput.value = playlistText;
   document.getElementById('sb-chat').click();
-  alert("playlist loaded into chat input! press send to share.");
+  alert("track link loaded into chat input! press send to share.");
 });
 
-/* --- Themes & Settings --- */
+/* --- Themes & Preferences --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -426,11 +400,8 @@ applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
 const searchPosSelect = document.getElementById('search-pos-select');
 function applySearchPos(pos) {
   const wrapper = document.getElementById('bottom-nav-wrapper');
-  if (pos === 'top') {
-    wrapper.classList.add('top-search-pos');
-  } else {
-    wrapper.classList.remove('top-search-pos');
-  }
+  if (pos === 'top') wrapper.classList.add('top-search-pos');
+  else wrapper.classList.remove('top-search-pos');
   localStorage.setItem('satura_search_pos', pos);
 }
 searchPosSelect.value = localStorage.getItem('satura_search_pos') || 'bottom';
@@ -465,7 +436,7 @@ guiScaleSlider.value = savedScale;
 applyGuiScale(savedScale);
 guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
 
-/* --- Modals Handling --- */
+/* --- Modals & Account --- */
 const profileModal = document.getElementById('profile-modal');
 const bookmarksModal = document.getElementById('bookmarks-modal');
 
@@ -563,65 +534,92 @@ document.getElementById('save-profile').addEventListener('click', async () => {
 });
 loadProfile();
 
-/* --- Cloak Presets & IP --- */
-const CLOAK_PRESETS = {
-  satura: {
-    title: 'satura',
-    favicon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><path d='M50 80 C50 60, 45 40, 35 30 M50 60 C55 45, 65 35, 75 25' stroke='%23fff' stroke-width='4' fill='none'/><circle cx='35' cy='30' r='6' fill='%23ffb7c5'/><circle cx='75' cy='25' r='8' fill='%23ffb7c5'/><circle cx='45' cy='20' r='5' fill='%23ffb7c5'/><circle cx='60' cy='40' r='6' fill='%23ffb7c5'/></svg>"
-  },
-  google: { title: 'Google', favicon: 'https://www.google.com/favicon.ico' },
-  khan: { title: 'Dashboard | Khan Academy', favicon: 'https://www.khanacademy.org/favicon.ico' },
-  drive: { title: 'My Drive - Google Drive', favicon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
-  canvas: { title: 'Dashboard', favicon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico' }
-};
-
-const tabCloakSelect = document.getElementById('tab-cloak-preset');
-const customTitleInput = document.getElementById('custom-title-input');
-
-function applyCloakPreset(presetKey) {
-  const preset = CLOAK_PRESETS[presetKey] || CLOAK_PRESETS.satura;
-  document.getElementById('tab-title').textContent = customTitleInput.value || preset.title;
-  document.getElementById('tab-favicon').href = preset.favicon;
-  localStorage.setItem('satura_cloak_preset', presetKey);
-}
-
-tabCloakSelect.addEventListener('change', (e) => applyCloakPreset(e.target.value));
-customTitleInput.addEventListener('input', () => applyCloakPreset(tabCloakSelect.value));
-
-document.getElementById('randomize-ip-btn').addEventListener('click', () => {
-  const randIp = `${Math.floor(Math.random() * 200 + 10)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254 + 1)}`;
-  localStorage.setItem('satura_simulated_ip', randIp);
-  alert(`Simulated IP updated to: ${randIp}`);
-});
-
-/* --- Star Canvas Engine --- */
+/* --- Enhanced Canvas Background Engine (Orbiting Stars & Inverting Shooting Beams) --- */
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
 
-function drawStarLogo() {
+// Generate orbiting background stars
+const backgroundStars = Array.from({ length: 45 }, () => ({
+  x: Math.random() * 550,
+  y: Math.random() * 550,
+  radius: Math.random() * 2 + 0.5,
+  orbitRadius: Math.random() * 180 + 70,
+  orbitAngle: Math.random() * Math.PI * 2,
+  speed: Math.random() * 0.012 + 0.004,
+  opacity: Math.random() * 0.7 + 0.3
+}));
+
+// Generate shooting beams
+const shootingBeams = Array.from({ length: 6 }, () => ({
+  angle: Math.random() * Math.PI * 2,
+  distance: Math.random() * 220 + 80,
+  length: Math.random() * 90 + 40,
+  speed: Math.random() * 0.02 + 0.01,
+  width: Math.random() * 2 + 1
+}));
+
+function drawStarEngine() {
+  starCanvas.width = 550;
+  starCanvas.height = 550;
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
   starCtx.save();
-  floatTime += 0.01;
-  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 5;
-  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 5;
+
+  floatTime += 0.012;
+  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 6;
+  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 6;
+
+  // 1. Draw Orbiting Background Stars
+  backgroundStars.forEach(star => {
+    star.orbitAngle += star.speed;
+    const sx = centerX + Math.cos(star.orbitAngle) * star.orbitRadius;
+    const sy = centerY + Math.sin(star.orbitAngle) * star.orbitRadius;
+    
+    starCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+    starCtx.beginPath();
+    starCtx.arc(sx, sy, star.radius, 0, Math.PI * 2);
+    starCtx.fill();
+  });
+
+  // 2. Draw Inverting Shooting Beams shooting toward center
+  shootingBeams.forEach(beam => {
+    beam.distance -= beam.speed * 40;
+    if (beam.distance < 20) beam.distance = Math.random() * 150 + 120;
+
+    const bx1 = centerX + Math.cos(beam.angle) * beam.distance;
+    const by1 = centerY + Math.sin(beam.angle) * beam.distance;
+    const bx2 = centerX + Math.cos(beam.angle) * (beam.distance + beam.length);
+    const by2 = centerY + Math.sin(beam.angle) * (beam.distance + beam.length);
+
+    starCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    starCtx.lineWidth = beam.width;
+    starCtx.beginPath();
+    starCtx.moveTo(bx1, by1);
+    starCtx.lineTo(bx2, by2);
+    starCtx.stroke();
+  });
+
+  // 3. Draw Big Central Inverting Star
+  starCtx.save();
   starCtx.translate(centerX, centerY);
   starCtx.rotate(angle);
   
   starCtx.fillStyle = '#ffffff';
   starCtx.beginPath();
   for (let i = 0; i < 4; i++) { 
-    starCtx.lineTo(0, -95); 
+    starCtx.lineTo(0, -135); 
     starCtx.rotate(Math.PI * 0.25); 
-    starCtx.lineTo(0, -38); 
+    starCtx.lineTo(0, -54); 
     starCtx.rotate(Math.PI * 0.25); 
   }
   starCtx.closePath(); 
   starCtx.fill();
   starCtx.restore();
 
+  starCtx.restore();
   angle += 0.0015;
-  requestAnimationFrame(drawStarLogo);
+  requestAnimationFrame(drawStarEngine);
 }
-drawStarLogo();
+
+drawStarEngine();
 renderTabs();
