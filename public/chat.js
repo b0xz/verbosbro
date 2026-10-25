@@ -1,6 +1,5 @@
 let currentChatRoom = 'global';
 let dmUsers = [];
-let dmSentCounts = {};
 let chatPoll = null;
 let heartbeatInterval = null;
 let lastMessageTime = 0;
@@ -8,6 +7,7 @@ let lastKnownCount = 0;
 
 window.initChat = function() {
   initRoomButtons();
+  bindModalActions();
   fetchChat(true);
   fetchUserStatuses();
 
@@ -22,6 +22,38 @@ window.initChat = function() {
     heartbeatInterval = setInterval(sendHeartbeat, 5000);
   }
 };
+
+function bindModalActions() {
+  const closeDashboardBtn = document.getElementById('close-user-dashboard');
+  if (closeDashboardBtn) {
+    closeDashboardBtn.onclick = () => {
+      document.getElementById('user-dashboard-modal').classList.add('hidden');
+    };
+  }
+
+  const udMessageBtn = document.getElementById('ud-message-btn');
+  if (udMessageBtn) {
+    udMessageBtn.onclick = () => {
+      if (!window.selectedDashboardUser) return;
+      const myName = localStorage.getItem('satura_user_name');
+      if (window.selectedDashboardUser === myName) {
+        alert("you cannot DM yourself!");
+        return;
+      }
+
+      if (!dmUsers.includes(window.selectedDashboardUser)) {
+        dmUsers.push(window.selectedDashboardUser);
+        renderDmList();
+      }
+
+      document.getElementById('user-dashboard-modal').classList.add('hidden');
+      document.getElementById('sb-chat').click();
+      setTimeout(() => {
+        document.querySelector(`.room-btn[data-room="${window.selectedDashboardUser}"]`)?.click();
+      }, 100);
+    };
+  }
+}
 
 async function sendHeartbeat() {
   const user = localStorage.getItem('satura_user_name') || 'saturauser-1000';
@@ -52,17 +84,14 @@ function initRoomButtons() {
   });
 }
 
-function createWavySpan(text) {
-  const container = document.createElement('span');
-  container.className = 'chat-msg-username';
-  for (let i = 0; i < text.length; i++) {
-    const letterSpan = document.createElement('span');
-    letterSpan.className = 'wavy-letter';
-    letterSpan.textContent = text[i] === ' ' ? '\u00A0' : text[i];
-    letterSpan.style.animationDelay = `${i * 0.08}s`;
-    container.appendChild(letterSpan);
-  }
-  return container;
+function renderDmList() {
+  const container = document.getElementById('dm-rooms-list');
+  if (!container) return;
+  container.innerHTML = dmUsers.map(user => `
+    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}">@${user}</button>
+  `).join('');
+
+  initRoomButtons();
 }
 
 async function fetchChat(forceScroll = false) {
@@ -73,9 +102,8 @@ async function fetchChat(forceScroll = false) {
     const res = await fetch('/api/chat');
     if (!res.ok) return;
     const data = await res.json();
-    
     const myName = localStorage.getItem('satura_user_name');
-    
+
     const filteredData = data.filter(m => {
       if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
       if (currentChatRoom.startsWith('general-')) return m.recipient === currentChatRoom;
@@ -110,22 +138,17 @@ async function fetchChat(forceScroll = false) {
         const headerDiv = document.createElement('div');
         headerDiv.className = 'chat-msg-header';
 
-        let userSpan;
-        if (m.anim === 'wavy') {
-          userSpan = createWavySpan(m.user);
-        } else {
-          userSpan = document.createElement('span');
-          userSpan.className = 'chat-msg-username';
-          userSpan.textContent = m.user;
-        }
+        const userSpan = document.createElement('span');
+        userSpan.className = 'chat-msg-username';
+        userSpan.textContent = m.user;
         userSpan.style.color = m.color || '#ffffff';
         userSpan.onclick = () => window.openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
-
-        headerDiv.appendChild(userSpan);
 
         const timeSpan = document.createElement('span');
         timeSpan.className = 'chat-msg-time';
         timeSpan.textContent = m.time;
+
+        headerDiv.appendChild(userSpan);
         headerDiv.appendChild(timeSpan);
 
         const textDiv = document.createElement('div');
@@ -194,13 +217,12 @@ async function sendChat() {
   const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
   const color = localStorage.getItem('satura_user_color') || '#ffffff';
   const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
-  const anim = localStorage.getItem('satura_username_anim') || 'none';
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, bio, color, font, anim, recipient: currentChatRoom })
+      body: JSON.stringify({ user, text, pfp, bio, color, font, recipient: currentChatRoom })
     });
 
     if (res.ok) { 
@@ -212,6 +234,7 @@ async function sendChat() {
 
 window.addEventListener('DOMContentLoaded', () => {
   initRoomButtons();
+  bindModalActions();
 
   const chatSend = document.getElementById('chat-send');
   const chatInput = document.getElementById('chat-input');
