@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v7_satura';
+const CURRENT_DATA_VERSION = 'v10_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
 }
@@ -22,8 +22,6 @@ if (!localStorage.getItem('satura_user_name')) {
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let currentChatRoom = 'global';
-let dmUsers = [];
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -151,8 +149,7 @@ document.getElementById('sb-chat').addEventListener('click', () => {
     chatPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-chat').classList.add('active');
-    fetchChat(true);
-    if (!chatPoll) chatPoll = setInterval(() => fetchChat(false), 2000);
+    if (window.initChat) window.initChat();
   });
 });
 
@@ -184,7 +181,7 @@ document.getElementById('sb-settings').addEventListener('click', () => {
   });
 });
 
-/* --- Persistent Seen Notifications Logic --- */
+/* --- Persistent Notifications --- */
 function markNotifSeen(notifId) {
   localStorage.setItem(`satura_seen_${notifId}`, 'true');
   const badge = document.querySelector(`[data-notif-id="${notifId}"]`);
@@ -200,7 +197,41 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/* --- Interactive Tooltips & Satura Hover Effect --- */
+/* --- Cloak & Mobile Double Tap Uncloak --- */
+let isCloaked = false;
+let lastTapTime = 0;
+const cloakNotice = document.getElementById('cloak-notice');
+
+function toggleCloak(forceState) {
+  isCloaked = typeof forceState === 'boolean' ? forceState : !isCloaked;
+  if (isCloaked) {
+    document.body.style.opacity = '0';
+    cloakNotice.style.display = 'block';
+  } else {
+    document.body.style.opacity = '1';
+    cloakNotice.style.display = 'none';
+  }
+}
+
+document.getElementById('manual-cloak-btn').addEventListener('click', () => toggleCloak(true));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === '\\') {
+    e.preventDefault();
+    toggleCloak();
+  }
+});
+
+document.addEventListener('touchend', () => {
+  const currentTime = new Date().getTime();
+  const tapLength = currentTime - lastTapTime;
+  if (tapLength < 300 && tapLength > 0 && isCloaked) {
+    toggleCloak(false);
+  }
+  lastTapTime = currentTime;
+});
+
+/* --- Tooltips & Satura Hover Effect --- */
 const globalTooltip = document.getElementById('global-tooltip');
 const saturaTitleEl = document.getElementById('satura-title-el');
 
@@ -254,14 +285,6 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Panic Key (\)
-document.addEventListener('keydown', (e) => {
-  if (e.key === '\\') {
-    e.preventDefault();
-    document.body.style.display = document.body.style.display === 'none' ? 'block' : 'none';
-  }
-});
-
 let currentMode = 'fast';
 let currentDevice = 'desktop';
 let currentVpn = 'us-east';
@@ -291,7 +314,8 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   showSpinner();
-  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}`;
+  const currentIp = localStorage.getItem('satura_simulated_ip') || '192.168.1.102';
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&mode=${currentMode}&device=${currentDevice}&vpn=${currentVpn}&sim_ip=${currentIp}`;
   
   const currentTab = tabs.find(t => t.id === activeTabId);
   if (currentTab) {
@@ -312,7 +336,7 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- SoundCloud Random Discovery & Audio Player --- */
+/* --- SoundCloud Discovery & Audio Player --- */
 const samplePlaylist = [
   { title: "lofi study chill beat 01", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
   { title: "ambient synthwave vibe 02", stream: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
@@ -328,6 +352,7 @@ const scUrlInput = document.getElementById('sc-url-input');
 const audioElement = document.getElementById('audio-element');
 
 function renderPlaylist() {
+  if (!randomSongsList) return;
   randomSongsList.innerHTML = samplePlaylist.map((song, idx) => `
     <div class="song-card" onclick="playSong(${idx})">
       <span>🎵 ${song.title}</span>
@@ -359,224 +384,13 @@ scLoadBtn.addEventListener('click', () => {
 
 document.getElementById('share-playlist-btn').addEventListener('click', async () => {
   const playlistText = `🎵 my satura playlist:\n` + samplePlaylist.map(s => `- ${s.title}`).join('\n');
-  chatInput.value = playlistText;
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) chatInput.value = playlistText;
   document.getElementById('sb-chat').click();
   alert("playlist loaded into chat input! press send to share.");
 });
 
-/* --- Chat System --- */
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const chatSend = document.getElementById('chat-send');
-let chatPoll = null;
-let lastMessageTime = 0;
-let lastKnownCount = 0;
-
-document.querySelectorAll('.room-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentChatRoom = btn.getAttribute('data-room');
-    document.getElementById('current-room-title').textContent = currentChatRoom.startsWith('general-') ? `# ${currentChatRoom}` : currentChatRoom === 'global' ? '# global-chat' : `dm: @${currentChatRoom}`;
-    fetchChat(true);
-  });
-});
-
-function createWavySpan(text) {
-  const container = document.createElement('span');
-  container.className = 'chat-msg-username';
-  for (let i = 0; i < text.length; i++) {
-    const span = document.createElement('span');
-    span.className = 'wavy-letter';
-    span.textContent = text[i];
-    span.style.animationDelay = `${i * 0.08}s`;
-    container.appendChild(span);
-  }
-  return container;
-}
-
-async function fetchChat(forceScroll = false) {
-  try {
-    const res = await fetch('/api/chat');
-    if (!res.ok) return;
-    const data = await res.json();
-    
-    const myName = localStorage.getItem('satura_user_name');
-    const filteredData = data.filter(m => {
-      if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
-      if (currentChatRoom.startsWith('general-')) return m.recipient === currentChatRoom;
-      return (m.recipient === currentChatRoom && m.user === myName) ||
-             (m.user === currentChatRoom && m.recipient === myName);
-    });
-
-    if (filteredData.length !== lastKnownCount || forceScroll) {
-      lastKnownCount = filteredData.length;
-
-      chatMessages.innerHTML = '';
-      if (filteredData.length === 0) {
-        chatMessages.innerHTML = `<div style="text-align:center; color:var(--subtext); margin-top:40px; text-transform:lowercase;">no messages here yet. say something!</div>`;
-        return;
-      }
-
-      filteredData.forEach(m => {
-        const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
-        const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-        const msgFont = m.font || 'Inter, sans-serif';
-
-        const itemEl = document.createElement('div');
-        itemEl.className = 'chat-msg-item';
-
-        const pfpDiv = document.createElement('div');
-        pfpDiv.className = 'chat-msg-pfp';
-        pfpDiv.innerHTML = pfpHTML;
-        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'chat-msg-content';
-
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'chat-msg-header';
-
-        let userSpan;
-        if (m.anim === 'wavy') {
-          userSpan = createWavySpan(m.user);
-        } else {
-          userSpan = document.createElement('span');
-          userSpan.className = 'chat-msg-username';
-          userSpan.textContent = m.user;
-        }
-        userSpan.style.color = m.color || '#ffffff';
-        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
-
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'chat-msg-time';
-        timeSpan.textContent = m.time;
-
-        headerDiv.appendChild(userSpan);
-        headerDiv.appendChild(timeSpan);
-
-        const textDiv = document.createElement('div');
-        textDiv.className = 'chat-msg-text';
-        textDiv.style.fontFamily = msgFont;
-        textDiv.style.whiteSpace = 'pre-wrap';
-        textDiv.textContent = m.text;
-
-        contentDiv.appendChild(headerDiv);
-        contentDiv.appendChild(textDiv);
-        itemEl.appendChild(pfpDiv);
-        itemEl.appendChild(contentDiv);
-
-        chatMessages.appendChild(itemEl);
-      });
-
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  } catch (e) {}
-}
-
-async function sendChat() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  const now = Date.now();
-  if (now - lastMessageTime < 1000) return;
-  lastMessageTime = now;
-
-  const user = localStorage.getItem('satura_user_name');
-  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
-  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
-  const color = localStorage.getItem('satura_user_color') || '#ffffff';
-  const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
-  const anim = localStorage.getItem('satura_username_anim') || 'none';
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ user, text, pfp, bio, color, font, anim, recipient: currentChatRoom })
-    });
-    if (res.ok) { 
-      chatInput.value = ''; 
-      fetchChat(true); 
-    }
-  } catch (e) {}
-}
-
-chatSend.addEventListener('click', sendChat);
-chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
-
-/* --- User Dashboard Modal & DMs --- */
-const userDashboardModal = document.getElementById('user-dashboard-modal');
-document.getElementById('close-user-dashboard').addEventListener('click', () => userDashboardModal.classList.add('hidden'));
-
-let selectedDashboardUser = '';
-window.openUserDashboard = function(username, pfp, bio) {
-  selectedDashboardUser = username;
-  document.getElementById('ud-username').textContent = username;
-  document.getElementById('ud-bio').textContent = bio;
-
-  const pfpContainer = document.getElementById('ud-pfp-container');
-  const isImg = pfp && (pfp.startsWith('http') || pfp.startsWith('data:image'));
-  if (isImg) {
-    pfpContainer.innerHTML = `<img src="${pfp}" alt="avatar" style="width:100%; height:100%; object-fit:cover;" />`;
-  } else {
-    pfpContainer.textContent = pfp || username.charAt(0).toUpperCase();
-  }
-
-  userDashboardModal.classList.remove('hidden');
-};
-
-document.getElementById('ud-message-btn').addEventListener('click', () => {
-  if (!selectedDashboardUser) return;
-  const myName = localStorage.getItem('satura_user_name');
-  if (selectedDashboardUser === myName) {
-    alert("you cannot message yourself!");
-    return;
-  }
-
-  if (!dmUsers.includes(selectedDashboardUser)) {
-    dmUsers.push(selectedDashboardUser);
-    renderDmList();
-  }
-
-  userDashboardModal.classList.add('hidden');
-  document.querySelector(`.room-btn[data-room="${selectedDashboardUser}"]`)?.click();
-});
-
-function renderDmList() {
-  const container = document.getElementById('dm-rooms-list');
-  container.innerHTML = dmUsers.map(user => `
-    <button class="room-btn ${currentChatRoom === user ? 'active' : ''}" data-room="${user}">@${user}</button>
-  `).join('');
-
-  container.querySelectorAll('.room-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentChatRoom = btn.getAttribute('data-room');
-      document.getElementById('current-room-title').textContent = `dm: @${currentChatRoom}`;
-      fetchChat(true);
-    });
-  });
-}
-
-document.getElementById('add-friend-btn').addEventListener('click', async () => {
-  const friendName = prompt("enter username to start a direct message:");
-  if (!friendName) return;
-  const clean = friendName.trim();
-  const myName = localStorage.getItem('satura_user_name');
-  if (clean === myName) {
-    alert("that's you!");
-    return;
-  }
-  if (!dmUsers.includes(clean)) {
-    dmUsers.push(clean);
-    renderDmList();
-  }
-  document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
-});
-
-/* --- Themes, Search Position, Outlines & GUI Scale --- */
+/* --- Themes & Settings --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -609,7 +423,6 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
 
-// Search Bar Position Selector
 const searchPosSelect = document.getElementById('search-pos-select');
 function applySearchPos(pos) {
   const wrapper = document.getElementById('bottom-nav-wrapper');
@@ -624,7 +437,6 @@ searchPosSelect.value = localStorage.getItem('satura_search_pos') || 'bottom';
 applySearchPos(searchPosSelect.value);
 searchPosSelect.addEventListener('change', () => applySearchPos(searchPosSelect.value));
 
-// UI Outlines & Borders Selector
 const uiOutlinesSelect = document.getElementById('ui-outlines-select');
 function applyUiOutlines(val) {
   const root = document.documentElement;
@@ -751,7 +563,38 @@ document.getElementById('save-profile').addEventListener('click', async () => {
 });
 loadProfile();
 
-/* --- Remade Star Logo with Working Division Inversion Color Effect --- */
+/* --- Cloak Presets & IP --- */
+const CLOAK_PRESETS = {
+  satura: {
+    title: 'satura',
+    favicon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><path d='M50 80 C50 60, 45 40, 35 30 M50 60 C55 45, 65 35, 75 25' stroke='%23fff' stroke-width='4' fill='none'/><circle cx='35' cy='30' r='6' fill='%23ffb7c5'/><circle cx='75' cy='25' r='8' fill='%23ffb7c5'/><circle cx='45' cy='20' r='5' fill='%23ffb7c5'/><circle cx='60' cy='40' r='6' fill='%23ffb7c5'/></svg>"
+  },
+  google: { title: 'Google', favicon: 'https://www.google.com/favicon.ico' },
+  khan: { title: 'Dashboard | Khan Academy', favicon: 'https://www.khanacademy.org/favicon.ico' },
+  drive: { title: 'My Drive - Google Drive', favicon: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png' },
+  canvas: { title: 'Dashboard', favicon: 'https://du11hjcvx0uqb.cloudfront.net/dist/images/favicon-e10d657a73.ico' }
+};
+
+const tabCloakSelect = document.getElementById('tab-cloak-preset');
+const customTitleInput = document.getElementById('custom-title-input');
+
+function applyCloakPreset(presetKey) {
+  const preset = CLOAK_PRESETS[presetKey] || CLOAK_PRESETS.satura;
+  document.getElementById('tab-title').textContent = customTitleInput.value || preset.title;
+  document.getElementById('tab-favicon').href = preset.favicon;
+  localStorage.setItem('satura_cloak_preset', presetKey);
+}
+
+tabCloakSelect.addEventListener('change', (e) => applyCloakPreset(e.target.value));
+customTitleInput.addEventListener('input', () => applyCloakPreset(tabCloakSelect.value));
+
+document.getElementById('randomize-ip-btn').addEventListener('click', () => {
+  const randIp = `${Math.floor(Math.random() * 200 + 10)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254 + 1)}`;
+  localStorage.setItem('satura_simulated_ip', randIp);
+  alert(`Simulated IP updated to: ${randIp}`);
+});
+
+/* --- Star Canvas Engine --- */
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
