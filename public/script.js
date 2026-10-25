@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v13_satura';
+const CURRENT_DATA_VERSION = 'v14_satura';
 if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
   localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
 }
@@ -436,6 +436,29 @@ guiScaleSlider.value = savedScale;
 applyGuiScale(savedScale);
 guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
 
+/* --- Background Modes --- */
+const bgModeSelect = document.getElementById('bg-mode-select');
+const shaderCanvas = document.getElementById('shader-canvas');
+const starCanvas = document.getElementById('star-canvas');
+
+function applyBgMode(mode) {
+  localStorage.setItem('satura_bg_mode', mode);
+  if (mode === 'shader') {
+    starCanvas.style.display = 'none';
+    shaderCanvas.style.display = 'block';
+    initShaderCanvas();
+  } else {
+    shaderCanvas.style.display = 'none';
+    starCanvas.style.display = 'block';
+  }
+}
+
+if (bgModeSelect) {
+  bgModeSelect.addEventListener('change', (e) => applyBgMode(e.target.value));
+  bgModeSelect.value = localStorage.getItem('satura_bg_mode') || 'stars';
+}
+applyBgMode(localStorage.getItem('satura_bg_mode') || 'stars');
+
 /* --- Modals & Account --- */
 const profileModal = document.getElementById('profile-modal');
 const bookmarksModal = document.getElementById('bookmarks-modal');
@@ -534,32 +557,23 @@ document.getElementById('save-profile').addEventListener('click', async () => {
 });
 loadProfile();
 
-/* --- Enhanced Canvas Background Engine (Orbiting Stars & Inverting Shooting Beams) --- */
-const starCanvas = document.getElementById('star-canvas');
+/* --- Star Engine (Left to Right Flow & Central Inversion) --- */
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
 
-// Generate orbiting background stars
-const backgroundStars = Array.from({ length: 45 }, () => ({
+const backgroundStars = Array.from({ length: 60 }, () => ({
   x: Math.random() * 550,
   y: Math.random() * 550,
-  radius: Math.random() * 2 + 0.5,
-  orbitRadius: Math.random() * 180 + 70,
-  orbitAngle: Math.random() * Math.PI * 2,
-  speed: Math.random() * 0.012 + 0.004,
-  opacity: Math.random() * 0.7 + 0.3
-}));
-
-// Generate shooting beams
-const shootingBeams = Array.from({ length: 6 }, () => ({
-  angle: Math.random() * Math.PI * 2,
-  distance: Math.random() * 220 + 80,
-  length: Math.random() * 90 + 40,
-  speed: Math.random() * 0.02 + 0.01,
-  width: Math.random() * 2 + 1
+  radius: Math.random() * 2 + 1,
+  speed: Math.random() * 1.5 + 0.5
 }));
 
 function drawStarEngine() {
+  if (starCanvas.style.display === 'none') {
+    requestAnimationFrame(drawStarEngine);
+    return;
+  }
+
   starCanvas.width = 550;
   starCanvas.height = 550;
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
@@ -568,38 +582,24 @@ function drawStarEngine() {
   floatTime += 0.012;
   const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 6;
   const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 6;
+  const starRadius = 54;
 
-  // 1. Draw Orbiting Background Stars
   backgroundStars.forEach(star => {
-    star.orbitAngle += star.speed;
-    const sx = centerX + Math.cos(star.orbitAngle) * star.orbitRadius;
-    const sy = centerY + Math.sin(star.orbitAngle) * star.orbitRadius;
-    
-    starCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+    star.x += star.speed;
+    if (star.x > starCanvas.width) {
+      star.x = 0;
+      star.y = Math.random() * starCanvas.height;
+    }
+
+    const distToCenter = Math.hypot(star.x - centerX, star.y - centerY);
+    const isInverted = distToCenter < starRadius;
+
+    starCtx.fillStyle = isInverted ? '#000000' : '#ffffff';
     starCtx.beginPath();
-    starCtx.arc(sx, sy, star.radius, 0, Math.PI * 2);
+    starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     starCtx.fill();
   });
 
-  // 2. Draw Inverting Shooting Beams shooting toward center
-  shootingBeams.forEach(beam => {
-    beam.distance -= beam.speed * 40;
-    if (beam.distance < 20) beam.distance = Math.random() * 150 + 120;
-
-    const bx1 = centerX + Math.cos(beam.angle) * beam.distance;
-    const by1 = centerY + Math.sin(beam.angle) * beam.distance;
-    const bx2 = centerX + Math.cos(beam.angle) * (beam.distance + beam.length);
-    const by2 = centerY + Math.sin(beam.angle) * (beam.distance + beam.length);
-
-    starCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    starCtx.lineWidth = beam.width;
-    starCtx.beginPath();
-    starCtx.moveTo(bx1, by1);
-    starCtx.lineTo(bx2, by2);
-    starCtx.stroke();
-  });
-
-  // 3. Draw Big Central Inverting Star
   starCtx.save();
   starCtx.translate(centerX, centerY);
   starCtx.rotate(angle);
@@ -620,6 +620,110 @@ function drawStarEngine() {
   angle += 0.0015;
   requestAnimationFrame(drawStarEngine);
 }
-
 drawStarEngine();
+
+/* --- Interactive 3D Shader Engine --- */
+let shaderInitialized = false;
+let draggableObjects = [];
+let isDragging = false;
+let draggedObj = null;
+
+function initShaderCanvas() {
+  if (shaderInitialized) return;
+  shaderInitialized = true;
+
+  const ctx = shaderCanvas.getContext('2d');
+  shaderCanvas.width = 550;
+  shaderCanvas.height = 550;
+
+  draggableObjects = [
+    { x: 275, y: 220, r: 45, color: '#ffffff', label: 'sphere' },
+    { x: 180, y: 320, r: 25, color: '#06b6d4', label: 'orb' }
+  ];
+
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  shaderCanvas.onmousedown = (e) => {
+    const rect = shaderCanvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    draggableObjects.forEach(obj => {
+      const dist = Math.hypot(mx - obj.x, my - obj.y);
+      if (dist < obj.r) {
+        isDragging = true;
+        draggedObj = obj;
+        dragOffsetX = mx - obj.x;
+        dragOffsetY = my - obj.y;
+      }
+    });
+  };
+
+  shaderCanvas.onmousemove = (e) => {
+    if (!isDragging || !draggedObj) return;
+    const rect = shaderCanvas.getBoundingClientRect();
+    draggedObj.x = e.clientX - rect.left - dragOffsetX;
+    draggedObj.y = e.clientY - rect.top - dragOffsetY;
+  };
+
+  window.onmouseup = () => {
+    isDragging = false;
+    draggedObj = null;
+  };
+
+  function renderShader() {
+    if (shaderCanvas.style.display === 'none') {
+      requestAnimationFrame(renderShader);
+      return;
+    }
+
+    ctx.clearRect(0, 0, shaderCanvas.width, shaderCanvas.height);
+
+    const groundGrad = ctx.createLinearGradient(0, 340, 0, 550);
+    groundGrad.addColorStop(0, '#1f2937');
+    groundGrad.addColorStop(1, '#030712');
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, 340, 550, 210);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 550; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(i, 340);
+      ctx.lineTo((i - 275) * 2 + 275, 550);
+      ctx.stroke();
+    }
+
+    ctx.font = '900 48px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillText("satura", 320, 265);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText("satura", 318, 260);
+
+    draggableObjects.forEach(obj => {
+      const grad = ctx.createRadialGradient(
+        obj.x - obj.r * 0.3,
+        obj.y - obj.r * 0.3,
+        obj.r * 0.1,
+        obj.x,
+        obj.y,
+        obj.r
+      );
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.5, obj.color);
+      grad.addColorStop(1, '#000000');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    requestAnimationFrame(renderShader);
+  }
+
+  renderShader();
+}
+
 renderTabs();
