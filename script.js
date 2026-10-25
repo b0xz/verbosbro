@@ -4,24 +4,23 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Data reset safeguard against softlocks (Version bump)
-const CURRENT_DATA_VERSION = 'v5_safe';
-if (localStorage.getItem('verbos_data_version') !== CURRENT_DATA_VERSION) {
+// Data reset safeguard and layout simplification
+const CURRENT_DATA_VERSION = 'v6_satura';
+if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
+  localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
   localStorage.setItem('verbos_ui_layout', 'normal');
-  localStorage.setItem('verbos_data_version', CURRENT_DATA_VERSION);
 }
 
-// Auto-assign unique verbosuser-<random> on first load
-if (!localStorage.getItem('verbos_user_name')) {
+// Auto-assign unique saturauser-<random> on first load
+if (!localStorage.getItem('satura_user_name')) {
   const randNum = Math.floor(1000 + Math.random() * 9000);
-  localStorage.setItem('verbos_user_name', 'verbosuser-' + randNum);
-  localStorage.setItem('verbos_user_bio', 'exploring the web with verbos.');
-  localStorage.setItem('verbos_user_pfp', '⭐');
-  localStorage.setItem('verbos_user_color', '#ffffff');
-  localStorage.setItem('verbos_chat_font', 'Arial, sans-serif');
-  localStorage.setItem('verbos_username_anim', 'none');
-  localStorage.setItem('verbos_gui_scale', '1.15');
-  localStorage.setItem('verbos_ui_formatting', 'standard');
+  localStorage.setItem('satura_user_name', 'saturauser-' + randNum);
+  localStorage.setItem('satura_user_bio', 'exploring the web with satura.');
+  localStorage.setItem('satura_user_pfp', '⭐');
+  localStorage.setItem('satura_user_color', '#ffffff');
+  localStorage.setItem('satura_chat_font', 'Inter, sans-serif');
+  localStorage.setItem('satura_username_anim', 'none');
+  localStorage.setItem('satura_gui_scale', '1.15');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
@@ -112,7 +111,7 @@ function hideAllPages() {
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
 }
 
-/* --- Randomized Central Viewport Swipe Transitions (Up, Down, Left, Right) --- */
+/* --- Swipe Transitions --- */
 function triggerSwipeTransition(targetPageViewEl, callback) {
   const directions = ['left', 'right', 'up', 'down'];
   const chosenDir = directions[Math.floor(Math.random() * directions.length)];
@@ -166,8 +165,7 @@ document.getElementById('sb-audio').addEventListener('click', () => {
     audioPageView.classList.add('active');
     bottomNavWrapper.classList.add('hidden');
     document.getElementById('sb-audio').classList.add('active');
-    const badge = document.querySelector('#sb-audio .badge-notif');
-    if (badge) badge.remove();
+    markNotifSeen('audio-badge');
   });
 });
 
@@ -189,8 +187,39 @@ document.getElementById('sb-settings').addEventListener('click', () => {
   });
 });
 
-/* --- Interactive Tooltips --- */
+/* --- Persistent Seen Notifications Logic --- */
+function markNotifSeen(notifId) {
+  localStorage.setItem(`satura_seen_${notifId}`, 'true');
+  const badge = document.querySelector(`[data-notif-id="${notifId}"]`);
+  if (badge) badge.remove();
+}
+
+// Check on load and remove already seen notification badges
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-notif-id]').forEach(badge => {
+    const id = badge.getAttribute('data-notif-id');
+    if (localStorage.getItem(`satura_seen_${id}`) === 'true') {
+      badge.remove();
+    }
+  });
+});
+
+/* --- Interactive Tooltips & Satura Hover Effect --- */
 const globalTooltip = document.getElementById('global-tooltip');
+const saturaTitleEl = document.getElementById('satura-title-el');
+
+saturaTitleEl.addEventListener('mouseover', (e) => {
+  globalTooltip.textContent = "*originally verbos";
+  globalTooltip.style.display = 'block';
+  positionTooltip(e);
+});
+saturaTitleEl.addEventListener('mousemove', (e) => {
+  if (globalTooltip.style.display === 'block') positionTooltip(e);
+});
+saturaTitleEl.addEventListener('mouseout', () => {
+  globalTooltip.style.display = 'none';
+});
+
 document.addEventListener('mouseover', (e) => {
   const notifBadge = e.target.closest('[data-tooltip-type="notif"]');
   const wipBadge = e.target.closest('[data-tooltip-type="wip"]');
@@ -207,7 +236,7 @@ document.addEventListener('mouseover', (e) => {
 });
 
 document.addEventListener('mousemove', (e) => {
-  if (globalTooltip.style.display === 'block') positionTooltip(e);
+  if (globalTooltip.style.display === 'block' && e.target !== saturaTitleEl) positionTooltip(e);
 });
 
 document.addEventListener('mouseout', (e) => {
@@ -222,7 +251,9 @@ function positionTooltip(e) {
 document.addEventListener('click', (e) => {
   const notif = e.target.closest('.badge-notif');
   if (notif) {
-    notif.remove();
+    const id = notif.getAttribute('data-notif-id');
+    if (id) markNotifSeen(id);
+    else notif.remove();
     globalTooltip.style.display = 'none';
   }
 });
@@ -285,7 +316,7 @@ window.launchProxy = function(rawInput) {
 document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
 proxyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); launchProxy(proxyInput.value); } });
 
-/* --- SoundCloud Audio Player Catcher --- */
+/* --- SoundCloud Audio Player --- */
 const scLoadBtn = document.getElementById('sc-load-btn');
 const scUrlInput = document.getElementById('sc-url-input');
 const audioElement = document.getElementById('audio-element');
@@ -316,7 +347,7 @@ scLoadBtn.addEventListener('click', async () => {
   }
 });
 
-/* --- Stable Chat System --- */
+/* --- Chat System --- */
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
@@ -353,11 +384,12 @@ async function fetchChat(forceScroll = false) {
     if (!res.ok) return;
     const data = await res.json();
     
+    const myName = localStorage.getItem('satura_user_name');
     const filteredData = data.filter(m => {
       if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
       if (currentChatRoom.startsWith('general-')) return m.recipient === currentChatRoom;
-      return (m.recipient === currentChatRoom && m.user === localStorage.getItem('verbos_user_name')) ||
-             (m.user === currentChatRoom && m.recipient === localStorage.getItem('verbos_user_name'));
+      return (m.recipient === currentChatRoom && m.user === myName) ||
+             (m.user === currentChatRoom && m.recipient === myName);
     });
 
     if (filteredData.length !== lastKnownCount || forceScroll) {
@@ -372,7 +404,7 @@ async function fetchChat(forceScroll = false) {
       filteredData.forEach(m => {
         const isImg = m.pfp && (m.pfp.startsWith('http') || m.pfp.startsWith('data:image'));
         const pfpHTML = isImg ? `<img src="${m.pfp}" alt="pfp" />` : (m.pfp || '⭐');
-        const msgFont = m.font || 'Arial, sans-serif';
+        const msgFont = m.font || 'Inter, sans-serif';
 
         const itemEl = document.createElement('div');
         itemEl.className = 'chat-msg-item';
@@ -380,7 +412,7 @@ async function fetchChat(forceScroll = false) {
         const pfpDiv = document.createElement('div');
         pfpDiv.className = 'chat-msg-pfp';
         pfpDiv.innerHTML = pfpHTML;
-        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with verbos.');
+        pfpDiv.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'chat-msg-content';
@@ -397,7 +429,7 @@ async function fetchChat(forceScroll = false) {
           userSpan.textContent = m.user;
         }
         userSpan.style.color = m.color || '#ffffff';
-        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with verbos.');
+        userSpan.onclick = () => openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
 
         const timeSpan = document.createElement('span');
         timeSpan.className = 'chat-msg-time';
@@ -432,12 +464,12 @@ async function sendChat() {
   if (now - lastMessageTime < 1000) return;
   lastMessageTime = now;
 
-  const user = localStorage.getItem('verbos_user_name');
-  const pfp = localStorage.getItem('verbos_user_pfp') || '⭐';
-  const bio = localStorage.getItem('verbos_user_bio') || 'exploring the web with verbos.';
-  const color = localStorage.getItem('verbos_user_color') || '#ffffff';
-  const font = localStorage.getItem('verbos_chat_font') || 'Arial, sans-serif';
-  const anim = localStorage.getItem('verbos_username_anim') || 'none';
+  const user = localStorage.getItem('satura_user_name');
+  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
+  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
+  const color = localStorage.getItem('satura_user_color') || '#ffffff';
+  const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
+  const anim = localStorage.getItem('satura_username_anim') || 'none';
 
   try {
     const res = await fetch('/api/chat', {
@@ -478,7 +510,7 @@ window.openUserDashboard = function(username, pfp, bio) {
 
 document.getElementById('ud-message-btn').addEventListener('click', () => {
   if (!selectedDashboardUser) return;
-  const myName = localStorage.getItem('verbos_user_name');
+  const myName = localStorage.getItem('satura_user_name');
   if (selectedDashboardUser === myName) {
     alert("you cannot message yourself!");
     return;
@@ -514,7 +546,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   const friendName = prompt("enter username to start a direct message:");
   if (!friendName) return;
   const clean = friendName.trim();
-  const myName = localStorage.getItem('verbos_user_name');
+  const myName = localStorage.getItem('satura_user_name');
   if (clean === myName) {
     alert("that's you!");
     return;
@@ -526,7 +558,7 @@ document.getElementById('add-friend-btn').addEventListener('click', async () => 
   document.querySelector(`.room-btn[data-room="${clean}"]`)?.click();
 });
 
-/* --- Themes, Formatting, Image Layout Presets & GUI Scale --- */
+/* --- Themes & GUI Scale --- */
 const DARK_THEMES = {
   obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
   crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
@@ -547,7 +579,7 @@ function applyTheme(key) {
   root.style.setProperty('--border', t.border);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('verbos_theme', key);
+  localStorage.setItem('satura_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -557,85 +589,19 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('verbos_theme') || 'obsidian');
-
-const uiFormattingSelect = document.getElementById('ui-formatting-select');
-function applyUiFormatting(style) {
-  const root = document.documentElement;
-  if (style === 'borderless') {
-    root.style.setProperty('--border-radius', '20px');
-    root.style.setProperty('--panel-border', '1px solid rgba(255, 255, 255, 0.08)');
-  } else if (style === 'minimalistic') {
-    root.style.setProperty('--border-radius', '4px');
-    root.style.setProperty('--panel-border', '1px solid rgba(255, 255, 255, 0.4)');
-  } else if (style === 'no-outlines') {
-    root.style.setProperty('--border-radius', '0px');
-    root.style.setProperty('--panel-border', 'none');
-  } else {
-    root.style.setProperty('--border-radius', '12px');
-    root.style.setProperty('--panel-border', '1px solid var(--border)');
-  }
-  localStorage.setItem('verbos_ui_formatting', style);
-}
-uiFormattingSelect.value = localStorage.getItem('verbos_ui_formatting') || 'standard';
-applyUiFormatting(uiFormattingSelect.value);
-uiFormattingSelect.addEventListener('change', () => applyUiFormatting(uiFormattingSelect.value));
-
-// UI Layout Formatting Presets (matching reference images)
-const uiLayoutSelect = document.getElementById('ui-layout-select');
-function applyUiLayout(layout) {
-  const sidebar = document.getElementById('sidebar-el');
-  const tabBarEl = document.getElementById('tab-bar');
-  const bottomNavWrap = document.getElementById('bottom-nav-wrapper');
-  const pageViews = document.querySelectorAll('.page-view');
-  const proxyViewerEl = document.getElementById('proxy-viewer');
-
-  if (layout === 'top-browser') {
-    // Preset 2: Modern Browser Dock (Image 1 style)
-    sidebar.classList.add('hidden-sidebar');
-    tabBarEl.classList.add('top-full');
-    bottomNavWrap.classList.add('full-center');
-    pageViews.forEach(p => p.classList.add('full-view'));
-    proxyViewerEl.classList.add('full-view');
-  } else if (layout === ' minimal-imp') {
-    // Preset 3: Minimalist Imp (Image 3 style)
-    sidebar.classList.add('hidden-sidebar');
-    tabBarEl.classList.add('top-full');
-    bottomNavWrap.classList.add('full-center');
-    pageViews.forEach(p => p.classList.add('full-view'));
-    proxyViewerEl.classList.add('full-view');
-  } else {
-    // Preset 1: Sidebar Workspace (Fern style / Image 2)
-    sidebar.classList.remove('hidden-sidebar');
-    tabBarEl.classList.remove('top-full');
-    bottomNavWrap.classList.remove('full-center');
-    pageViews.forEach(p => p.classList.remove('full-view'));
-    proxyViewerEl.classList.remove('full-view');
-  }
-  localStorage.setItem('verbos_ui_layout', layout);
-}
-uiLayoutSelect.value = localStorage.getItem('verbos_ui_layout') || 'normal';
-applyUiLayout(uiLayoutSelect.value);
-uiLayoutSelect.addEventListener('change', () => applyUiLayout(uiLayoutSelect.value));
+applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 function applyGuiScale(val) {
   document.documentElement.style.setProperty('--gui-scale', val);
   guiScaleVal.textContent = val;
-  localStorage.setItem('verbos_gui_scale', val);
+  localStorage.setItem('satura_gui_scale', val);
 }
-const savedScale = localStorage.getItem('verbos_gui_scale') || '1.15';
+const savedScale = localStorage.getItem('satura_gui_scale') || '1.15';
 guiScaleSlider.value = savedScale;
 applyGuiScale(savedScale);
 guiScaleSlider.addEventListener('input', (e) => applyGuiScale(e.target.value));
-
-const bgSelect = document.getElementById('bg-style-select');
-bgSelect.value = localStorage.getItem('verbos_bg_style') || 'stars';
-bgSelect.addEventListener('change', () => {
-  localStorage.setItem('verbos_bg_style', bgSelect.value);
-  initBackground(bgSelect.value);
-});
 
 /* --- Modals Handling --- */
 const profileModal = document.getElementById('profile-modal');
@@ -658,12 +624,12 @@ const pfpInitial = document.getElementById('pfp-initial');
 const pfpImg = document.getElementById('pfp-img');
 
 function loadProfile() {
-  const name = localStorage.getItem('verbos_user_name');
-  const bio = localStorage.getItem('verbos_user_bio');
-  const pfp = localStorage.getItem('verbos_user_pfp');
-  const font = localStorage.getItem('verbos_chat_font');
-  const anim = localStorage.getItem('verbos_username_anim') || 'none';
-  const color = localStorage.getItem('verbos_user_color');
+  const name = localStorage.getItem('satura_user_name');
+  const bio = localStorage.getItem('satura_user_bio');
+  const pfp = localStorage.getItem('satura_user_pfp');
+  const font = localStorage.getItem('satura_chat_font');
+  const anim = localStorage.getItem('satura_username_anim') || 'none';
+  const color = localStorage.getItem('satura_user_color');
 
   profileNameInput.value = name;
   profileBioInput.value = bio;
@@ -709,7 +675,7 @@ document.getElementById('save-profile').addEventListener('click', async () => {
     const res = await fetch('/api/chat?type=users');
     if (res.ok) {
       const users = await res.json();
-      const currentStoredName = localStorage.getItem('verbos_user_name');
+      const currentStoredName = localStorage.getItem('satura_user_name');
       if (users.includes(name) && name !== currentStoredName) {
         alert("this display name is already taken!");
         return;
@@ -717,82 +683,29 @@ document.getElementById('save-profile').addEventListener('click', async () => {
     }
   } catch (e) {}
 
-  const bio = profileBioInput.value.trim() || 'exploring the web with verbos.';
+  const bio = profileBioInput.value.trim() || 'exploring the web with satura.';
   const pfp = profilePfpInput.value.trim() || '⭐';
   const font = profileFontSelect.value;
   const anim = profileAnimSelect.value;
   const color = profileColorInput.value;
 
-  localStorage.setItem('verbos_user_name', name);
-  localStorage.setItem('verbos_user_bio', bio);
-  localStorage.setItem('verbos_user_pfp', pfp);
-  localStorage.setItem('verbos_chat_font', font);
-  localStorage.setItem('verbos_username_anim', anim);
-  localStorage.setItem('verbos_user_color', color);
+  localStorage.setItem('satura_user_name', name);
+  localStorage.setItem('satura_user_bio', bio);
+  localStorage.setItem('satura_user_pfp', pfp);
+  localStorage.setItem('satura_chat_font', font);
+  localStorage.setItem('satura_username_anim', anim);
+  localStorage.setItem('satura_user_color', color);
 
   loadProfile();
   profileModal.classList.add('hidden');
 });
 loadProfile();
 
-/* --- Dynamic Background --- */
-const bgCanvas = document.getElementById('bg-stars');
-const bgCtx = bgCanvas.getContext('2d');
-let animationFrameId = null;
-
-function initBackground(style) {
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
-
-  if (style === 'matrix') {
-    const letters = 'VERBOS010101XYZ';
-    const fontSize = 14;
-    const columns = Math.floor(bgCanvas.width / fontSize);
-    const drops = Array(columns).fill(1);
-
-    function drawMatrix() {
-      bgCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = '#ffffff';
-      bgCtx.font = fontSize + 'px monospace';
-      for (let i = 0; i < drops.length; i++) {
-        const text = letters.charAt(Math.floor(Math.random() * letters.length));
-        bgCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > bgCanvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-      animationFrameId = requestAnimationFrame(drawMatrix);
-    }
-    drawMatrix();
-  } else if (style === 'void') {
-    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-  } else {
-    let stars = [];
-    for (let i = 0; i < 120; i++) {
-      stars.push({ x: Math.random() * bgCanvas.width, y: Math.random() * bgCanvas.height, size: Math.random() * 2.5 + 0.8, speed: Math.random() * 0.3 + 0.05, rot: Math.random() * Math.PI, rotSpeed: (Math.random() - 0.5) * 0.02 });
-    }
-    function drawStars() {
-      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      bgCtx.fillStyle = '#ffffff';
-      stars.forEach(s => {
-        s.x += s.speed; s.rot += s.rotSpeed;
-        if (s.x > bgCanvas.width) s.x = 0;
-        bgCtx.save(); bgCtx.translate(s.x, s.y); bgCtx.rotate(s.rot);
-        bgCtx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size);
-        bgCtx.restore();
-      });
-      animationFrameId = requestAnimationFrame(drawStars);
-    }
-    drawStars();
-  }
-}
-initBackground(localStorage.getItem('verbos_bg_style') || 'stars');
-
-// Star Logo (Clean math without division errors)
+/* --- Remade Star Logo with Division Inversion Color Effect --- */
 const starCanvas = document.getElementById('star-canvas');
 const starCtx = starCanvas.getContext('2d');
 let angle = 0, floatTime = 0;
+
 function drawStarLogo() {
   starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
   starCtx.save();
@@ -801,6 +714,7 @@ function drawStarLogo() {
   const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 5;
   starCtx.translate(centerX, centerY);
   starCtx.rotate(angle);
+  
   starCtx.fillStyle = '#ffffff';
   starCtx.beginPath();
   for (let i = 0; i < 4; i++) { 
@@ -812,6 +726,7 @@ function drawStarLogo() {
   starCtx.closePath(); 
   starCtx.fill();
   starCtx.restore();
+
   angle += 0.0015;
   requestAnimationFrame(drawStarLogo);
 }
