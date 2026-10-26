@@ -4,55 +4,38 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_DATA_VERSION = 'v17_satura';
-if (localStorage.getItem('satura_data_version') !== CURRENT_DATA_VERSION) {
-  localStorage.setItem('satura_data_version', CURRENT_DATA_VERSION);
+const CURRENT_VERSION = 'styu_v1.0';
+if (localStorage.getItem('styu_version') !== CURRENT_VERSION) {
+  localStorage.setItem('styu_version', CURRENT_VERSION);
 }
 
-if (!localStorage.getItem('satura_user_name')) {
-  const randNum = Math.floor(1000 + Math.random() * 9000);
-  localStorage.setItem('satura_user_name', 'saturauser-' + randNum);
-  localStorage.setItem('satura_user_bio', 'exploring the web with satura.');
-  localStorage.setItem('satura_user_pfp', '⭐');
-  localStorage.setItem('satura_user_color', '#ffffff');
-  localStorage.setItem('satura_chat_font', 'Inter, sans-serif');
-  localStorage.setItem('satura_username_anim', 'none');
-  localStorage.setItem('satura_gui_scale', '1.15');
-}
-
-let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
+let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
+let historyLog = JSON.parse(localStorage.getItem('styu_history') || '[]');
+let bookmarksList = JSON.parse(localStorage.getItem('styu_bookmarks') || '[]');
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
 const proxyInput = document.getElementById('proxy-input');
-const proxyViewer = document.getElementById('proxy-iframe-1');
-const proxyViewerContainer = document.getElementById('proxy-viewer');
+const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
 const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
-const bottomNavWrapper = document.getElementById('bottom-nav-wrapper');
-const loadingSpinner = document.getElementById('loading-spinner');
 const onlineCounterText = document.getElementById('online-counter-text');
 
-function showSpinner() { if (loadingSpinner) loadingSpinner.classList.remove('hidden'); }
-function hideSpinner() { if (loadingSpinner) loadingSpinner.classList.add('hidden'); }
-
-if (proxyViewer) proxyViewer.addEventListener('load', hideSpinner);
-
-// Real Online Users Counter (Synced via BroadcastChannel & Server Heartbeat)
-const presenceChannel = new BroadcastChannel('satura_presence_channel');
-let sessionKey = 'satura_session_' + Math.random();
-let activeSessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+// Real Online Users Counter (Synced via BroadcastChannel & LocalStorage Session Heartbeat)
+const presenceChannel = new BroadcastChannel('styu_presence_channel');
+let sessionKey = 'styu_session_' + Math.random();
+let activeSessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
 
 activeSessions[sessionKey] = Date.now();
-localStorage.setItem('satura_active_sessions', JSON.stringify(activeSessions));
+localStorage.setItem('styu_active_sessions', JSON.stringify(activeSessions));
 
 window.addEventListener('beforeunload', () => {
-  let sessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+  let sessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
   delete sessions[sessionKey];
-  localStorage.setItem('satura_active_sessions', JSON.stringify(sessions));
+  localStorage.setItem('styu_active_sessions', JSON.stringify(sessions));
   presenceChannel.postMessage({ type: 'ping' });
 });
 
@@ -65,7 +48,6 @@ presenceChannel.onmessage = (event) => {
 async function updateRealOnlineCounter() {
   if (!onlineCounterText) return;
   
-  // Try fetching from real server endpoint if available
   try {
     const res = await fetch('/api/online', { method: 'GET', cache: 'no-store' });
     if (res.ok) {
@@ -77,8 +59,7 @@ async function updateRealOnlineCounter() {
     }
   } catch (e) {}
 
-  // Fallback: Real active session tracking across tabs/windows
-  let sessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+  let sessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
   const now = Date.now();
   let validCount = 0;
   
@@ -91,7 +72,7 @@ async function updateRealOnlineCounter() {
   });
 
   sessions[sessionKey] = now;
-  localStorage.setItem('satura_active_sessions', JSON.stringify(sessions));
+  localStorage.setItem('styu_active_sessions', JSON.stringify(sessions));
   validCount = Math.max(1, validCount);
 
   onlineCounterText.textContent = validCount === 1 ? '1 person online' : `${validCount} people online`;
@@ -108,7 +89,7 @@ function renderTabs() {
     tabEl.className = `tab-item ${tab.id === activeTabId ? 'active' : ''}`;
     tabEl.innerHTML = `
       <span>${tab.title}</span>
-      <button class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">×</button>
+      <button class="tab-close" onclick="event.stopPropagation(); closeTab(${tab.id})">✕</button>
     `;
     tabEl.addEventListener('click', () => switchTab(tab.id));
     tabBar.insertBefore(tabEl, addTabBtn);
@@ -123,21 +104,19 @@ function switchTab(id) {
     hideAllPages();
 
     if (tab.src === 'about:blank' || !tab.url) {
-      if (proxyViewerContainer) proxyViewerContainer.classList.remove('active');
-      if (homeView) homeView.classList.remove('hidden');
-      if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
+      if (proxyViewer) proxyViewer.classList.remove('active');
+      if (homeView) homeView.classList.add('active');
       if (proxyViewer) proxyViewer.src = 'about:blank';
     } else {
-      if (homeView) homeView.classList.add('hidden');
-      if (proxyViewerContainer) proxyViewerContainer.classList.add('active');
-      if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
+      if (homeView) homeView.classList.remove('active');
+      if (proxyViewer) proxyViewer.classList.add('active');
       if (proxyViewer) proxyViewer.src = tab.src;
     }
   }
   renderTabs();
 }
 
-function addTab(url = '', src = 'about:blank', title = 'new tab') {
+function addTab(url = '', src = 'about:blank', title = 'New Tab') {
   const newId = Date.now();
   tabs.push({ id: newId, title, url, src });
   switchTab(newId);
@@ -145,7 +124,7 @@ function addTab(url = '', src = 'about:blank', title = 'new tab') {
 
 window.closeTab = function(id) {
   if (tabs.length === 1) {
-    tabs[0] = { id: Date.now(), title: 'new tab', url: '', src: 'about:blank' };
+    tabs[0] = { id: Date.now(), title: 'New Tab', url: '', src: 'about:blank' };
     switchTab(tabs[0].id);
     return;
   }
@@ -157,57 +136,61 @@ window.closeTab = function(id) {
 if (addTabBtn) addTabBtn.addEventListener('click', () => addTab());
 
 function hideAllPages() {
-  if (homeView) homeView.classList.add('hidden');
-  if (proxyViewerContainer) proxyViewerContainer.classList.remove('active');
+  if (homeView) homeView.classList.remove('active');
+  if (proxyViewer) proxyViewer.classList.remove('active');
   if (chatPageView) chatPageView.classList.remove('active');
   if (gamesPageView) gamesPageView.classList.remove('active');
-  if (settingsPageView) settingsPageView.classList.add('active'); // Wait, settings should be hidden unless active
   if (settingsPageView) settingsPageView.classList.remove('active');
-  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
 }
 
-/* Sidebar Navigation & Search Bar Visibility */
-document.getElementById('sb-home')?.addEventListener('click', () => {
+/* Dock Navigation */
+document.getElementById('dock-home')?.addEventListener('click', () => {
   hideAllPages();
-  if (homeView) homeView.classList.remove('hidden');
-  if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
-  document.getElementById('sb-home').classList.add('active');
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab && currentTab.url) {
+    if (proxyViewer) proxyViewer.classList.add('active');
+  } else {
+    if (homeView) homeView.classList.add('active');
+  }
+  document.getElementById('dock-home').classList.add('active');
 });
 
-document.getElementById('sb-chat')?.addEventListener('click', () => {
+document.getElementById('dock-chat')?.addEventListener('click', () => {
   hideAllPages();
   if (chatPageView) chatPageView.classList.add('active');
-  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden'); // Hides search bar in chat
-  document.getElementById('sb-chat').classList.add('active');
+  document.getElementById('dock-chat').classList.add('active');
   if (window.initChat) window.initChat();
 });
 
-document.getElementById('sb-games')?.addEventListener('click', () => {
+document.getElementById('dock-games')?.addEventListener('click', () => {
   hideAllPages();
   if (gamesPageView) gamesPageView.classList.add('active');
-  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden'); // Hides search bar in games
-  document.getElementById('sb-games').classList.add('active');
+  document.getElementById('dock-games').classList.add('active');
 });
 
-document.getElementById('sb-settings')?.addEventListener('click', () => {
+document.getElementById('dock-settings')?.addEventListener('click', () => {
   hideAllPages();
   if (settingsPageView) settingsPageView.classList.add('active');
-  if (bottomNavWrapper) bottomNavWrapper.classList.add('hidden'); // Hides search bar in settings
-  document.getElementById('sb-settings').classList.add('active');
+  document.getElementById('dock-settings').classList.add('active');
 });
 
-document.getElementById('sb-bookmarks')?.addEventListener('click', () => {
-  document.getElementById('bookmarks-modal')?.classList.remove('hidden');
+/* Toolbar Actions & Proxy Execution connected to /api/proxy */
+document.getElementById('btn-home')?.addEventListener('click', () => {
+  hideAllPages();
+  if (homeView) homeView.classList.add('active');
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab) {
+    currentTab.url = '';
+    currentTab.src = 'about:blank';
+    currentTab.title = 'New Tab';
+  }
+  if (proxyInput) proxyInput.value = '';
+  renderTabs();
 });
 
-document.getElementById('close-bookmarks')?.addEventListener('click', () => {
-  document.getElementById('bookmarks-modal')?.classList.add('hidden');
-});
-
-/* Navigation & Refresh Controls */
 document.getElementById('btn-reload')?.addEventListener('click', () => {
   if (proxyViewer && proxyViewer.src && proxyViewer.src !== 'about:blank') {
-    showSpinner();
     proxyViewer.src = proxyViewer.src;
   }
 });
@@ -220,7 +203,14 @@ document.getElementById('btn-forward')?.addEventListener('click', () => {
   try { proxyViewer.contentWindow.history.forward(); } catch (e) {}
 });
 
-/* Proxy Execution */
+document.getElementById('btn-fullscreen')?.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
@@ -233,10 +223,10 @@ window.launchProxy = function(rawInput) {
   const targetUrl = processUrl(rawInput);
   if (!targetUrl) return;
 
-  showSpinner();
   const currentTab = tabs.find(t => t.id === activeTabId);
-  const simIp = localStorage.getItem('satura_simulated_ip') || '192.168.1.102';
+  const simIp = '192.168.1.102';
   
+  // Encoded token routing through api/proxy.js
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
   const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}`;
   
@@ -246,17 +236,18 @@ window.launchProxy = function(rawInput) {
     try { currentTab.title = new URL(targetUrl).hostname; } catch(e) { currentTab.title = targetUrl; }
   }
 
+  // Log History
+  historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
+  if (historyLog.length > 50) historyLog.pop();
+  localStorage.setItem('styu_history', JSON.stringify(historyLog));
+
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
-  if (proxyViewerContainer) proxyViewerContainer.classList.add('active');
-  if (bottomNavWrapper) bottomNavWrapper.classList.remove('hidden');
+  if (proxyViewer) proxyViewer.classList.add('active');
   if (proxyViewer) proxyViewer.src = proxyUrl;
   renderTabs();
 };
 
-if (document.getElementById('proxy-go')) {
-  document.getElementById('proxy-go').addEventListener('click', () => launchProxy(proxyInput.value));
-}
 if (proxyInput) {
   proxyInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -266,28 +257,66 @@ if (proxyInput) {
   });
 }
 
-/* Themes & Preferences Settings */
-const DARK_THEMES = {
-  obsidian: { bg: '#000000', panel: '#000000', border: '#ffffff', accent: '#ffffff', hover: '#141414' },
-  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', accent: '#ef4444', hover: '#2f0c11' },
-  emerald: { bg: '#02120d', panel: '#082119', border: '#133a2d', accent: '#10b981', hover: '#0f3327' },
-  amethyst: { bg: '#0b0614', panel: '#150c26', border: '#2d1b4d', accent: '#8b5cf6', hover: '#22133d' },
-  amber: { bg: '#120c02', panel: '#211808', border: '#3d2b12', accent: '#f59e0b', hover: '#2f210e' },
-  ghost: { bg: '#090a0f', panel: '#13151c', border: '#2a2e3d', accent: '#94a3b8', hover: '#1c1f2b' },
-  cyberpunk: { bg: '#030712', panel: '#0f172a', border: '#06b6d4', accent: '#06b6d4', hover: '#1e293b' },
-  matrix: { bg: '#020b05', panel: '#051b0f', border: '#22c55e', accent: '#22c55e', hover: '#0d2e1a' },
-  coffee: { bg: '#1c140f', panel: '#291d17', border: '#d97706', accent: '#d97706', hover: '#3d2b21' }
+/* Starring / Bookmarking */
+document.getElementById('btn-star')?.addEventListener('click', () => {
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab && currentTab.url) {
+    if (!bookmarksList.some(b => b.url === currentTab.url)) {
+      bookmarksList.push({ title: currentTab.title, url: currentTab.url });
+      localStorage.setItem('styu_bookmarks', JSON.stringify(bookmarksList));
+      alert('Page starred and bookmarked!');
+    } else {
+      alert('Page is already bookmarked.');
+    }
+  } else {
+    alert('No active website to star.');
+  }
+});
+
+/* History Modal */
+const historyModal = document.getElementById('history-modal');
+document.getElementById('btn-history')?.addEventListener('click', () => {
+  const listEl = document.getElementById('history-list');
+  listEl.innerHTML = historyLog.map(h => `<div class="list-item" onclick="launchProxy('${h.url}'); historyModal.classList.add('hidden');"><span>${h.url}</span><span style="color:var(--subtext);font-size:0.75rem;">${h.time}</span></div>`).join('') || '<p style="color:var(--subtext);">No history yet.</p>';
+  historyModal.classList.remove('hidden');
+});
+document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
+document.getElementById('clear-history')?.addEventListener('click', () => {
+  historyLog = [];
+  localStorage.removeItem('styu_history');
+  document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">No history yet.</p>';
+});
+
+/* Bookmarks Modal */
+const bookmarksModal = document.getElementById('bookmarks-modal');
+document.getElementById('btn-bookmarks')?.addEventListener('click', () => {
+  const listEl = document.getElementById('bookmarks-list');
+  listEl.innerHTML = bookmarksList.map(b => `<div class="list-item" onclick="launchProxy('${b.url}'); bookmarksModal.classList.add('hidden');"><span>${b.title}</span><span style="color:var(--subtext);font-size:0.75rem;">${b.url}</span></div>`).join('') || '<p style="color:var(--subtext);">No starred bookmarks yet.</p>';
+  bookmarksModal.classList.remove('hidden');
+});
+document.getElementById('close-bookmarks')?.addEventListener('click', () => bookmarksModal.classList.add('hidden'));
+
+/* Themes & GUI Scaling */
+const THEMES = {
+  oled: { bg: '#000000', panel: '#050505', border: '#1f1f1f', text: '#f8fafc', subtext: '#888888', accent: '#ffffff', hover: '#121212' },
+  charcoal: { bg: '#0f1115', panel: '#181b22', border: '#2b313b', text: '#e2e8f0', subtext: '#94a3b8', accent: '#38bdf8', hover: '#222731' },
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#133a23', text: '#86efac', subtext: '#4ade80', accent: '#22c55e', hover: '#0d2e1a' },
+  blossom: { bg: '#12050b', panel: '#210813', border: '#421226', text: '#fbcfe8', subtext: '#f472b6', accent: '#ec4899', hover: '#300b1b' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', text: '#fca5a5', subtext: '#f87171', accent: '#ef4444', hover: '#2f0c11' },
+  aquatic: { bg: '#020d14', panel: '#051926', border: '#0e314a', text: '#7dd3fc', subtext: '#38bdf8', accent: '#0ea5e9', hover: '#092436' }
 };
 
 function applyTheme(key) {
-  const t = DARK_THEMES[key] || DARK_THEMES.obsidian;
+  const t = THEMES[key] || THEMES.oled;
   const root = document.documentElement;
   root.style.setProperty('--bg', t.bg);
   root.style.setProperty('--panel', t.panel);
   root.style.setProperty('--border', t.border);
+  root.style.setProperty('--text', t.text);
+  root.style.setProperty('--subtext', t.subtext);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('satura_theme', key);
+  localStorage.setItem('styu_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -297,86 +326,13 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('satura_theme') || 'obsidian');
+applyTheme(localStorage.getItem('styu_theme') || 'oled');
 
-/* Cloak & Stealth Handling */
-let isCloaked = false;
-const cloakNotice = document.getElementById('cloak-notice');
-
-function toggleCloak(forceState) {
-  isCloaked = typeof forceState === 'boolean' ? forceState : !isCloaked;
-  if (isCloaked) {
-    document.body.style.opacity = '0';
-    if (cloakNotice) cloakNotice.style.display = 'block';
-  } else {
-    document.body.style.opacity = '1';
-    if (cloakNotice) cloakNotice.style.display = 'none';
-  }
-}
-
-document.getElementById('sb-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
-document.getElementById('manual-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === '\\') {
-    e.preventDefault();
-    toggleCloak();
-  }
-});
-
-const tabCloakPreset = document.getElementById('tab-cloak-preset');
-if (tabCloakPreset) {
-  tabCloakPreset.value = localStorage.getItem('satura_cloak_preset') || 'satura';
-  tabCloakPreset.addEventListener('change', (e) => {
-    const val = e.target.value;
-    localStorage.setItem('satura_cloak_preset', val);
-    const titleEl = document.getElementById('tab-title');
-    const faviconEl = document.getElementById('tab-favicon');
-    if (val === 'google') {
-      if (titleEl) titleEl.textContent = 'Google';
-      if (faviconEl) faviconEl.href = 'https://www.google.com/favicon.ico';
-    } else if (val === 'khan') {
-      if (titleEl) titleEl.textContent = 'Dashboard | Khan Academy';
-      if (faviconEl) faviconEl.href = 'https://cdn.kastatic.org/images/favicon.ico';
-    } else {
-      if (titleEl) titleEl.textContent = 'satura';
-    }
-  });
-}
-
-const searchPosSelect = document.getElementById('search-pos-select');
-if (searchPosSelect) {
-  searchPosSelect.value = localStorage.getItem('satura_search_pos') || 'bottom';
-  searchPosSelect.addEventListener('change', (e) => {
-    const pos = e.target.value;
-    localStorage.setItem('satura_search_pos', pos);
-    if (pos === 'top') bottomNavWrapper?.classList.add('top-search-pos');
-    else bottomNavWrapper?.classList.remove('top-search-pos');
-  });
-  if (searchPosSelect.value === 'top') bottomNavWrapper?.classList.add('top-search-pos');
-}
-
-const uiOutlinesSelect = document.getElementById('ui-outlines-select');
-if (uiOutlinesSelect) {
-  uiOutlinesSelect.value = localStorage.getItem('satura_ui_outlines') || 'enabled';
-  uiOutlinesSelect.addEventListener('change', (e) => {
-    const val = e.target.value;
-    localStorage.setItem('satura_ui_outlines', val);
-    const root = document.documentElement;
-    if (val === 'disabled') {
-      root.style.setProperty('--panel-border', 'none');
-      root.style.setProperty('--border-radius', '0px');
-    } else {
-      root.style.setProperty('--panel-border', '1px solid var(--border)');
-      root.style.setProperty('--border-radius', '12px');
-    }
-  });
-}
-
+// GUI Scale Resizer
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 if (guiScaleSlider) {
-  const savedScale = localStorage.getItem('satura_gui_scale') || '1.15';
+  const savedScale = localStorage.getItem('styu_gui_scale') || '1.0';
   guiScaleSlider.value = savedScale;
   document.documentElement.style.setProperty('--gui-scale', savedScale);
   if (guiScaleVal) guiScaleVal.textContent = savedScale;
@@ -385,142 +341,8 @@ if (guiScaleSlider) {
     const val = e.target.value;
     document.documentElement.style.setProperty('--gui-scale', val);
     if (guiScaleVal) guiScaleVal.textContent = val;
-    localStorage.setItem('satura_gui_scale', val);
+    localStorage.setItem('styu_gui_scale', val);
   });
 }
 
-/* Profile Modal & Automatic Letter PFPs */
-const profileModal = document.getElementById('profile-modal');
-document.getElementById('sb-profile')?.addEventListener('click', () => profileModal.classList.remove('hidden'));
-document.getElementById('close-profile')?.addEventListener('click', () => profileModal.classList.add('hidden'));
-
-const profileNameInput = document.getElementById('profile-name');
-const profileBioInput = document.getElementById('profile-bio');
-const profilePfpInput = document.getElementById('profile-pfp');
-const profileFontSelect = document.getElementById('profile-font');
-const profileAnimSelect = document.getElementById('profile-anim');
-const profileColorInput = document.getElementById('profile-color');
-const pfpInitial = document.getElementById('pfp-initial');
-const pfpImg = document.getElementById('pfp-img');
-
-function loadProfile() {
-  const name = localStorage.getItem('satura_user_name') || 'saturauser';
-  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
-  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
-  const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
-  const anim = localStorage.getItem('satura_username_anim') || 'none';
-  const color = localStorage.getItem('satura_user_color') || '#ffffff';
-
-  if (profileNameInput) profileNameInput.value = name;
-  if (profileBioInput) profileBioInput.value = bio;
-  if (profilePfpInput && !pfp.startsWith('data:')) profilePfpInput.value = pfp;
-  if (profileFontSelect) profileFontSelect.value = font;
-  if (profileAnimSelect) profileAnimSelect.value = anim;
-  if (profileColorInput) profileColorInput.value = color;
-
-  if (pfp && (pfp.startsWith('http') || pfp.startsWith('data:'))) {
-    if (pfpImg) {
-      pfpImg.src = pfp;
-      pfpImg.classList.remove('hidden');
-    }
-    if (pfpInitial) pfpInitial.classList.add('hidden');
-  } else {
-    if (pfpInitial) {
-      pfpInitial.textContent = name.charAt(0).toUpperCase(); // Automatic Letter PFP
-      pfpInitial.classList.remove('hidden');
-    }
-    if (pfpImg) pfpImg.classList.add('hidden');
-  }
-}
-
-document.getElementById('save-profile')?.addEventListener('click', () => {
-  const name = profileNameInput.value.trim();
-  if (!name) {
-    alert("display name cannot be empty!");
-    return;
-  }
-
-  const bio = profileBioInput.value.trim() || 'exploring the web with satura.';
-  const pfp = profilePfpInput.value.trim() || name.charAt(0).toUpperCase();
-  const font = profileFontSelect.value;
-  const anim = profileAnimSelect.value;
-  const color = profileColorInput.value;
-
-  localStorage.setItem('satura_user_name', name);
-  localStorage.setItem('satura_user_bio', bio);
-  localStorage.setItem('satura_user_pfp', pfp);
-  localStorage.setItem('satura_chat_font', font);
-  localStorage.setItem('satura_username_anim', anim);
-  localStorage.setItem('satura_user_color', color);
-
-  loadProfile();
-  profileModal.classList.add('hidden');
-});
-loadProfile();
-
-/* Star Background Engine */
-const starCanvas = document.getElementById('star-canvas');
-const starCtx = starCanvas ? starCanvas.getContext('2d') : null;
-let angle = 0, floatTime = 0;
-
-const backgroundStars = Array.from({ length: 90 }, () => ({
-  x: Math.random() * window.innerWidth,
-  y: Math.random() * window.innerHeight,
-  radius: Math.random() * 2 + 1,
-  speed: Math.random() * 1.5 + 0.5
-}));
-
-function drawStarEngine() {
-  if (!starCanvas || !starCtx) return;
-
-  if (starCanvas.width !== window.innerWidth || starCanvas.height !== window.innerHeight) {
-    starCanvas.width = window.innerWidth;
-    starCanvas.height = window.innerHeight;
-  }
-
-  starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-  starCtx.save();
-
-  floatTime += 0.012;
-  const centerX = starCanvas.width * 0.5 + Math.sin(floatTime) * 8;
-  const centerY = starCanvas.height * 0.5 + Math.cos(floatTime * 0.8) * 8;
-  const starRadius = 54;
-
-  backgroundStars.forEach(star => {
-    star.x += star.speed;
-    if (star.x > starCanvas.width) {
-      star.x = 0;
-      star.y = Math.random() * starCanvas.height;
-    }
-
-    const distToCenter = Math.hypot(star.x - centerX, star.y - centerY);
-    const isInverted = distToCenter < starRadius;
-
-    starCtx.fillStyle = isInverted ? '#000000' : '#ffffff';
-    starCtx.beginPath();
-    starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    starCtx.fill();
-  });
-
-  starCtx.save();
-  starCtx.translate(centerX, centerY);
-  starCtx.rotate(angle);
-  
-  starCtx.fillStyle = '#ffffff';
-  starCtx.beginPath();
-  for (let i = 0; i < 4; i++) { 
-    starCtx.lineTo(0, -135); 
-    starCtx.rotate(Math.PI * 0.25); 
-    starCtx.lineTo(0, -54); 
-    starCtx.rotate(Math.PI * 0.25); 
-  }
-  starCtx.closePath(); 
-  starCtx.fill();
-  starCtx.restore();
-
-  starCtx.restore();
-  angle += 0.0015;
-  requestAnimationFrame(drawStarEngine);
-}
-drawStarEngine();
 renderTabs();
