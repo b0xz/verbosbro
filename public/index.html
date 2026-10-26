@@ -3,491 +3,396 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">satura</title>
-  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><path d='M50 80 C50 60, 45 40, 35 30 M50 60 C55 45, 65 35, 75 25' stroke='%23fff' stroke-width='4' fill='none'/><circle cx='35' cy='30' r='6' fill='%23ffb7c5'/><circle cx='75' cy='25' r='8' fill='%23ffb7c5'/><circle cx='45' cy='20' r='5' fill='%23ffb7c5'/><circle cx='60' cy='40' r='6' fill='%23ffb7c5'/></svg>">
+  <title id="tab-title">styu v1.0</title>
+  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><circle cx='50' cy='50' r='30' fill='%23fff'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --gui-scale: 1.15;
+      --gui-scale: 1;
       --bg: #000000;
-      --panel: #000000;
-      --border: #ffffff;
-      --text: #ffffff;
+      --panel: #0a0a0a;
+      --border: #222222;
+      --text: #e2e8f0;
       --subtext: #888888;
       --accent: #ffffff;
-      --hover: #141414;
+      --hover: #1a1a1a;
       --font: 'Inter', Arial, sans-serif;
-      --border-radius: 12px;
+      --border-radius: 8px;
       --panel-border: 1px solid var(--border);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); font-size: calc(14px * var(--gui-scale)); }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
+
+    /* Clean Scaled UI Wrapper */
+    #app-container {
+      width: calc(100% / var(--gui-scale));
+      height: calc(100% / var(--gui-scale));
+      transform: scale(var(--gui-scale));
+      transform-origin: top left;
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
 
     .hidden { display: none !important; }
 
-    /* Inversion Star Engine Container */
-    .star-blend-container {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;
-      display: flex; align-items: center; justify-content: center; background: #000000;
+    /* Top Tab Bar */
+    .top-browser-header {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      background: var(--bg);
+      border-bottom: var(--panel-border);
+      padding: 0 10px;
+      gap: 8px;
+      z-index: 1100;
     }
 
-    .home-view {
-      position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
-      width: 100%; height: 100%; background: transparent; gap: 8px;
-    }
-    .home-view.hidden { display: none; }
-
-    .satura-title {
-      font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; text-transform: lowercase; user-select: none; text-align: center;
-      background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      cursor: default; pointer-events: auto;
-    }
-
-    .online-counter-sub {
-      font-size: 0.85rem; color: var(--subtext); text-transform: lowercase; pointer-events: auto; z-index: 4;
-    }
-
-    .star-mask-wrapper {
-      position: absolute; width: 550px; height: 550px; display: flex; align-items: center; justify-content: center;
-      mix-blend-mode: difference; pointer-events: none; z-index: 4;
-    }
-
-    canvas#star-canvas { width: 100%; height: 100%; background: transparent; }
-
-    .custom-tooltip {
-      position: fixed; background: #222; color: #fff; padding: 8px 12px; border-radius: 4px;
-      font-family: 'Press Start 2P', monospace; font-size: 0.55rem; z-index: 9999; pointer-events: none;
-      border: 1px solid #fff; max-width: 250px; line-height: 1.4; display: none;
-    }
-
-    .badge-notif {
-      background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 2px 6px;
-      border-radius: 50px; display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; cursor: pointer;
-    }
-
-    /* Sidebar Taskbar */
-    .sidebar {
-      position: fixed; top: 0; left: 0; width: calc(64px * var(--gui-scale)); height: 100vh;
-      background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column;
-      align-items: center; padding-top: calc(18px * var(--gui-scale)); padding-bottom: calc(18px * var(--gui-scale));
-      gap: calc(14px * var(--gui-scale)); z-index: 1200; transition: all 0.3s ease;
-    }
-
-    .sidebar-btn {
-      background: transparent; border: 1px solid transparent; color: var(--text);
-      width: calc(42px * var(--gui-scale)); height: calc(42px * var(--gui-scale)); border-radius: var(--border-radius);
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; position: relative;
-    }
-    .sidebar-btn:hover, .sidebar-btn.active { background: var(--hover); border-color: var(--border); color: var(--accent); }
-
-    .profile-avatar-btn {
-      margin-top: auto; width: calc(40px * var(--gui-scale)); height: calc(40px * var(--gui-scale));
-      border-radius: 50%; border: var(--panel-border); background: var(--bg); display: flex;
-      align-items: center; justify-content: center; overflow: hidden; cursor: pointer;
-    }
-    .profile-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
-    .svg-icon { width: calc(20px * var(--gui-scale)); height: calc(20px * var(--gui-scale)); fill: currentColor; stroke: none; }
-
-    .tab-bar-container {
-      position: fixed; top: 0; left: calc(64px * var(--gui-scale)); right: 0; height: calc(46px * var(--gui-scale));
-      background: var(--panel); border-bottom: var(--panel-border); display: flex; align-items: center;
-      padding: 0 calc(14px * var(--gui-scale)); gap: calc(8px * var(--gui-scale)); z-index: 1100; overflow-x: auto;
+    .tab-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      flex: 1;
     }
 
     .tab-item {
-      background: var(--bg); border: var(--panel-border); color: var(--subtext); padding: calc(8px * var(--gui-scale)) calc(14px * var(--gui-scale));
-      border-radius: var(--border-radius) var(--border-radius) 0 0; font-size: calc(0.85rem * var(--gui-scale)); cursor: grab; display: flex; align-items: center; gap: 10px; max-width: 180px; white-space: nowrap; user-select: none;
+      background: var(--panel);
+      border: var(--panel-border);
+      color: var(--subtext);
+      padding: 6px 14px;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 180px;
+      white-space: nowrap;
+      user-select: none;
     }
-    .tab-item.active { background: var(--panel); color: var(--text); border-bottom-color: var(--panel); }
-    .tab-close { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 1rem; }
+    .tab-item.active { background: var(--bg); color: var(--text); border-bottom-color: var(--bg); font-weight: 600; }
+    .tab-close { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 0.9rem; }
     .tab-close:hover { color: var(--text); }
-    .add-tab-btn {
-      background: transparent; border: 1px dashed var(--border); color: var(--text); width: calc(32px * var(--gui-scale)); height: calc(32px * var(--gui-scale));
-      border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; cursor: pointer;
-    }
-
-    .footer-credit { position: fixed; bottom: calc(85px * var(--gui-scale)); left: 50%; transform: translateX(-50%); color: var(--subtext); font-size: 0.85rem; z-index: 1300; user-select: none; text-transform: lowercase; }
-
-    .page-view {
-      position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
-      height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1050; display: none; flex-direction: column;
-    }
-    .page-view.active { display: flex; }
-
-    /* Chat Layout */
-    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); }
-    .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 8px; overflow-y: auto; }
-    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); text-transform: lowercase; margin-top: 5px; margin-bottom: 2px; }
-    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.88rem; text-transform: lowercase; }
-    .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
-
-    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; background: var(--bg); }
-    .chat-messages-container {
-      flex: 1; background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 20px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; }
-    .chat-msg-pfp { width: 40px; height: 40px; border-radius: 50%; border: var(--panel-border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; cursor: pointer; }
-    .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
-    .chat-msg-username { font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: lowercase; }
-    .chat-msg-username:hover { text-decoration: underline; }
     
-    @keyframes letterWave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-    .wavy-letter { display: inline-block; animation: letterWave 1s ease-in-out infinite; }
-
-    .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .chat-msg-text { font-size: 0.98rem; color: #ffffff; word-break: break-word; }
-    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
-
-    /* Games Hub */
-    .games-container { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; background: var(--bg); }
-    .games-frame { width: 100%; flex: 1; border: var(--panel-border); border-radius: var(--border-radius); background: #ffffff; }
-
-    /* Settings Page */
-    .settings-container { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; max-width: 600px; margin: 0 auto; width: 100%; overflow-y: auto; background: var(--bg); }
-
-    /* Bottom Search Bar */
-    .bottom-nav-wrapper {
-      position: fixed; bottom: calc(20px * var(--gui-scale)); left: calc(50% + 32px * var(--gui-scale)); transform: translateX(-50%);
-      width: 90%; max-width: calc(780px * var(--gui-scale)); z-index: 1300; display: flex; flex-direction: column; gap: 6px; align-items: center;
-      transition: opacity 0.2s ease, transform 0.2s ease;
+    .add-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
     }
-    .bottom-nav-wrapper.top-search-pos { bottom: auto !important; top: calc(55px * var(--gui-scale)) !important; }
-    .bottom-nav-wrapper.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); }
-    .bottom-nav-pill {
-      background: var(--panel); border: var(--panel-border); border-radius: calc(35px * var(--gui-scale));
-      padding: calc(6px * var(--gui-scale)) calc(12px * var(--gui-scale)); display: flex; align-items: center; gap: calc(8px * var(--gui-scale));
-      width: 100%; transition: all 0.3s ease; position: relative;
-    }
-    .pill-input { flex: 1; background: transparent; border: none; outline: none; padding: calc(8px * var(--gui-scale)) calc(10px * var(--gui-scale)); font-size: calc(1rem * var(--gui-scale)); color: var(--text); }
-    .pill-input::placeholder { color: var(--subtext); text-transform: lowercase; }
-    .go-btn {
-      background: var(--text); border: none; width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%;
-      color: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-    }
-    .go-btn:hover { background: var(--accent); transform: scale(1.05); }
+    .add-tab-btn:hover { background: var(--hover); }
 
-    .nav-btn { background: transparent; border: none; color: var(--text); width: calc(34px * var(--gui-scale)); height: calc(34px * var(--gui-scale)); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .nav-btn:hover { background: var(--hover); color: var(--accent); }
+    /* Browser Navigation & Toolbar */
+    .browser-toolbar {
+      display: flex;
+      align-items: center;
+      height: 48px;
+      background: var(--panel);
+      border-bottom: var(--panel-border);
+      padding: 0 12px;
+      gap: 8px;
+      z-index: 1050;
+    }
 
+    .toolbar-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .toolbar-btn:hover { background: var(--hover); color: var(--accent); }
+
+    .url-bar-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: var(--panel-border);
+      border-radius: 20px;
+      padding: 0 14px;
+      height: 34px;
+      gap: 8px;
+    }
+
+    .url-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .url-input::placeholder { color: var(--subtext); }
+
+    /* Workspace Content Area */
+    .workspace-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .view-page {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .view-page.active { display: flex; }
+
+    /* Home View */
+    #home-view {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+    }
+    .styu-brand {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text);
+    }
+    .online-counter {
+      font-size: 0.85rem;
+      color: var(--subtext);
+    }
+
+    /* Sidebar Taskbar (Left Mini Nav) */
+    .sidebar-dock {
+      position: fixed;
+      left: 0;
+      top: 90px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+      background: var(--panel);
+      border-top: var(--panel-border);
+      border-right: var(--panel-border);
+      border-bottom: var(--panel-border);
+      border-radius: 0 12px 12px 0;
+      z-index: 1200;
+    }
+    .dock-btn {
+      background: transparent;
+      border: none;
+      color: var(--subtext);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .dock-btn:hover, .dock-btn.active { background: var(--hover); color: var(--text); }
+
+    /* Proxy Viewer Frame */
     .proxy-viewer {
-      position: fixed; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); width: calc(100vw - 64px * var(--gui-scale));
-      height: calc(100vh - 46px * var(--gui-scale)); background: var(--bg); z-index: 1000; display: none; align-items: center; justify-content: space-between;
-      padding-bottom: calc(85px * var(--gui-scale)); gap: 12px; padding-left: 12px; padding-right: 12px;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+      display: none;
     }
-    .proxy-viewer.active { display: flex; }
-    .screen-panel { flex: 1; height: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
-    .device-viewport { width: 100%; height: 100%; background: #ffffff; }
-    .proxy-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
+    .proxy-viewer.active { display: block; }
 
-    .loading-overlay {
-      position: absolute; top: calc(46px * var(--gui-scale)); left: calc(64px * var(--gui-scale)); right: 0; bottom: calc(85px * var(--gui-scale));
-      background: rgba(0, 0, 0, 0.9); z-index: 1500; display: flex; align-items: center; justify-content: center;
+    /* Chat, Games & Settings Layouts */
+    .page-container {
+      padding: 30px;
+      overflow-y: auto;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
-    .loading-overlay.hidden { display: none; }
-    .spinner-ring {
-      width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--text); border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85);
-      z-index: 3000; display: flex; align-items: center; justify-content: center;
-    }
-    .modal-overlay.hidden { display: none; }
-    .modal-box {
-      background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); width: 90%; max-width: 440px; padding: 24px;
-      display: flex; flex-direction: column; gap: 16px; max-height: 85vh; overflow-y: auto;
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: var(--panel-border); padding-bottom: 10px; font-weight: bold; text-transform: lowercase; }
-    .setting-group { display: flex; flex-direction: column; gap: 8px; }
-    .setting-group label { font-size: 0.82rem; color: var(--subtext); text-transform: lowercase; }
-    .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; text-transform: lowercase; }
+    .setting-group { display: flex; flex-direction: column; gap: 8px; max-width: 450px; }
+    .setting-group label { font-size: 0.85rem; color: var(--subtext); }
+    .setting-input { background: var(--panel); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
 
-    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .theme-card {
-      background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; text-transform: lowercase;
-    }
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .theme-card { background: var(--panel); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
     .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
-    .theme-color-preview { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); }
+    .theme-color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); }
 
-    .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 12px; font-weight: bold; color: var(--bg); cursor: pointer; text-transform: lowercase; }
+    .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 10px 16px; font-weight: bold; color: var(--bg); cursor: pointer; }
     .action-btn:hover { opacity: 0.9; }
 
-    #cloak-notice {
-      position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-      color: rgba(255, 255, 255, 0.4); font-size: 0.7rem; z-index: 99999;
-      pointer-events: none; user-select: none; display: none; text-transform: lowercase;
-    }
+    .svg-icon { width: 18px; height: 18px; fill: currentColor; }
+
+    /* Modals for History & Bookmarks */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); width: 90%; max-width: 500px; padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: var(--panel-border); padding-bottom: 10px; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border: var(--panel-border); border-radius: 6px; font-size: 0.88rem; cursor: pointer; }
+    .list-item:hover { background: var(--hover); }
   </style>
 </head>
 <body>
 
-  <div class="custom-tooltip" id="global-tooltip"></div>
+<div id="app-container">
 
-  <!-- Inversion Star Engine Container -->
-  <div class="star-blend-container">
-    <div class="home-view" id="home-view">
-      <div class="satura-title" id="satura-title-el">satura</div>
-      <div class="online-counter-sub" id="online-counter-text">1 person online</div>
-    </div>
-    <div class="star-mask-wrapper">
-      <canvas id="star-canvas" width="550" height="550"></canvas>
-    </div>
+  <!-- Sidebar Dock -->
+  <div class="sidebar-dock">
+    <button class="dock-btn active" id="dock-home" title="Home">🏠</button>
+    <button class="dock-btn" id="dock-chat" title="Chat">💬</button>
+    <button class="dock-btn" id="dock-games" title="gn-math games">🎮</button>
+    <button class="dock-btn" id="dock-settings" title="Settings">⚙️</button>
   </div>
 
-  <div class="loading-overlay hidden" id="loading-spinner">
-    <div class="spinner-ring"></div>
-  </div>
-
-  <!-- Sidebar Taskbar -->
-  <div class="sidebar" id="sidebar-el">
-    <button class="sidebar-btn active" id="sb-home" title="home">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-bookmarks" title="bookmarks & notes">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-chat" title="satura chat">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-games" title="games hub">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-settings" title="theme & settings">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-    </button>
-    <button class="sidebar-btn" id="sb-cloak-btn" title="stealth cloak (press \)">
-      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-    </button>
-
-    <div class="profile-avatar-btn" id="sb-profile" title="account & profile">
-      <span id="pfp-initial" style="font-weight:bold; font-size:0.9rem;">?</span>
-      <img id="pfp-img" src="" class="hidden" alt="profile" />
+  <!-- Top Browser Header (Tabs) -->
+  <div class="top-browser-header">
+    <div class="tab-container" id="tab-bar">
+      <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
     </div>
   </div>
 
-  <div class="tab-bar-container" id="tab-bar">
-    <button class="add-tab-btn" id="add-tab-btn" title="new tab">+</button>
+  <!-- Browser Navigation Toolbar (Matching Reference Image Layout) -->
+  <div class="browser-toolbar">
+    <button class="toolbar-btn" id="btn-back" title="Back"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+    <button class="toolbar-btn" id="btn-forward" title="Forward"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+    <button class="toolbar-btn" id="btn-reload" title="Reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+    <button class="toolbar-btn" id="btn-home" title="Home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+
+    <div class="url-bar-container">
+      <input type="text" class="url-input" id="proxy-input" placeholder="Search or enter address..." autocomplete="off">
+      <button class="toolbar-btn" id="btn-star" title="Star this page">⭐</button>
+    </div>
+
+    <button class="toolbar-btn" id="btn-fullscreen" title="Fullscreen">🖵</button>
+    <button class="toolbar-btn" id="btn-history" title="History">🕒</button>
+    <button class="toolbar-btn" id="btn-bookmarks" title="Bookmarks">📌</button>
   </div>
 
-  <div class="footer-credit" id="footer-credit">(powered by satura)</div>
+  <!-- Workspace Area -->
+  <div class="workspace-area">
 
-  <!-- Chat Page View -->
-  <div class="page-view" id="chat-page-view">
-    <div class="swipe-container" id="chat-swipe">
-      <div class="chat-layout">
-        <div class="chat-sidebar">
-          <h4>servers</h4>
-          <button class="room-btn active" data-room="global"># global-chat</button>
-          <button class="room-btn" data-room="general-1"># general-1</button>
-          <button class="room-btn" data-room="general-2"># general-2</button>
-          <button class="room-btn" data-room="general-3"># general-3</button>
-          <h4 style="margin-top: 15px;">direct messages</h4>
-          <div id="dm-rooms-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
-        </div>
-        <div class="chat-main-area">
-          <div style="font-weight: bold; font-size: 1.15rem; display: flex; justify-content: space-between; align-items: center; text-transform: lowercase;">
-            <span id="current-room-title"># global-chat</span>
-          </div>
-          <div class="chat-messages-container" id="chat-messages"></div>
-          <div class="chat-input-bar">
-            <input type="text" id="chat-input" class="pill-input" placeholder="type a message..." autocomplete="off" />
-            <button class="go-btn" id="chat-send" title="send">
-              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
-          </div>
+    <!-- Home View -->
+    <div class="view-page active" id="home-view">
+      <h1 class="styu-brand">styu</h1>
+      <div class="online-counter" id="online-counter-text">1 person online</div>
+    </div>
+
+    <!-- Proxy Viewer -->
+    <iframe class="view-page proxy-viewer" id="proxy-viewer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe>
+
+    <!-- Chat View -->
+    <div class="view-page" id="chat-page-view">
+      <div class="page-container">
+        <h2>styu chat</h2>
+        <div style="flex:1; background:var(--panel); border:var(--panel-border); border-radius:var(--border-radius); padding:20px; overflow-y:auto;" id="chat-messages"></div>
+        <div style="display:flex; gap:10px;">
+          <input type="text" class="setting-input" id="chat-input" placeholder="Type a message...">
+          <button class="action-btn" id="chat-send">Send</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Games Hub Page View (gn-math games) -->
-  <div class="page-view" id="games-page-view">
-    <div class="swipe-container" id="games-swipe">
-      <div class="games-container">
-        <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">🎮 gn-math games</div>
-        <iframe class="games-frame" src="https://s3.amazonaws.com/prageru-server/mathematics.html"></iframe>
+    <!-- Games Hub (gn-math games) -->
+    <div class="view-page" id="games-page-view">
+      <div class="page-container" style="padding:10px;">
+        <h2 style="margin-bottom:10px;">gn-math games</h2>
+        <iframe src="https://s3.amazonaws.com/prageru-server/mathematics.html" style="width:100%; flex:1; border:var(--panel-border); border-radius:var(--border-radius); background:#fff;"></iframe>
       </div>
     </div>
-  </div>
 
-  <!-- Settings Page View -->
-  <div class="page-view" id="settings-page-view">
-    <div class="swipe-container" id="settings-swipe">
-      <div class="settings-container">
-        <div style="font-weight: bold; font-size: 1.25rem; text-transform: lowercase;">⚙️ theme & preferences</div>
-        
+    <!-- Settings View -->
+    <div class="view-page" id="settings-page-view">
+      <div class="page-container">
+        <h2>styu settings & preferences</h2>
+
         <div class="setting-group">
-          <label>select color scheme</label>
+          <label>Theme Palette</label>
           <div class="theme-grid">
-            <div class="theme-card active" data-theme="obsidian"><div class="theme-color-preview" style="background:#ffffff;"></div><span>obsidian</span></div>
-            <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#ef4444;"></div><span>crimson</span></div>
-            <div class="theme-card" data-theme="emerald"><div class="theme-color-preview" style="background:#10b981;"></div><span>emerald</span></div>
-            <div class="theme-card" data-theme="amethyst"><div class="theme-color-preview" style="background:#8b5cf6;"></div><span>amethyst</span></div>
-            <div class="theme-card" data-theme="amber"><div class="theme-color-preview" style="background:#f59e0b;"></div><span>amber</span></div>
-            <div class="theme-card" data-theme="ghost"><div class="theme-color-preview" style="background:#94a3b8;"></div><span>ghost</span></div>
-            <div class="theme-card" data-theme="cyberpunk"><div class="theme-color-preview" style="background:#06b6d4;"></div><span>cyberpunk</span></div>
-            <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#22c55e;"></div><span>matrix</span></div>
-            <div class="theme-card" data-theme="coffee"><div class="theme-color-preview" style="background:#d97706;"></div><span>coffee</span></div>
+            <div class="theme-card active" data-theme="oled"><div class="theme-color-preview" style="background:#000000;"></div><span>OLED Black</span></div>
+            <div class="theme-card" data-theme="charcoal"><div class="theme-color-preview" style="background:#121212;"></div><span>Charcoal</span></div>
+            <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>Matrix Green</span></div>
+            <div class="theme-card" data-theme="blossom"><div class="theme-color-preview" style="background:#2d121c;"></div><span>Blossom Pink</span></div>
+            <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>Crimson Red</span></div>
+            <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>Aquatic Cyan</span></div>
           </div>
         </div>
 
         <div class="setting-group">
-          <label>tab & favicon cloak presets</label>
+          <label>Interface Style Options</label>
+          <select id="style-option-select" class="setting-input">
+            <option value="minimalist">Minimalist Dark</option>
+            <option value="compact">Compact Toolbar</option>
+            <option value="modern">Modern Glass</option>
+          </select>
+        </div>
+
+        <div class="setting-group">
+          <label>GUI Scale Size (<span id="gui-scale-val">1.0</span>x)</label>
+          <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="1.5" step="0.05" value="1.0" style="padding:0; cursor:pointer;">
+        </div>
+
+        <div class="setting-group">
+          <label>Tab Cloak Preset</label>
           <select id="tab-cloak-preset" class="setting-input">
-            <option value="satura">satura (default)</option>
-            <option value="google">google search</option>
-            <option value="khan">khan academy</option>
-            <option value="drive">google drive</option>
-            <option value="canvas">canvas lms</option>
+            <option value="styu">styu v1.0 (default)</option>
+            <option value="google">Google Search</option>
+            <option value="khan">Khan Academy</option>
+            <option value="drive">Google Drive</option>
           </select>
         </div>
-
-        <div class="setting-group">
-          <label>simulated IP & region</label>
-          <div style="display:flex; gap:10px;">
-            <select id="ip-region-select" class="setting-input" style="flex:1;">
-              <option value="us">US - Virginia (192.168.1.102)</option>
-              <option value="eu">EU - Frankfurt (185.220.101.5)</option>
-              <option value="asia">Asia - Tokyo (103.208.220.1)</option>
-            </select>
-            <button class="action-btn" id="randomize-ip-btn" style="padding: 8px 12px; font-size: 0.8rem;">randomize IP</button>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label>search bar position</label>
-          <select id="search-pos-select" class="setting-input">
-            <option value="bottom">bottom screen (default)</option>
-            <option value="top">top of screen (below tabs)</option>
-          </select>
-        </div>
-
-        <div class="setting-group">
-          <label>ui outlines & borders</label>
-          <select id="ui-outlines-select" class="setting-input">
-            <option value="enabled">enabled (standard borders)</option>
-            <option value="disabled">disabled (no outlines)</option>
-          </select>
-        </div>
-
-        <div class="setting-group">
-          <label>gui scale size (<span id="gui-scale-val">1.15</span>x)</label>
-          <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="3.0" step="0.05" value="1.15" style="padding: 0; cursor: pointer;" />
-        </div>
-
-        <div class="setting-group" style="margin-top: 10px;">
-          <button class="action-btn" id="manual-cloak-btn" style="background:#ef4444; color:#fff;">cloak view now (or press \)</button>
-        </div>
       </div>
     </div>
+
   </div>
 
-  <!-- User Profile Dashboard -->
-  <div class="modal-overlay hidden" id="user-dashboard-modal">
-    <div class="modal-box" style="align-items: center; text-align: center;">
-      <div class="modal-header" style="width: 100%;">
-        <span>user profile</span>
-        <button class="nav-btn" id="close-user-dashboard">×</button>
-      </div>
-      <div id="ud-pfp-container" style="width: 80px; height: 80px; border-radius: 50%; border: var(--panel-border); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 2rem; margin-top: 10px;"></div>
-      <h3 id="ud-username" style="margin-top: 5px; font-size: 1.3rem; text-transform: lowercase;">username</h3>
-      <div class="setting-group" style="width: 100%; text-align: left; margin-top: 10px;">
-        <label>user bio / status</label>
-        <div id="ud-bio" class="setting-input" style="min-height: 60px; background: var(--bg); color: #ccc;">exploring the web with satura.</div>
-      </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay hidden" id="history-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Browsing History</span>
+      <button class="toolbar-btn" id="close-history">✕</button>
     </div>
+    <div id="history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="action-btn" id="clear-history">Clear History</button>
   </div>
+</div>
 
-  <!-- Profile Modal -->
-  <div class="modal-overlay hidden" id="profile-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span>account & profile settings</span>
-        <button class="nav-btn" id="close-profile">×</button>
-      </div>
-      <div class="setting-group">
-        <label>display name</label>
-        <input type="text" id="profile-name" class="setting-input" placeholder="your username..." maxlength="20" />
-      </div>
-      <div class="setting-group">
-        <label>user bio / status</label>
-        <textarea id="profile-bio" class="setting-input" rows="2" placeholder="tell others about yourself..." maxlength="120"></textarea>
-      </div>
-      <div class="setting-group">
-        <label>profile picture URL</label>
-        <input type="text" id="profile-pfp" class="setting-input" placeholder="https://..." />
-      </div>
-      <div class="setting-group">
-        <label>chat message font</label>
-        <select id="profile-font" class="setting-input">
-          <option value="Arial, sans-serif">standard (arial)</option>
-          <option value="'Orbitron', sans-serif">sci-fi (orbitron)</option>
-          <option value="'Press Start 2P', monospace">press start 2p (retro)</option>
-          <option value="'Rajdhani', sans-serif">rajdhani (futuristic)</option>
-          <option value="'Share Tech Mono', monospace">share tech mono</option>
-          <option value="'Inter', sans-serif">inter clean</option>
-        </select>
-      </div>
-      <div class="setting-group">
-        <label>username animation style</label>
-        <select id="profile-anim" class="setting-input">
-          <option value="none">none</option>
-          <option value="wavy">wavy (animated letters)</option>
-        </select>
-      </div>
-      <div class="setting-group">
-        <label>username color</label>
-        <input type="color" id="profile-color" class="setting-input" value="#ffffff" style="height: 40px; padding: 2px; cursor: pointer;" />
-      </div>
-      <button class="action-btn" id="save-profile">save profile & preferences</button>
+<!-- Bookmarks Modal -->
+<div class="modal-overlay hidden" id="bookmarks-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>Starred Bookmarks</span>
+      <button class="toolbar-btn" id="close-bookmarks">✕</button>
     </div>
+    <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
+</div>
 
-  <!-- Bottom Search Bar with < and > Arrows -->
-  <div class="bottom-nav-wrapper" id="bottom-nav-wrapper">
-    <div class="bottom-nav-pill" id="search-pill-container">
-      <button class="nav-btn" id="btn-back" title="back"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-      <button class="nav-btn" id="btn-forward" title="forward"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
-      <button class="nav-btn" id="btn-reload" title="refresh"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
-
-      <input type="text" id="proxy-input" class="pill-input" placeholder="enter url..." autocomplete="off" autofocus />
-      <button class="go-btn" id="proxy-go"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
-    </div>
-  </div>
-
-  <!-- Bookmarks Modal -->
-  <div class="modal-overlay hidden" id="bookmarks-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <span>bookmarks & quick notes</span>
-        <button class="nav-btn" id="close-bookmarks">×</button>
-      </div>
-      <div class="setting-group">
-        <label>local scratchpad</label>
-        <textarea id="notes-textarea" class="setting-input" rows="5" placeholder="type quick notes here..."></textarea>
-      </div>
-      <button class="action-btn" id="save-notes">save notes</button>
-    </div>
-  </div>
-
-  <!-- Proxy Viewports -->
-  <div class="proxy-viewer" id="proxy-viewer">
-    <div class="screen-panel" id="screen-panel-1">
-      <div class="device-viewport"><iframe id="proxy-iframe-1" class="proxy-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe></div>
-    </div>
-  </div>
-
-  <div id="cloak-notice">double tap screen to uncloak</div>
-
-  <script src="/script.js"></script>
-  <script src="/chat.js"></script>
+<script src="/script.js"></script>
+<script src="/chat.js"></script>
 </body>
 </html>
