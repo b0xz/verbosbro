@@ -4,15 +4,23 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'styu_v1.0';
-if (localStorage.getItem('styu_version') !== CURRENT_VERSION) {
-  localStorage.setItem('styu_version', CURRENT_VERSION);
+const CURRENT_VERSION = 'at26_v1.0';
+if (localStorage.getItem('at26_version') !== CURRENT_VERSION) {
+  localStorage.setItem('at26_version', CURRENT_VERSION);
+}
+
+if (!localStorage.getItem('at26_user_name')) {
+  localStorage.setItem('at26_user_name', 'at26user-' + Math.floor(1000 + Math.random() * 9000));
+  localStorage.setItem('at26_user_bio', 'exploring the web with at26.');
+  localStorage.setItem('at26_user_pfp', '🚀');
+  localStorage.setItem('at26_user_color', '#ffffff');
+  localStorage.setItem('at26_username_anim', 'none');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let historyLog = JSON.parse(localStorage.getItem('styu_history') || '[]');
-let bookmarksList = JSON.parse(localStorage.getItem('styu_bookmarks') || '[]');
+let historyLog = JSON.parse(localStorage.getItem('at26_history') || '[]');
+let bookmarksList = JSON.parse(localStorage.getItem('at26_bookmarks') || '[]');
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -127,6 +135,117 @@ document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   });
 });
 
+/* Cloaking / Stealth Handling */
+let isCloaked = false;
+const cloakNotice = document.getElementById('cloak-notice');
+
+function toggleCloak(forceState) {
+  isCloaked = typeof forceState === 'boolean' ? forceState : !isCloaked;
+  if (isCloaked) {
+    document.body.style.opacity = '0';
+    if (cloakNotice) cloakNotice.style.display = 'block';
+  } else {
+    document.body.style.opacity = '1';
+    if (cloakNotice) cloakNotice.style.display = 'none';
+  }
+}
+
+document.getElementById('manual-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
+document.addEventListener('keydown', (e) => {
+  if (e.key === '\\') {
+    e.preventDefault();
+    toggleCloak();
+  }
+});
+
+const tabCloakPreset = document.getElementById('tab-cloak-preset');
+if (tabCloakPreset) {
+  tabCloakPreset.value = localStorage.getItem('at26_cloak_preset') || 'at26';
+  tabCloakPreset.addEventListener('change', (e) => {
+    const val = e.target.value;
+    localStorage.setItem('at26_cloak_preset', val);
+    const titleEl = document.getElementById('tab-title');
+    const faviconEl = document.getElementById('tab-favicon');
+    if (val === 'google') {
+      if (titleEl) titleEl.textContent = 'google search';
+      if (faviconEl) faviconEl.href = 'https://www.google.com/favicon.ico';
+    } else if (val === 'khan') {
+      if (titleEl) titleEl.textContent = 'dashboard | khan academy';
+      if (faviconEl) faviconEl.href = 'https://cdn.kastatic.org/images/favicon.ico';
+    } else {
+      if (titleEl) titleEl.textContent = 'at26';
+      if (faviconEl) faviconEl.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='10' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='50'>2</text><path d='M40 50 Q50 20 60 50' stroke='%23fff' stroke-width='6' fill='none'/><text x='65' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='50'>6</text></svg>";
+    }
+  });
+}
+
+/* Profile Settings */
+const profileNameInput = document.getElementById('profile-name');
+const profileBioInput = document.getElementById('profile-bio');
+const profilePfpInput = document.getElementById('profile-pfp');
+const profileColorInput = document.getElementById('profile-color');
+const profileAnimSelect = document.getElementById('profile-anim');
+
+function loadProfileSettings() {
+  if (profileNameInput) profileNameInput.value = localStorage.getItem('at26_user_name') || '';
+  if (profileBioInput) profileBioInput.value = localStorage.getItem('at26_user_bio') || '';
+  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('at26_user_pfp') || '';
+  if (profileColorInput) profileColorInput.value = localStorage.getItem('at26_user_color') || '#ffffff';
+  if (profileAnimSelect) profileAnimSelect.value = localStorage.getItem('at26_username_anim') || 'none';
+}
+loadProfileSettings();
+
+document.getElementById('save-profile')?.addEventListener('click', () => {
+  localStorage.setItem('at26_user_name', profileNameInput.value.trim() || 'at26user');
+  localStorage.setItem('at26_user_bio', profileBioInput.value.trim());
+  localStorage.setItem('at26_user_pfp', profilePfpInput.value.trim() || '🚀');
+  localStorage.setItem('at26_user_color', profileColorInput.value);
+  localStorage.setItem('at26_username_anim', profileAnimSelect.value);
+  alert('profile settings saved!');
+});
+
+/* Data JSON Export / Import & Deletion */
+document.getElementById('export-json-btn')?.addEventListener('click', () => {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'at26_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-json-file')?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      Object.keys(data).forEach(key => {
+        localStorage.setItem(key, data[key]);
+      });
+      alert('data successfully imported! reloading...');
+      location.reload();
+    } catch (err) {
+      alert('invalid json backup file.');
+    }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('clear-local-data')?.addEventListener('click', () => {
+  if (confirm('are you sure you want to delete all local data and preferences?')) {
+    localStorage.clear();
+    location.reload();
+  }
+});
+
 /* Toolbar Actions & Proxy Execution connected to /api/proxy */
 document.getElementById('btn-home')?.addEventListener('click', () => {
   hideAllPages();
@@ -189,7 +308,7 @@ window.launchProxy = function(rawInput) {
 
   historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
   if (historyLog.length > 50) historyLog.pop();
-  localStorage.setItem('styu_history', JSON.stringify(historyLog));
+  localStorage.setItem('at26_history', JSON.stringify(historyLog));
 
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
@@ -213,7 +332,7 @@ document.getElementById('btn-star')?.addEventListener('click', () => {
   if (currentTab && currentTab.url) {
     if (!bookmarksList.some(b => b.url === currentTab.url)) {
       bookmarksList.push({ title: currentTab.title, url: currentTab.url });
-      localStorage.setItem('styu_bookmarks', JSON.stringify(bookmarksList));
+      localStorage.setItem('at26_bookmarks', JSON.stringify(bookmarksList));
       alert('page starred and bookmarked!');
     } else {
       alert('page is already bookmarked.');
@@ -233,7 +352,7 @@ document.getElementById('btn-history')?.addEventListener('click', () => {
 document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
 document.getElementById('clear-history')?.addEventListener('click', () => {
   historyLog = [];
-  localStorage.removeItem('styu_history');
+  localStorage.removeItem('at26_history');
   document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">no history yet.</p>';
 });
 
@@ -245,14 +364,6 @@ document.getElementById('btn-bookmarks')?.addEventListener('click', () => {
   bookmarksModal.classList.remove('hidden');
 });
 document.getElementById('close-bookmarks')?.addEventListener('click', () => bookmarksModal.classList.add('hidden'));
-
-/* Clear Local Data */
-document.getElementById('clear-local-data')?.addEventListener('click', () => {
-  if (confirm('are you sure you want to clear all local data?')) {
-    localStorage.clear();
-    location.reload();
-  }
-});
 
 /* Themes & GUI Scaling */
 const THEMES = {
@@ -274,7 +385,7 @@ function applyTheme(key) {
   root.style.setProperty('--subtext', t.subtext);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('styu_theme', key);
+  localStorage.setItem('at26_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -284,12 +395,12 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('styu_theme') || 'oled');
+applyTheme(localStorage.getItem('at26_theme') || 'oled');
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 if (guiScaleSlider) {
-  const savedScale = localStorage.getItem('styu_gui_scale') || '1.0';
+  const savedScale = localStorage.getItem('at26_gui_scale') || '1.0';
   guiScaleSlider.value = savedScale;
   document.documentElement.style.setProperty('--gui-scale', savedScale);
   if (guiScaleVal) guiScaleVal.textContent = savedScale;
@@ -298,7 +409,7 @@ if (guiScaleSlider) {
     const val = e.target.value;
     document.documentElement.style.setProperty('--gui-scale', val);
     if (guiScaleVal) guiScaleVal.textContent = val;
-    localStorage.setItem('styu_gui_scale', val);
+    localStorage.setItem('at26_gui_scale', val);
   });
 }
 
