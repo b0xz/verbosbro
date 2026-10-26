@@ -4,23 +4,23 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = '1t25_v1.0';
-if (localStorage.getItem('1t25_version') !== CURRENT_VERSION) {
-  localStorage.setItem('1t25_version', CURRENT_VERSION);
+const CURRENT_VERSION = 'at26_v1.0';
+if (localStorage.getItem('at26_version') !== CURRENT_VERSION) {
+  localStorage.setItem('at26_version', CURRENT_VERSION);
 }
 
-if (!localStorage.getItem('1t25_user_name')) {
-  localStorage.setItem('1t25_user_name', '1t25user-' + Math.floor(1000 + Math.random() * 9000));
-  localStorage.setItem('1t25_user_bio', 'exploring the web with 1t25.');
-  localStorage.setItem('1t25_user_pfp', '🚀');
-  localStorage.setItem('1t25_user_color', '#ffffff');
-  localStorage.setItem('1t25_username_anim', 'none');
+if (!localStorage.getItem('at26_user_name')) {
+  localStorage.setItem('at26_user_name', 'at26user-' + Math.floor(1000 + Math.random() * 9000));
+  localStorage.setItem('at26_user_bio', 'exploring the web with at26.');
+  localStorage.setItem('at26_user_pfp', '🚀');
+  localStorage.setItem('at26_user_color', '#ffffff');
+  localStorage.setItem('at26_username_anim', 'none');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let historyLog = JSON.parse(localStorage.getItem('1t25_history') || '[]');
-let bookmarksList = JSON.parse(localStorage.getItem('1t25_bookmarks') || '[]');
+let historyLog = JSON.parse(localStorage.getItem('at26_history') || '[]');
+let bookmarksList = JSON.parse(localStorage.getItem('at26_bookmarks') || '[]');
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -30,6 +30,16 @@ const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
 const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
+const liveTimeDisplay = document.getElementById('live-time-display');
+
+// Live Time Ticker Below Thumbnail / Home
+function updateLiveTime() {
+  if (!liveTimeDisplay) return;
+  const now = new Date();
+  liveTimeDisplay.textContent = now.toLocaleTimeString();
+}
+setInterval(updateLiveTime, 1000);
+updateLiveTime();
 
 function renderTabs() {
   if (!tabBar) return;
@@ -160,10 +170,10 @@ document.addEventListener('keydown', (e) => {
 
 const tabCloakPreset = document.getElementById('tab-cloak-preset');
 if (tabCloakPreset) {
-  tabCloakPreset.value = localStorage.getItem('1t25_cloak_preset') || '1t25';
+  tabCloakPreset.value = localStorage.getItem('at26_cloak_preset') || 'at26';
   tabCloakPreset.addEventListener('change', (e) => {
     const val = e.target.value;
-    localStorage.setItem('1t25_cloak_preset', val);
+    localStorage.setItem('at26_cloak_preset', val);
     const titleEl = document.getElementById('tab-title');
     const faviconEl = document.getElementById('tab-favicon');
     if (val === 'google') {
@@ -173,8 +183,8 @@ if (tabCloakPreset) {
       if (titleEl) titleEl.textContent = 'dashboard | khan academy';
       if (faviconEl) faviconEl.href = 'https://cdn.kastatic.org/images/favicon.ico';
     } else {
-      if (titleEl) titleEl.textContent = '1t25';
-      if (faviconEl) faviconEl.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='5' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='45'>1</text><path d='M32 50 Q50 15 68 50' stroke='%23fff' stroke-width='5' fill='none'/><text x='72' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='45'>25</text></svg>";
+      if (titleEl) titleEl.textContent = 'at26';
+      if (faviconEl) faviconEl.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='10' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='35'>at26</text></svg>";
     }
   });
 }
@@ -187,20 +197,20 @@ const profileColorInput = document.getElementById('profile-color');
 const profileAnimSelect = document.getElementById('profile-anim');
 
 function loadProfileSettings() {
-  if (profileNameInput) profileNameInput.value = localStorage.getItem('1t25_user_name') || '';
-  if (profileBioInput) profileBioInput.value = localStorage.getItem('1t25_user_bio') || '';
-  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('1t25_user_pfp') || '';
-  if (profileColorInput) profileColorInput.value = localStorage.getItem('1t25_user_color') || '#ffffff';
-  if (profileAnimSelect) profileAnimSelect.value = localStorage.getItem('1t25_username_anim') || 'none';
+  if (profileNameInput) profileNameInput.value = localStorage.getItem('at26_user_name') || '';
+  if (profileBioInput) profileBioInput.value = localStorage.getItem('at26_user_bio') || '';
+  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('at26_user_pfp') || '';
+  if (profileColorInput) profileColorInput.value = localStorage.getItem('at26_user_color') || '#ffffff';
+  if (profileAnimSelect) profileAnimSelect.value = localStorage.getItem('at26_username_anim') || 'none';
 }
 loadProfileSettings();
 
 document.getElementById('save-profile')?.addEventListener('click', () => {
-  localStorage.setItem('1t25_user_name', profileNameInput.value.trim() || '1t25user');
-  localStorage.setItem('1t25_user_bio', profileBioInput.value.trim());
-  localStorage.setItem('1t25_user_pfp', profilePfpInput.value.trim() || '🚀');
-  localStorage.setItem('1t25_user_color', profileColorInput.value);
-  localStorage.setItem('1t25_username_anim', profileAnimSelect.value);
+  localStorage.setItem('at26_user_name', profileNameInput.value.trim() || 'at26user');
+  localStorage.setItem('at26_user_bio', profileBioInput.value.trim());
+  localStorage.setItem('at26_user_pfp', profilePfpInput.value.trim() || '🚀');
+  localStorage.setItem('at26_user_color', profileColorInput.value);
+  localStorage.setItem('at26_username_anim', profileAnimSelect.value);
   alert('profile settings saved!');
 });
 
@@ -215,7 +225,7 @@ document.getElementById('export-json-btn')?.addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '1t25_backup.json';
+  a.download = 'at26_backup.json';
   a.click();
   URL.revokeObjectURL(url);
 });
@@ -308,7 +318,7 @@ window.launchProxy = function(rawInput) {
 
   historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
   if (historyLog.length > 50) historyLog.pop();
-  localStorage.setItem('1t25_history', JSON.stringify(historyLog));
+  localStorage.setItem('at26_history', JSON.stringify(historyLog));
 
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
@@ -332,7 +342,7 @@ document.getElementById('btn-star')?.addEventListener('click', () => {
   if (currentTab && currentTab.url) {
     if (!bookmarksList.some(b => b.url === currentTab.url)) {
       bookmarksList.push({ title: currentTab.title, url: currentTab.url });
-      localStorage.setItem('1t25_bookmarks', JSON.stringify(bookmarksList));
+      localStorage.setItem('at26_bookmarks', JSON.stringify(bookmarksList));
       alert('page starred and bookmarked!');
     } else {
       alert('page is already bookmarked.');
@@ -352,7 +362,7 @@ document.getElementById('btn-history')?.addEventListener('click', () => {
 document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
 document.getElementById('clear-history')?.addEventListener('click', () => {
   historyLog = [];
-  localStorage.removeItem('1t25_history');
+  localStorage.removeItem('at26_history');
   document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">no history yet.</p>';
 });
 
@@ -385,7 +395,7 @@ function applyTheme(key) {
   root.style.setProperty('--subtext', t.subtext);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('1t25_theme', key);
+  localStorage.setItem('at26_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -395,12 +405,12 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('1t25_theme') || 'oled');
+applyTheme(localStorage.getItem('at26_theme') || 'oled');
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 if (guiScaleSlider) {
-  const savedScale = localStorage.getItem('1t25_gui_scale') || '1.0';
+  const savedScale = localStorage.getItem('at26_gui_scale') || '1.0';
   guiScaleSlider.value = savedScale;
   document.documentElement.style.setProperty('--gui-scale', savedScale);
   if (guiScaleVal) guiScaleVal.textContent = savedScale;
@@ -409,7 +419,7 @@ if (guiScaleSlider) {
     const val = e.target.value;
     document.documentElement.style.setProperty('--gui-scale', val);
     if (guiScaleVal) guiScaleVal.textContent = val;
-    localStorage.setItem('1t25_gui_scale', val);
+    localStorage.setItem('at26_gui_scale', val);
   });
 }
 
