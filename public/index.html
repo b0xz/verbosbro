@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">at26</title>
-  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='10' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='50'>2</text><path d='M40 50 Q50 20 60 50' stroke='%23fff' stroke-width='6' fill='none'/><text x='65' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='50'>6</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <title id="tab-title">1t25</title>
+  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='5' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='45'>1</text><path d='M32 50 Q50 15 68 50' stroke='%23fff' stroke-width='5' fill='none'/><text x='72' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='45'>25</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -17,12 +17,12 @@
       --subtext: #888888;
       --accent: #ffffff;
       --hover: #1a1a1a;
-      --font: 'Inter', Arial, sans-serif;
+      --font: 'Share Tech Mono', monospace;
       --border-radius: 8px;
       --panel-border: 1px solid var(--border);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; font-weight: 300; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
     #app-container {
@@ -143,7 +143,7 @@
     }
     .url-input::placeholder { color: var(--subtext); }
 
-    /* Workspace Area */
+    /* Workspace Area & Full Viewport Frame */
     .workspace-area {
       flex: 1;
       position: relative;
@@ -151,38 +151,37 @@
       flex-direction: column;
       overflow: hidden;
       background: var(--bg);
-      padding-bottom: 56px;
     }
 
     .view-page {
       position: absolute;
       inset: 0;
-      bottom: 56px;
+      bottom: 0;
       display: none;
       flex-direction: column;
       background: var(--bg);
     }
     .view-page.active { display: flex; }
 
-    /* Home View with at26 Logo */
+    /* Home View with 1t25 Logo */
     #home-view {
       align-items: center;
       justify-content: center;
       text-align: center;
       gap: 12px;
     }
-    .at26-brand {
+    .brand-container {
       display: flex;
       align-items: center;
       gap: 12px;
       font-size: 3.5rem;
-      font-weight: 800;
-      letter-spacing: -1px;
+      font-weight: 300;
+      letter-spacing: 2px;
       color: var(--text);
     }
-    .at26-logo-svg {
-      width: 64px;
-      height: 64px;
+    .brand-logo-svg {
+      width: 70px;
+      height: 70px;
       fill: currentColor;
     }
 
@@ -216,7 +215,7 @@
     }
     .dock-btn:hover, .dock-btn.active { background: var(--hover); color: var(--text); }
 
-    /* Proxy Viewer Frame */
+    /* Proxy Viewer Frame covering top-to-bottom */
     .proxy-viewer {
       width: 100%;
       height: 100%;
@@ -227,7 +226,7 @@
     .proxy-viewer.active { display: block; }
 
     /* Chat Layout Styles */
-    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); }
+    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); padding-bottom: 56px; }
     .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 8px; overflow-y: auto; }
     .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); margin-top: 5px; margin-bottom: 2px; }
     .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.88rem; }
@@ -253,6 +252,7 @@
       flex-direction: column;
       gap: 20px;
       background: var(--bg);
+      padding-bottom: 80px;
     }
     .settings-tabs-header {
       display: flex;
@@ -347,16 +347,16 @@
   <!-- Workspace Area -->
   <div class="workspace-area">
 
-    <!-- Home View with at26 Logo -->
-    <div class="view-page active" id="home-view">
-      <div class="at26-brand">
-        <span>2</span>
-        <svg class="at26-logo-svg" viewBox="0 0 100 100"><path d="M20 50 Q50 10 80 50" stroke="currentColor" stroke-width="12" fill="none" stroke-linecap="round"/></svg>
-        <span>6</span>
+    <!-- Home View with 1t25 Logo -->
+    <div class="view-page active" id="home-view" style="padding-bottom: 56px;">
+      <div class="brand-container">
+        <span>1</span>
+        <svg class="brand-logo-svg" viewBox="0 0 100 100"><path d="M20 50 Q50 15 80 50" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round"/></svg>
+        <span>25</span>
       </div>
     </div>
 
-    <!-- Proxy Viewer -->
+    <!-- Proxy Viewer (Covers Top and Bottom) -->
     <iframe class="view-page proxy-viewer" id="proxy-viewer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe>
 
     <!-- Chat View -->
@@ -380,17 +380,17 @@
     </div>
 
     <!-- Games Hub -->
-    <div class="view-page" id="games-page-view">
-      <div class="page-container" style="padding:10px;">
+    <div class="view-page" id="games-page-view" style="padding-bottom: 56px;">
+      <div class="page-container" style="padding:10px; height:100%;">
         <h2 style="margin-bottom:10px;">gn-math games</h2>
         <iframe src="https://s3.amazonaws.com/prageru-server/mathematics.html" style="width:100%; flex:1; border:var(--panel-border); border-radius:var(--border-radius); background:#fff;"></iframe>
       </div>
     </div>
 
     <!-- Fullscreen Settings View with Tabs -->
-    <div class="view-page" id="settings-page-view">
+    <div class="view-page" id="settings-page-view" style="padding-bottom: 56px;">
       <div class="settings-container">
-        <h2>at26 settings & preferences</h2>
+        <h2>1t25 settings & preferences</h2>
 
         <div class="settings-tabs-header">
           <button class="settings-tab-btn active" data-tab="ui">ui</button>
@@ -436,7 +436,7 @@
           <div class="setting-card">
             <label>tab & favicon cloak presets</label>
             <select id="tab-cloak-preset" class="setting-input">
-              <option value="at26">at26 (default)</option>
+              <option value="1t25">1t25 (default)</option>
               <option value="google">google search</option>
               <option value="khan">khan academy</option>
               <option value="drive">google drive</option>
