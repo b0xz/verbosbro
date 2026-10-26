@@ -181,7 +181,7 @@
       color: var(--subtext);
     }
 
-    /* Sidebar Taskbar (Left Mini Nav) */
+    /* Sidebar Dock (Left Mini Nav) */
     .sidebar-dock {
       position: fixed;
       left: 0;
@@ -221,7 +221,25 @@
     }
     .proxy-viewer.active { display: block; }
 
-    /* Chat, Games & Settings Layouts */
+    /* Chat Layout Styles */
+    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); }
+    .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 8px; overflow-y: auto; }
+    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); margin-top: 5px; margin-bottom: 2px; }
+    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.88rem; }
+    .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
+    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; background: var(--bg); }
+    .chat-messages-container { flex: 1; background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; }
+    .chat-msg-pfp { width: 40px; height: 40px; border-radius: 50%; border: var(--panel-border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
+    .chat-msg-username { font-weight: bold; font-size: 0.95rem; }
+    .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
+    .chat-msg-text { font-size: 0.98rem; color: var(--text); word-break: break-word; }
+    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
+
+    /* Settings & General Page Containers */
     .page-container {
       padding: 30px;
       overflow-y: auto;
@@ -273,7 +291,7 @@
     </div>
   </div>
 
-  <!-- Browser Navigation Toolbar (Matching Reference Image Layout) -->
+  <!-- Browser Navigation Toolbar with Fixed SVGs -->
   <div class="browser-toolbar">
     <button class="toolbar-btn" id="btn-back" title="Back"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
     <button class="toolbar-btn" id="btn-forward" title="Forward"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
@@ -304,12 +322,20 @@
 
     <!-- Chat View -->
     <div class="view-page" id="chat-page-view">
-      <div class="page-container">
-        <h2>styu chat</h2>
-        <div style="flex:1; background:var(--panel); border:var(--panel-border); border-radius:var(--border-radius); padding:20px; overflow-y:auto;" id="chat-messages"></div>
-        <div style="display:flex; gap:10px;">
-          <input type="text" class="setting-input" id="chat-input" placeholder="Type a message...">
-          <button class="action-btn" id="chat-send">Send</button>
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <h4>servers</h4>
+          <button class="room-btn active" data-room="global"># global-chat</button>
+          <button class="room-btn" data-room="general-1"># general-1</button>
+          <button class="room-btn" data-room="general-2"># general-2</button>
+        </div>
+        <div class="chat-main-area">
+          <div style="font-weight: bold; font-size: 1.15rem;"><span id="current-room-title"># global-chat</span></div>
+          <div class="chat-messages-container" id="chat-messages"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="chat-input" class="url-input" placeholder="type a message..." autocomplete="off" />
+            <button class="toolbar-btn" id="chat-send" title="send"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+          </div>
         </div>
       </div>
     </div>
