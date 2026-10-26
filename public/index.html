@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tab-title">styu v1.0</title>
   <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><circle cx='50' cy='50' r='30' fill='%23fff'/></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Press+Start+2P&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -22,10 +22,9 @@
       --panel-border: 1px solid var(--border);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
-    /* Clean Scaled UI Wrapper */
     #app-container {
       width: calc(100% / var(--gui-scale));
       height: calc(100% / var(--gui-scale));
@@ -144,7 +143,7 @@
     }
     .url-input::placeholder { color: var(--subtext); }
 
-    /* Workspace Content Area */
+    /* Workspace Area */
     .workspace-area {
       flex: 1;
       position: relative;
@@ -152,11 +151,13 @@
       flex-direction: column;
       overflow: hidden;
       background: var(--bg);
+      padding-bottom: 56px;
     }
 
     .view-page {
       position: absolute;
       inset: 0;
+      bottom: 56px;
       display: none;
       flex-direction: column;
       background: var(--bg);
@@ -176,38 +177,34 @@
       letter-spacing: -1px;
       color: var(--text);
     }
-    .online-counter {
-      font-size: 0.85rem;
-      color: var(--subtext);
-    }
 
-    /* Sidebar Dock (Left Mini Nav) */
+    /* Bottom Navigation Dock */
     .sidebar-dock {
       position: fixed;
+      bottom: 0;
       left: 0;
-      top: 90px;
+      width: 100%;
+      height: 56px;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
       background: var(--panel);
       border-top: var(--panel-border);
-      border-right: var(--panel-border);
-      border-bottom: var(--panel-border);
-      border-radius: 0 12px 12px 0;
       z-index: 1200;
     }
     .dock-btn {
       background: transparent;
       border: none;
       color: var(--subtext);
-      width: 36px;
-      height: 36px;
+      padding: 8px 16px;
       border-radius: 8px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
       cursor: pointer;
+      font-size: 0.85rem;
     }
     .dock-btn:hover, .dock-btn.active { background: var(--hover); color: var(--text); }
 
@@ -239,22 +236,60 @@
     .chat-msg-text { font-size: 0.98rem; color: var(--text); word-break: break-word; }
     .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
 
-    /* Settings & General Page Containers */
-    .page-container {
+    /* Fullscreen Tabbed Settings */
+    .settings-container {
       padding: 30px;
       overflow-y: auto;
       height: 100%;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      background: var(--bg);
+    }
+    .settings-tabs-header {
+      display: flex;
+      gap: 10px;
+      border-bottom: var(--panel-border);
+      padding-bottom: 12px;
+    }
+    .settings-tab-btn {
+      background: var(--panel);
+      border: var(--panel-border);
+      color: var(--subtext);
+      padding: 8px 16px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .settings-tab-btn.active {
+      background: var(--bg);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .settings-tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .settings-tab-pane.active {
+      display: flex;
     }
 
-    .setting-group { display: flex; flex-direction: column; gap: 8px; max-width: 450px; }
-    .setting-group label { font-size: 0.85rem; color: var(--subtext); }
-    .setting-input { background: var(--panel); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+    .setting-card {
+      background: var(--panel);
+      border: var(--panel-border);
+      border-radius: var(--border-radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 650px;
+    }
+    .setting-card label { font-size: 0.85rem; color: var(--subtext); }
+    .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
 
     .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .theme-card { background: var(--panel); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+    .theme-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
     .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
     .theme-color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); }
 
@@ -276,36 +311,28 @@
 
 <div id="app-container">
 
-  <!-- Sidebar Dock -->
-  <div class="sidebar-dock">
-    <button class="dock-btn active" id="dock-home" title="Home">🏠</button>
-    <button class="dock-btn" id="dock-chat" title="Chat">💬</button>
-    <button class="dock-btn" id="dock-games" title="gn-math games">🎮</button>
-    <button class="dock-btn" id="dock-settings" title="Settings">⚙️</button>
-  </div>
-
   <!-- Top Browser Header (Tabs) -->
   <div class="top-browser-header">
     <div class="tab-container" id="tab-bar">
-      <button class="add-tab-btn" id="add-tab-btn" title="New Tab">+</button>
+      <button class="add-tab-btn" id="add-tab-btn" title="new tab">+</button>
     </div>
   </div>
 
-  <!-- Browser Navigation Toolbar with Fixed SVGs -->
+  <!-- Browser Navigation Toolbar with Built-in SVGs -->
   <div class="browser-toolbar">
-    <button class="toolbar-btn" id="btn-back" title="Back"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-    <button class="toolbar-btn" id="btn-forward" title="Forward"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
-    <button class="toolbar-btn" id="btn-reload" title="Reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
-    <button class="toolbar-btn" id="btn-home" title="Home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+    <button class="toolbar-btn" id="btn-back" title="back"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+    <button class="toolbar-btn" id="btn-forward" title="forward"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></button>
+    <button class="toolbar-btn" id="btn-reload" title="reload"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+    <button class="toolbar-btn" id="btn-home" title="home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
 
     <div class="url-bar-container">
-      <input type="text" class="url-input" id="proxy-input" placeholder="Search or enter address..." autocomplete="off">
-      <button class="toolbar-btn" id="btn-star" title="Star this page">⭐</button>
+      <input type="text" class="url-input" id="proxy-input" placeholder="search or enter address..." autocomplete="off">
+      <button class="toolbar-btn" id="btn-star" title="star this page"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
     </div>
 
-    <button class="toolbar-btn" id="btn-fullscreen" title="Fullscreen">🖵</button>
-    <button class="toolbar-btn" id="btn-history" title="History">🕒</button>
-    <button class="toolbar-btn" id="btn-bookmarks" title="Bookmarks">📌</button>
+    <button class="toolbar-btn" id="btn-fullscreen" title="fullscreen"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+    <button class="toolbar-btn" id="btn-history" title="history"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7 7 7 0 0 1-4.93-2.08l-1.42 1.42A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg></button>
+    <button class="toolbar-btn" id="btn-bookmarks" title="bookmarks"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg></button>
   </div>
 
   <!-- Workspace Area -->
@@ -314,7 +341,6 @@
     <!-- Home View -->
     <div class="view-page active" id="home-view">
       <h1 class="styu-brand">styu</h1>
-      <div class="online-counter" id="online-counter-text">1 person online</div>
     </div>
 
     <!-- Proxy Viewer -->
@@ -348,49 +374,81 @@
       </div>
     </div>
 
-    <!-- Settings View -->
+    <!-- Fullscreen Settings View with Tabs -->
     <div class="view-page" id="settings-page-view">
-      <div class="page-container">
+      <div class="settings-container">
         <h2>styu settings & preferences</h2>
 
-        <div class="setting-group">
-          <label>Theme Palette</label>
-          <div class="theme-grid">
-            <div class="theme-card active" data-theme="oled"><div class="theme-color-preview" style="background:#000000;"></div><span>OLED Black</span></div>
-            <div class="theme-card" data-theme="charcoal"><div class="theme-color-preview" style="background:#121212;"></div><span>Charcoal</span></div>
-            <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>Matrix Green</span></div>
-            <div class="theme-card" data-theme="blossom"><div class="theme-color-preview" style="background:#2d121c;"></div><span>Blossom Pink</span></div>
-            <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>Crimson Red</span></div>
-            <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>Aquatic Cyan</span></div>
+        <div class="settings-tabs-header">
+          <button class="settings-tab-btn active" data-tab="ui">ui</button>
+          <button class="settings-tab-btn" data-tab="advanced">advanced</button>
+          <button class="settings-tab-btn" data-tab="privacy">privacy / cloaking / security</button>
+          <button class="settings-tab-btn" data-tab="misc">misc</button>
+        </div>
+
+        <!-- UI Tab -->
+        <div class="settings-tab-pane active" id="pane-ui">
+          <div class="setting-card">
+            <label>color scheme</label>
+            <div class="theme-grid">
+              <div class="theme-card active" data-theme="oled"><div class="theme-color-preview" style="background:#000000;"></div><span>oled black</span></div>
+              <div class="theme-card" data-theme="charcoal"><div class="theme-color-preview" style="background:#121212;"></div><span>charcoal</span></div>
+              <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>matrix green</span></div>
+              <div class="theme-card" data-theme="blossom"><div class="theme-color-preview" style="background:#2d121c;"></div><span>blossom pink</span></div>
+              <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>crimson red</span></div>
+              <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>aquatic cyan</span></div>
+            </div>
+          </div>
+          <div class="setting-card">
+            <label>gui scale size (<span id="gui-scale-val">1.0</span>x)</label>
+            <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="1.5" step="0.05" value="1.0" style="padding:0; cursor:pointer;">
           </div>
         </div>
 
-        <div class="setting-group">
-          <label>Interface Style Options</label>
-          <select id="style-option-select" class="setting-input">
-            <option value="minimalist">Minimalist Dark</option>
-            <option value="compact">Compact Toolbar</option>
-            <option value="modern">Modern Glass</option>
-          </select>
+        <!-- Advanced Tab -->
+        <div class="settings-tab-pane" id="pane-advanced">
+          <div class="setting-card">
+            <label>interface style options</label>
+            <select id="style-option-select" class="setting-input">
+              <option value="minimalist">minimalist dark</option>
+              <option value="compact">compact toolbar</option>
+              <option value="modern">modern glass</option>
+            </select>
+          </div>
         </div>
 
-        <div class="setting-group">
-          <label>GUI Scale Size (<span id="gui-scale-val">1.0</span>x)</label>
-          <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="1.5" step="0.05" value="1.0" style="padding:0; cursor:pointer;">
+        <!-- Privacy / Cloaking / Security Tab -->
+        <div class="settings-tab-pane" id="pane-privacy">
+          <div class="setting-card">
+            <label>tab & favicon cloak presets</label>
+            <select id="tab-cloak-preset" class="setting-input">
+              <option value="styu">styu v1.0 (default)</option>
+              <option value="google">google search</option>
+              <option value="khan">khan academy</option>
+              <option value="drive">google drive</option>
+            </select>
+          </div>
         </div>
 
-        <div class="setting-group">
-          <label>Tab Cloak Preset</label>
-          <select id="tab-cloak-preset" class="setting-input">
-            <option value="styu">styu v1.0 (default)</option>
-            <option value="google">Google Search</option>
-            <option value="khan">Khan Academy</option>
-            <option value="drive">Google Drive</option>
-          </select>
+        <!-- Misc Tab -->
+        <div class="settings-tab-pane" id="pane-misc">
+          <div class="setting-card">
+            <label>local data & cache</label>
+            <button class="action-btn" id="clear-local-data">clear local storage data</button>
+          </div>
         </div>
+
       </div>
     </div>
 
+  </div>
+
+  <!-- Bottom Navigation Dock -->
+  <div class="sidebar-dock">
+    <button class="dock-btn active" id="dock-home" title="home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>home</button>
+    <button class="dock-btn" id="dock-chat" title="chat"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>chat</button>
+    <button class="dock-btn" id="dock-games" title="games"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>games</button>
+    <button class="dock-btn" id="dock-settings" title="settings"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>settings</button>
   </div>
 
 </div>
@@ -399,11 +457,11 @@
 <div class="modal-overlay hidden" id="history-modal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>Browsing History</span>
+      <span>browsing history</span>
       <button class="toolbar-btn" id="close-history">✕</button>
     </div>
     <div id="history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-    <button class="action-btn" id="clear-history">Clear History</button>
+    <button class="action-btn" id="clear-history">clear history</button>
   </div>
 </div>
 
@@ -411,7 +469,7 @@
 <div class="modal-overlay hidden" id="bookmarks-modal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>Starred Bookmarks</span>
+      <span>starred bookmarks</span>
       <button class="toolbar-btn" id="close-bookmarks">✕</button>
     </div>
     <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:8px;"></div>
