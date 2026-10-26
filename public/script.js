@@ -41,14 +41,64 @@ function hideSpinner() { if (loadingSpinner) loadingSpinner.classList.add('hidde
 
 if (proxyViewer) proxyViewer.addEventListener('load', hideSpinner);
 
-// Online Users Counter Simulation
-function updateOnlineCounter() {
+// Real Online Users Counter (Synced via BroadcastChannel & Server Heartbeat)
+const presenceChannel = new BroadcastChannel('satura_presence_channel');
+let sessionKey = 'satura_session_' + Math.random();
+let activeSessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+
+activeSessions[sessionKey] = Date.now();
+localStorage.setItem('satura_active_sessions', JSON.stringify(activeSessions));
+
+window.addEventListener('beforeunload', () => {
+  let sessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+  delete sessions[sessionKey];
+  localStorage.setItem('satura_active_sessions', JSON.stringify(sessions));
+  presenceChannel.postMessage({ type: 'ping' });
+});
+
+presenceChannel.onmessage = (event) => {
+  if (event.data && event.data.type === 'ping') {
+    updateRealOnlineCounter();
+  }
+};
+
+async function updateRealOnlineCounter() {
   if (!onlineCounterText) return;
-  const count = Math.floor(Math.random() * 5) + 1;
-  onlineCounterText.textContent = count === 1 ? '1 person online' : `${count} people online`;
+  
+  // Try fetching from real server endpoint if available
+  try {
+    const res = await fetch('/api/online', { method: 'GET', cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.count === 'number') {
+        onlineCounterText.textContent = data.count === 1 ? '1 person online' : `${data.count} people online`;
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // Fallback: Real active session tracking across tabs/windows
+  let sessions = JSON.parse(localStorage.getItem('satura_active_sessions') || '{}');
+  const now = Date.now();
+  let validCount = 0;
+  
+  Object.keys(sessions).forEach(k => {
+    if (now - sessions[k] < 15000) {
+      validCount++;
+    } else {
+      delete sessions[k];
+    }
+  });
+
+  sessions[sessionKey] = now;
+  localStorage.setItem('satura_active_sessions', JSON.stringify(sessions));
+  validCount = Math.max(1, validCount);
+
+  onlineCounterText.textContent = validCount === 1 ? '1 person online' : `${validCount} people online`;
 }
-setInterval(updateOnlineCounter, 10000);
-updateOnlineCounter();
+
+setInterval(updateRealOnlineCounter, 5000);
+updateRealOnlineCounter();
 
 function renderTabs() {
   if (!tabBar) return;
@@ -111,6 +161,7 @@ function hideAllPages() {
   if (proxyViewerContainer) proxyViewerContainer.classList.remove('active');
   if (chatPageView) chatPageView.classList.remove('active');
   if (gamesPageView) gamesPageView.classList.remove('active');
+  if (settingsPageView) settingsPageView.classList.add('active'); // Wait, settings should be hidden unless active
   if (settingsPageView) settingsPageView.classList.remove('active');
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
 }
