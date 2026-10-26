@@ -9,7 +9,7 @@ if (localStorage.getItem('styu_version') !== CURRENT_VERSION) {
   localStorage.setItem('styu_version', CURRENT_VERSION);
 }
 
-let tabs = [{ id: 1, title: 'New Tab', url: '', src: 'about:blank' }];
+let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
 let historyLog = JSON.parse(localStorage.getItem('styu_history') || '[]');
 let bookmarksList = JSON.parse(localStorage.getItem('styu_bookmarks') || '[]');
@@ -22,64 +22,6 @@ const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
 const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
-const onlineCounterText = document.getElementById('online-counter-text');
-
-// Real Online Users Counter (Synced via BroadcastChannel & LocalStorage Session Heartbeat)
-const presenceChannel = new BroadcastChannel('styu_presence_channel');
-let sessionKey = 'styu_session_' + Math.random();
-let activeSessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
-
-activeSessions[sessionKey] = Date.now();
-localStorage.setItem('styu_active_sessions', JSON.stringify(activeSessions));
-
-window.addEventListener('beforeunload', () => {
-  let sessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
-  delete sessions[sessionKey];
-  localStorage.setItem('styu_active_sessions', JSON.stringify(sessions));
-  presenceChannel.postMessage({ type: 'ping' });
-});
-
-presenceChannel.onmessage = (event) => {
-  if (event.data && event.data.type === 'ping') {
-    updateRealOnlineCounter();
-  }
-};
-
-async function updateRealOnlineCounter() {
-  if (!onlineCounterText) return;
-  
-  try {
-    const res = await fetch('/api/online', { method: 'GET', cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && typeof data.count === 'number') {
-        onlineCounterText.textContent = data.count === 1 ? '1 person online' : `${data.count} people online`;
-        return;
-      }
-    }
-  } catch (e) {}
-
-  let sessions = JSON.parse(localStorage.getItem('styu_active_sessions') || '{}');
-  const now = Date.now();
-  let validCount = 0;
-  
-  Object.keys(sessions).forEach(k => {
-    if (now - sessions[k] < 15000) {
-      validCount++;
-    } else {
-      delete sessions[k];
-    }
-  });
-
-  sessions[sessionKey] = now;
-  localStorage.setItem('styu_active_sessions', JSON.stringify(sessions));
-  validCount = Math.max(1, validCount);
-
-  onlineCounterText.textContent = validCount === 1 ? '1 person online' : `${validCount} people online`;
-}
-
-setInterval(updateRealOnlineCounter, 5000);
-updateRealOnlineCounter();
 
 function renderTabs() {
   if (!tabBar) return;
@@ -116,7 +58,7 @@ function switchTab(id) {
   renderTabs();
 }
 
-function addTab(url = '', src = 'about:blank', title = 'New Tab') {
+function addTab(url = '', src = 'about:blank', title = 'new tab') {
   const newId = Date.now();
   tabs.push({ id: newId, title, url, src });
   switchTab(newId);
@@ -124,7 +66,7 @@ function addTab(url = '', src = 'about:blank', title = 'New Tab') {
 
 window.closeTab = function(id) {
   if (tabs.length === 1) {
-    tabs[0] = { id: Date.now(), title: 'New Tab', url: '', src: 'about:blank' };
+    tabs[0] = { id: Date.now(), title: 'new tab', url: '', src: 'about:blank' };
     switchTab(tabs[0].id);
     return;
   }
@@ -175,6 +117,16 @@ document.getElementById('dock-settings')?.addEventListener('click', () => {
   document.getElementById('dock-settings').classList.add('active');
 });
 
+/* Settings Tab Switching */
+document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.settings-tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`pane-${btn.getAttribute('data-tab')}`)?.classList.add('active');
+  });
+});
+
 /* Toolbar Actions & Proxy Execution connected to /api/proxy */
 document.getElementById('btn-home')?.addEventListener('click', () => {
   hideAllPages();
@@ -183,7 +135,7 @@ document.getElementById('btn-home')?.addEventListener('click', () => {
   if (currentTab) {
     currentTab.url = '';
     currentTab.src = 'about:blank';
-    currentTab.title = 'New Tab';
+    currentTab.title = 'new tab';
   }
   if (proxyInput) proxyInput.value = '';
   renderTabs();
@@ -226,7 +178,6 @@ window.launchProxy = function(rawInput) {
   const currentTab = tabs.find(t => t.id === activeTabId);
   const simIp = '192.168.1.102';
   
-  // Encoded token routing through api/proxy.js
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
   const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}`;
   
@@ -236,7 +187,6 @@ window.launchProxy = function(rawInput) {
     try { currentTab.title = new URL(targetUrl).hostname; } catch(e) { currentTab.title = targetUrl; }
   }
 
-  // Log History
   historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
   if (historyLog.length > 50) historyLog.pop();
   localStorage.setItem('styu_history', JSON.stringify(historyLog));
@@ -264,12 +214,12 @@ document.getElementById('btn-star')?.addEventListener('click', () => {
     if (!bookmarksList.some(b => b.url === currentTab.url)) {
       bookmarksList.push({ title: currentTab.title, url: currentTab.url });
       localStorage.setItem('styu_bookmarks', JSON.stringify(bookmarksList));
-      alert('Page starred and bookmarked!');
+      alert('page starred and bookmarked!');
     } else {
-      alert('Page is already bookmarked.');
+      alert('page is already bookmarked.');
     }
   } else {
-    alert('No active website to star.');
+    alert('no active website to star.');
   }
 });
 
@@ -277,24 +227,32 @@ document.getElementById('btn-star')?.addEventListener('click', () => {
 const historyModal = document.getElementById('history-modal');
 document.getElementById('btn-history')?.addEventListener('click', () => {
   const listEl = document.getElementById('history-list');
-  listEl.innerHTML = historyLog.map(h => `<div class="list-item" onclick="launchProxy('${h.url}'); historyModal.classList.add('hidden');"><span>${h.url}</span><span style="color:var(--subtext);font-size:0.75rem;">${h.time}</span></div>`).join('') || '<p style="color:var(--subtext);">No history yet.</p>';
+  listEl.innerHTML = historyLog.map(h => `<div class="list-item" onclick="launchProxy('${h.url}'); historyModal.classList.add('hidden');"><span>${h.url}</span><span style="color:var(--subtext);font-size:0.75rem;">${h.time}</span></div>`).join('') || '<p style="color:var(--subtext);">no history yet.</p>';
   historyModal.classList.remove('hidden');
 });
 document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
 document.getElementById('clear-history')?.addEventListener('click', () => {
   historyLog = [];
   localStorage.removeItem('styu_history');
-  document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">No history yet.</p>';
+  document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">no history yet.</p>';
 });
 
 /* Bookmarks Modal */
 const bookmarksModal = document.getElementById('bookmarks-modal');
 document.getElementById('btn-bookmarks')?.addEventListener('click', () => {
   const listEl = document.getElementById('bookmarks-list');
-  listEl.innerHTML = bookmarksList.map(b => `<div class="list-item" onclick="launchProxy('${b.url}'); bookmarksModal.classList.add('hidden');"><span>${b.title}</span><span style="color:var(--subtext);font-size:0.75rem;">${b.url}</span></div>`).join('') || '<p style="color:var(--subtext);">No starred bookmarks yet.</p>';
+  listEl.innerHTML = bookmarksList.map(b => `<div class="list-item" onclick="launchProxy('${b.url}'); bookmarksModal.classList.add('hidden');"><span>${b.title}</span><span style="color:var(--subtext);font-size:0.75rem;">${b.url}</span></div>`).join('') || '<p style="color:var(--subtext);">no starred bookmarks yet.</p>';
   bookmarksModal.classList.remove('hidden');
 });
 document.getElementById('close-bookmarks')?.addEventListener('click', () => bookmarksModal.classList.add('hidden'));
+
+/* Clear Local Data */
+document.getElementById('clear-local-data')?.addEventListener('click', () => {
+  if (confirm('are you sure you want to clear all local data?')) {
+    localStorage.clear();
+    location.reload();
+  }
+});
 
 /* Themes & GUI Scaling */
 const THEMES = {
@@ -328,7 +286,6 @@ document.querySelectorAll('.theme-card').forEach(card => {
 });
 applyTheme(localStorage.getItem('styu_theme') || 'oled');
 
-// GUI Scale Resizer
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 if (guiScaleSlider) {
