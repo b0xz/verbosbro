@@ -4,25 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title id="tab-title">celest</title>
-  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='5' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='32'>celest</text></svg>">
+  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><rect x='20' y='40' width='60' height='20' fill='%23fff'/></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --gui-scale: 1;
       --bg: #000000;
-      --panel: #0a0a0a;
-      --border: #222222;
-      --text: #e2e8f0;
-      --subtext: #888888;
+      --panel: #000000;
+      --border: #ffffff;
+      --text: #ffffff;
+      --subtext: #aaaaaa;
       --accent: #ffffff;
-      --hover: #1a1a1a;
+      --hover: #151515;
       --font: 'Share Tech Mono', monospace;
-      --border-radius: 8px;
-      --panel-border: 1px solid var(--border);
+      --border-radius: 0px;
+      --panel-border: 1px solid #ffffff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; font-weight: 300; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; font-weight: 400; }
     body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
 
     #app-container {
@@ -36,6 +36,7 @@
       top: 0;
       left: 0;
       overflow: hidden;
+      border: 2px solid #ffffff;
     }
 
     .hidden { display: none !important; }
@@ -44,82 +45,79 @@
     .top-browser-header {
       display: flex;
       align-items: center;
-      height: 40px;
+      height: 38px;
       background: var(--bg);
       border-bottom: var(--panel-border);
-      padding: 0 10px;
-      gap: 8px;
+      padding: 0 8px;
+      gap: 6px;
       z-index: 1100;
     }
 
     .tab-container {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       overflow-x: auto;
       flex: 1;
     }
 
     .tab-item {
-      background: var(--panel);
+      background: var(--bg);
       border: var(--panel-border);
       color: var(--subtext);
-      padding: 6px 14px;
-      border-radius: var(--border-radius) var(--border-radius) 0 0;
-      font-size: 0.82rem;
+      padding: 4px 12px;
+      font-size: 0.8rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 10px;
-      max-width: 180px;
+      gap: 8px;
+      max-width: 160px;
       white-space: nowrap;
       user-select: none;
     }
-    .tab-item.active { background: var(--bg); color: var(--text); border-bottom-color: var(--bg); font-weight: 600; }
-    .tab-close { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 0.9rem; }
-    .tab-close:hover { color: var(--text); }
+    .tab-item.active { background: #ffffff; color: #000000; font-weight: bold; }
+    .tab-close { background: transparent; border: none; color: inherit; cursor: pointer; font-size: 0.85rem; }
+    .tab-close:hover { opacity: 0.7; }
     
     .add-tab-btn {
       background: transparent;
-      border: none;
+      border: var(--panel-border);
       color: var(--text);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+      width: 26px;
+      height: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
-    .add-tab-btn:hover { background: var(--hover); }
+    .add-tab-btn:hover { background: #ffffff; color: #000000; }
 
     /* Browser Navigation & Toolbar */
     .browser-toolbar {
       display: flex;
       align-items: center;
-      height: 48px;
-      background: var(--panel);
+      height: 44px;
+      background: var(--bg);
       border-bottom: var(--panel-border);
-      padding: 0 12px;
-      gap: 8px;
+      padding: 0 10px;
+      gap: 6px;
       z-index: 1050;
     }
 
     .toolbar-btn {
       background: transparent;
-      border: none;
+      border: var(--panel-border);
       color: var(--text);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
+      width: 30px;
+      height: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       flex-shrink: 0;
     }
-    .toolbar-btn:hover { background: var(--hover); color: var(--accent); }
+    .toolbar-btn:hover { background: #ffffff; color: #000000; }
 
     .url-bar-container {
       flex: 1;
@@ -127,10 +125,9 @@
       align-items: center;
       background: var(--bg);
       border: var(--panel-border);
-      border-radius: 20px;
-      padding: 0 14px;
-      height: 34px;
-      gap: 8px;
+      padding: 0 10px;
+      height: 30px;
+      gap: 6px;
     }
 
     .url-input {
@@ -138,7 +135,7 @@
       background: transparent;
       border: none;
       outline: none;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text);
     }
     .url-input::placeholder { color: var(--subtext); }
@@ -163,34 +160,39 @@
     }
     .view-page.active { display: flex; }
 
-    /* Home View matching Celest Layout */
+    /* Home View */
     #home-view {
       align-items: center;
       justify-content: center;
       text-align: center;
-      gap: 24px;
+      gap: 20px;
       padding-bottom: 56px;
+      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
     }
     .celest-brand {
-      font-size: 4.5rem;
-      font-weight: 300;
-      letter-spacing: 2px;
+      font-size: 4rem;
+      font-weight: bold;
+      letter-spacing: 4px;
       color: var(--text);
+      border: 2px dashed #ffffff;
+      padding: 10px 30px;
+      background: #000000;
     }
     .search-lessons-bar {
       width: 100%;
-      max-width: 540px;
-      background: var(--panel);
-      border: var(--panel-border);
-      border-radius: 8px;
-      padding: 12px 18px;
+      max-width: 500px;
+      background: #000000;
+      border: 2px solid var(--border);
+      padding: 12px 16px;
       color: var(--text);
       outline: none;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      text-align: center;
     }
     .home-nav-grid {
       display: flex;
-      gap: 36px;
+      gap: 24px;
       justify-content: center;
       align-items: center;
       margin-top: 10px;
@@ -199,78 +201,85 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
-      background: transparent;
-      border: none;
-      color: var(--subtext);
+      background: #000;
+      border: var(--panel-border);
+      color: var(--text);
+      padding: 10px 16px;
+      width: 85px;
     }
-    .home-nav-item:hover { color: var(--text); }
+    .home-nav-item:hover { background: #ffffff; color: #000000; }
     .home-nav-icon {
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       fill: currentColor;
     }
     .home-nav-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
 
-    /* Apps Hub Styles with Favicons */
+    /* Apps Hub Styles */
     .apps-container {
-      padding: 30px;
+      padding: 24px;
       overflow-y: auto;
       height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
       background: var(--bg);
       padding-bottom: 80px;
     }
     .apps-category-title {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       color: var(--subtext);
-      margin-bottom: 12px;
-      border-bottom: var(--panel-border);
-      padding-bottom: 6px;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 4px;
+      letter-spacing: 1px;
     }
     .apps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
     }
     .app-card {
-      background: var(--panel);
+      background: #000000;
       border: var(--panel-border);
-      border-radius: var(--border-radius);
-      padding: 16px;
+      padding: 14px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      transition: border-color 0.2s, background 0.2s;
+      gap: 6px;
     }
     .app-card:hover {
-      border-color: var(--accent);
-      background: var(--hover);
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+    .app-card:hover .app-card-desc {
+      color: #333333;
     }
     .app-card-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .app-card-icon {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       object-fit: contain;
-      border-radius: 4px;
+      filter: invert(1);
+    }
+    .app-card:hover .app-card-icon {
+      filter: invert(0);
     }
     .app-card-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: var(--text);
+      font-weight: bold;
+      font-size: 0.9rem;
     }
     .app-card-desc {
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       color: var(--subtext);
     }
 
@@ -280,29 +289,28 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 56px;
+      height: 48px;
       display: flex;
       flex-direction: row;
       justify-content: center;
       align-items: center;
-      gap: 16px;
-      background: var(--panel);
+      gap: 12px;
+      background: var(--bg);
       border-top: var(--panel-border);
       z-index: 1200;
     }
     .dock-btn {
       background: transparent;
-      border: none;
-      color: var(--subtext);
-      padding: 8px 16px;
-      border-radius: 8px;
+      border: var(--panel-border);
+      color: var(--text);
+      padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
-    .dock-btn:hover, .dock-btn.active { background: var(--hover); color: var(--text); }
+    .dock-btn:hover, .dock-btn.active { background: #ffffff; color: #000000; }
 
     /* Proxy Viewer Frame */
     .proxy-viewer {
@@ -315,28 +323,27 @@
     .proxy-viewer.active { display: block; }
 
     /* Chat Layout Styles */
-    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); padding-bottom: 56px; }
-    .chat-sidebar { width: 240px; background: var(--panel); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 20px; gap: 8px; overflow-y: auto; }
-    .chat-sidebar h4 { font-size: 0.85rem; color: var(--subtext); margin-top: 5px; margin-bottom: 2px; }
-    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 8px 12px; border-radius: var(--border-radius); cursor: pointer; text-align: left; font-size: 0.88rem; }
-    .room-btn.active, .room-btn:hover { border-color: var(--accent); background: var(--hover); }
-    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 14px; background: var(--bg); }
-    .chat-messages-container { flex: 1; background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-    .chat-msg-item { display: flex; gap: 14px; align-items: flex-start; }
-    .chat-msg-pfp { width: 40px; height: 40px; border-radius: 50%; border: var(--panel-border); background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
-    .chat-msg-pfp img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .chat-msg-header { display: flex; gap: 10px; align-items: baseline; }
-    .chat-msg-username { font-weight: bold; font-size: 0.95rem; }
-    .chat-msg-time { font-size: 0.75rem; color: var(--subtext); }
-    .chat-msg-text { font-size: 0.98rem; color: var(--text); word-break: break-word; }
-    .chat-input-bar { display: flex; gap: 10px; align-items: center; background: var(--panel); border: var(--panel-border); border-radius: 35px; padding: 8px 18px; }
+    .chat-layout { display: flex; flex: 1; width: 100%; height: 100%; background: var(--bg); padding-bottom: 48px; }
+    .chat-sidebar { width: 220px; background: var(--bg); border-right: var(--panel-border); display: flex; flex-direction: column; padding: 16px; gap: 6px; overflow-y: auto; }
+    .chat-sidebar h4 { font-size: 0.8rem; color: var(--subtext); margin-bottom: 4px; }
+    .room-btn { background: var(--bg); border: var(--panel-border); color: var(--text); padding: 6px 10px; cursor: pointer; text-align: left; font-size: 0.82rem; }
+    .room-btn.active, .room-btn:hover { background: #ffffff; color: #000000; }
+    .chat-main-area { flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px; background: var(--bg); }
+    .chat-messages-container { flex: 1; background: var(--bg); border: var(--panel-border); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .chat-msg-item { display: flex; gap: 12px; align-items: flex-start; }
+    .chat-msg-pfp { width: 36px; height: 36px; border: var(--panel-border); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+    .chat-msg-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .chat-msg-header { display: flex; gap: 8px; align-items: baseline; }
+    .chat-msg-username { font-weight: bold; font-size: 0.9rem; }
+    .chat-msg-time { font-size: 0.7rem; color: var(--subtext); }
+    .chat-msg-text { font-size: 0.9rem; color: var(--text); word-break: break-word; }
+    .chat-input-bar { display: flex; gap: 8px; align-items: center; background: var(--bg); border: var(--panel-border); padding: 6px 14px; }
 
-    /* Fixed Games Viewport Container */
+    /* Games Viewport Container */
     #games-page-view {
       display: none;
       flex-direction: column;
-      padding-bottom: 56px;
+      padding-bottom: 48px;
       height: 100%;
     }
     #games-page-view.active {
@@ -350,80 +357,73 @@
       flex-direction: column;
       overflow: hidden;
       background: var(--bg);
-      padding: 10px;
+      padding: 8px;
     }
 
-    /* Fullscreen Settings View with Tabs */
+    /* Settings View */
     .settings-container {
-      padding: 30px;
+      padding: 24px;
       overflow-y: auto;
       height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       background: var(--bg);
       padding-bottom: 80px;
     }
     .settings-tabs-header {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       border-bottom: var(--panel-border);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
       flex-wrap: wrap;
     }
     .settings-tab-btn {
-      background: var(--panel);
+      background: var(--bg);
       border: var(--panel-border);
       color: var(--subtext);
-      padding: 8px 16px;
-      border-radius: var(--border-radius);
+      padding: 6px 12px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
     .settings-tab-btn.active {
-      background: var(--bg);
-      color: var(--text);
-      border-color: var(--accent);
+      background: #ffffff;
+      color: #000000;
+      font-weight: bold;
     }
     .settings-tab-pane {
       display: none;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     .settings-tab-pane.active {
       display: flex;
     }
 
     .setting-card {
-      background: var(--panel);
+      background: var(--bg);
       border: var(--panel-border);
-      border-radius: var(--border-radius);
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-width: 650px;
+      gap: 8px;
+      max-width: 600px;
     }
-    .setting-card label { font-size: 0.85rem; color: var(--subtext); }
-    .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+    .setting-card label { font-size: 0.8rem; color: var(--subtext); }
+    .setting-input { background: var(--bg); border: var(--panel-border); padding: 8px; color: var(--text); outline: none; width: 100%; }
 
-    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .theme-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
-    .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
-    .theme-color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); }
+    .action-btn { background: #ffffff; border: 1px solid #ffffff; padding: 8px 14px; font-weight: bold; color: #000000; cursor: pointer; }
+    .action-btn:hover { background: #000000; color: #ffffff; }
 
-    .action-btn { background: var(--text); border: none; border-radius: 8px; padding: 10px 16px; font-weight: bold; color: var(--bg); cursor: pointer; }
-    .action-btn:hover { opacity: 0.9; }
+    .svg-icon { width: 16px; height: 16px; fill: currentColor; }
 
-    .svg-icon { width: 18px; height: 18px; fill: currentColor; }
-
-    /* Modals for History & Bookmarks */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+    /* Modals */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; align-items: center; justify-content: center; }
     .modal-overlay.hidden { display: none; }
-    .modal-box { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); width: 90%; max-width: 500px; padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 80vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: var(--panel-border); padding-bottom: 10px; }
-    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border: var(--panel-border); border-radius: 6px; font-size: 0.88rem; cursor: pointer; }
-    .list-item:hover { background: var(--hover); }
+    .modal-box { background: #000000; border: 2px solid #ffffff; width: 90%; max-width: 480px; padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px dashed #ffffff; padding-bottom: 8px; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #000; border: var(--panel-border); font-size: 0.85rem; cursor: pointer; }
+    .list-item:hover { background: #ffffff; color: #000000; }
   </style>
 </head>
 <body>
@@ -445,8 +445,8 @@
     <button class="toolbar-btn" id="btn-home" title="home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
 
     <div class="url-bar-container">
-      <input type="text" class="url-input" id="proxy-input" placeholder="search lessons or enter address..." autocomplete="off">
-      <button class="toolbar-btn" id="btn-star" title="star this page"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
+      <input type="text" class="url-input" id="proxy-input" placeholder="search network or enter url..." autocomplete="off">
+      <button class="toolbar-btn" id="btn-star" title="star page"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></button>
     </div>
 
     <button class="toolbar-btn" id="btn-fullscreen" title="fullscreen"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
@@ -457,10 +457,10 @@
   <!-- Workspace Area -->
   <div class="workspace-area">
 
-    <!-- Home View with Ecosia Fast Search -->
+    <!-- Home View -->
     <div class="view-page active" id="home-view">
       <div class="celest-brand">celest</div>
-      <input type="text" class="search-lessons-bar" id="home-search-bar" placeholder="search lessons" autocomplete="off">
+      <input type="text" class="search-lessons-bar" id="home-search-bar" placeholder="search network..." autocomplete="off">
       <div class="home-nav-grid">
         <button class="home-nav-item" id="nav-games">
           <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
@@ -479,22 +479,21 @@
           <span class="home-nav-label">chat</span>
         </button>
         <button class="home-nav-item" id="nav-settings">
-          <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
           <span class="home-nav-label">settings</span>
         </button>
       </div>
-      <div id="live-time-display" style="font-size: 0.9rem; color: var(--subtext);">00:00:00</div>
+      <div id="live-time-display" style="font-size: 0.85rem; color: var(--subtext); letter-spacing: 1px;">00:00:00</div>
     </div>
 
     <!-- Proxy Viewer -->
     <iframe class="view-page proxy-viewer" id="proxy-viewer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe>
 
-    <!-- Apps Hub View with Favicons -->
+    <!-- Apps Hub View -->
     <div class="view-page" id="apps-page-view">
       <div class="apps-container">
-        <h2>celest apps & sites directory</h2>
+        <h2>// apps & network directory</h2>
 
-        <!-- Game Sites Section -->
         <div>
           <div class="apps-category-title">popular game sites</div>
           <div class="apps-grid">
@@ -517,7 +516,6 @@
           </div>
         </div>
 
-        <!-- Video Sites Section -->
         <div>
           <div class="apps-category-title">video & streaming</div>
           <div class="apps-grid">
@@ -529,21 +527,12 @@
               <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=twitch.tv&sz=32" alt=""><span class="app-card-title">twitch</span></div>
               <div class="app-card-desc">live streams & esports</div>
             </div>
-            <div class="app-card" onclick="launchProxy('https://vimeo.com')">
-              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=vimeo.com&sz=32" alt=""><span class="app-card-title">vimeo</span></div>
-              <div class="app-card-desc">creative video hosting platform</div>
-            </div>
           </div>
         </div>
 
-        <!-- Useful Sites Section -->
         <div>
           <div class="apps-category-title">useful web tools & search</div>
           <div class="apps-grid">
-            <div class="app-card" onclick="launchProxy('https://ecosia.org')">
-              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=ecosia.org&sz=32" alt=""><span class="app-card-title">ecosia</span></div>
-              <div class="app-card-desc">eco-friendly alternative search engine</div>
-            </div>
             <div class="app-card" onclick="launchProxy('https://wikipedia.org')">
               <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=wikipedia.org&sz=32" alt=""><span class="app-card-title">wikipedia</span></div>
               <div class="app-card-desc">free online encyclopedia</div>
@@ -551,10 +540,6 @@
             <div class="app-card" onclick="launchProxy('https://github.com')">
               <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt=""><span class="app-card-title">github</span></div>
               <div class="app-card-desc">developer platform & code repositories</div>
-            </div>
-            <div class="app-card" onclick="launchProxy('https://spotify.com')">
-              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=spotify.com&sz=32" alt=""><span class="app-card-title">spotify</span></div>
-              <div class="app-card-desc">music & podcast streaming</div>
             </div>
           </div>
         </div>
@@ -566,16 +551,16 @@
     <div class="view-page" id="chat-page-view">
       <div class="chat-layout">
         <div class="chat-sidebar">
-          <h4>servers</h4>
+          <h4>// channels</h4>
           <button class="room-btn active" data-room="global"># global-chat</button>
           <button class="room-btn" data-room="general-1"># general-1</button>
           <button class="room-btn" data-room="general-2"># general-2</button>
         </div>
         <div class="chat-main-area">
-          <div style="font-weight: bold; font-size: 1.15rem;"><span id="current-room-title"># global-chat</span></div>
+          <div style="font-weight: bold; font-size: 1rem;"><span id="current-room-title"># global-chat</span></div>
           <div class="chat-messages-container" id="chat-messages"></div>
           <div class="chat-input-bar">
-            <input type="text" id="chat-input" class="url-input" placeholder="type a message..." autocomplete="off" />
+            <input type="text" id="chat-input" class="url-input" placeholder="type message..." autocomplete="off" />
             <button class="toolbar-btn" id="chat-send" title="send"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
           </div>
         </div>
@@ -585,120 +570,60 @@
     <!-- Games Hub -->
     <div class="view-page" id="games-page-view">
       <div class="games-iframe-wrapper">
-        <h2 style="margin-bottom:6px; font-size:1rem;">gn-math games</h2>
-        <iframe src="https://s3.amazonaws.com/prageru-server/mathematics.html" style="width:100%; flex:1; border:var(--panel-border); border-radius:var(--border-radius); background:#fff;"></iframe>
+        <h2 style="margin-bottom:6px; font-size:0.9rem;">// arcade hub</h2>
+        <iframe src="https://s3.amazonaws.com/prageru-server/mathematics.html" style="width:100%; flex:1; border:var(--panel-border); background:#fff;"></iframe>
       </div>
     </div>
 
-    <!-- Fullscreen Settings View with Tabs -->
+    <!-- Settings View -->
     <div class="view-page" id="settings-page-view">
       <div class="settings-container">
-        <h2>celest settings & preferences</h2>
+        <h2>// settings & configuration</h2>
 
         <div class="settings-tabs-header">
-          <button class="settings-tab-btn active" data-tab="ui">ui</button>
-          <button class="settings-tab-btn" data-tab="advanced">advanced</button>
-          <button class="settings-tab-btn" data-tab="privacy">privacy / cloaking / security</button>
+          <button class="settings-tab-btn active" data-tab="privacy">privacy & adblock</button>
           <button class="settings-tab-btn" data-tab="profile">profile</button>
-          <button class="settings-tab-btn" data-tab="misc">misc & data</button>
+          <button class="settings-tab-btn" data-tab="misc">data & backup</button>
         </div>
 
-        <!-- UI Tab -->
-        <div class="settings-tab-pane active" id="pane-ui">
-          <div class="setting-card">
-            <label>color scheme</label>
-            <div class="theme-grid">
-              <div class="theme-card active" data-theme="oled"><div class="theme-color-preview" style="background:#000000;"></div><span>oled black</span></div>
-              <div class="theme-card" data-theme="charcoal"><div class="theme-color-preview" style="background:#121212;"></div><span>charcoal</span></div>
-              <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>matrix green</span></div>
-              <div class="theme-card" data-theme="blossom"><div class="theme-color-preview" style="background:#2d121c;"></div><span>blossom pink</span></div>
-              <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>crimson red</span></div>
-              <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>aquatic cyan</span></div>
-            </div>
-          </div>
-          <div class="setting-card">
-            <label>gui scale size (<span id="gui-scale-val">1.0</span>x)</label>
-            <input type="range" id="gui-scale-slider" class="setting-input" min="0.8" max="1.5" step="0.05" value="1.0" style="padding:0; cursor:pointer;">
-          </div>
-        </div>
-
-        <!-- Advanced Tab -->
-        <div class="settings-tab-pane" id="pane-advanced">
-          <div class="setting-card">
-            <label>interface style options</label>
-            <select id="style-option-select" class="setting-input">
-              <option value="minimalist">minimalist dark</option>
-              <option value="compact">compact toolbar</option>
-              <option value="modern">modern glass</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Privacy / Cloaking / Security Tab -->
-        <div class="settings-tab-pane" id="pane-privacy">
+        <div class="settings-tab-pane active" id="pane-privacy">
           <div class="setting-card">
             <label>adblocker & tracker shield</label>
-            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-              <input type="checkbox" id="adblock-toggle" style="width: 20px; height: 20px; cursor: pointer;">
-              <span style="font-size: 0.9rem; color: var(--text);">enable built-in ad & tracker blocking</span>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+              <input type="checkbox" id="adblock-toggle" style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="font-size: 0.85rem;">enable built-in ad & tracker blocking</span>
             </div>
           </div>
           <div class="setting-card">
-            <label>tab & favicon cloak presets</label>
-            <select id="tab-cloak-preset" class="setting-input">
-              <option value="celest">celest (default)</option>
-              <option value="google">google search</option>
-              <option value="khan">khan academy</option>
-              <option value="drive">google drive</option>
-            </select>
-          </div>
-          <div class="setting-card">
-            <label>manual stealth cloak (or press '\')</label>
-            <button class="action-btn" id="manual-cloak-btn" style="background:#ef4444; color:#fff;">cloak view now</button>
+            <label>stealth cloak (press '\' to quick-hide)</label>
+            <button class="action-btn" id="manual-cloak-btn">cloak view now</button>
           </div>
         </div>
 
-        <!-- Profile Tab -->
         <div class="settings-tab-pane" id="pane-profile">
           <div class="setting-card">
             <label>account display name</label>
-            <input type="text" id="profile-name" class="setting-input" placeholder="your username...">
+            <input type="text" id="profile-name" class="setting-input" placeholder="username...">
           </div>
           <div class="setting-card">
             <label>bio / status</label>
-            <textarea id="profile-bio" class="setting-input" rows="2" placeholder="tell others about yourself..."></textarea>
+            <textarea id="profile-bio" class="setting-input" rows="2" placeholder="status..."></textarea>
           </div>
           <div class="setting-card">
-            <label>profile picture URL or emoji</label>
-            <input type="text" id="profile-pfp" class="setting-input" placeholder="https:// or emoji...">
-          </div>
-          <div class="setting-card">
-            <label>username color</label>
-            <input type="color" id="profile-color" class="setting-input" value="#ffffff" style="height:40px; padding:2px; cursor:pointer;">
-          </div>
-          <div class="setting-card">
-            <label>username animation effect</label>
-            <select id="profile-anim" class="setting-input">
-              <option value="none">none</option>
-              <option value="wavy">wavy animation</option>
-            </select>
+            <label>pfp url or emoji</label>
+            <input type="text" id="profile-pfp" class="setting-input" placeholder="emoji or url...">
           </div>
           <button class="action-btn" id="save-profile">save profile settings</button>
         </div>
 
-        <!-- Misc & Data Tab -->
         <div class="settings-tab-pane" id="pane-misc">
           <div class="setting-card">
-            <label>export local data (json backup)</label>
-            <button class="action-btn" id="export-json-btn">export data to json</button>
+            <label>export local data</label>
+            <button class="action-btn" id="export-json-btn">export to json</button>
           </div>
           <div class="setting-card">
-            <label>import local data (json restore)</label>
-            <input type="file" id="import-json-file" accept=".json" class="setting-input" style="padding:6px;">
-          </div>
-          <div class="setting-card" style="border-color: #ef4444;">
-            <label style="color:#ef4444;">danger zone</label>
-            <button class="action-btn" id="clear-local-data" style="background:#ef4444; color:#fff;">delete all local data</button>
+            <label>danger zone</label>
+            <button class="action-btn" id="clear-local-data" style="background:#fff; color:#000;">delete all local data</button>
           </div>
         </div>
 
@@ -712,35 +637,32 @@
     <button class="dock-btn active" id="dock-home" title="home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>home</button>
     <button class="dock-btn" id="dock-chat" title="chat"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>chat</button>
     <button class="dock-btn" id="dock-games" title="games"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>games</button>
-    <button class="dock-btn" id="dock-settings" title="settings"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>settings</button>
+    <button class="dock-btn" id="dock-settings" title="settings"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>settings</button>
   </div>
 
 </div>
 
-<!-- History Modal -->
+<!-- Modals -->
 <div class="modal-overlay hidden" id="history-modal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>browsing history</span>
+      <span>// browsing history</span>
       <button class="toolbar-btn" id="close-history">✕</button>
     </div>
-    <div id="history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-    <button class="action-btn" id="clear-history">clear history</button>
+    <div id="history-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+    <button class="action-btn" id="clear-history" style="margin-top:10px;">clear history</button>
   </div>
 </div>
 
-<!-- Bookmarks Modal -->
 <div class="modal-overlay hidden" id="bookmarks-modal">
   <div class="modal-box">
     <div class="modal-header">
-      <span>starred bookmarks</span>
+      <span>// starred bookmarks</span>
       <button class="toolbar-btn" id="close-bookmarks">✕</button>
     </div>
-    <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="bookmarks-list" style="display:flex; flex-direction:column; gap:6px;"></div>
   </div>
 </div>
-
-<div id="cloak-notice" style="position:fixed; bottom:15px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.4); font-size:0.7rem; z-index:99999; pointer-events:none; display:none;">double tap screen to uncloak</div>
 
 <script src="/script.js"></script>
 <script src="/chat.js"></script>
