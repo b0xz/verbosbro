@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // Enterprise CORS & School Gateway Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -17,8 +16,8 @@ export default async function handler(req, res) {
   const device = req.query.device || 'desktop';
   const vpn = req.query.vpn || 'us-east';
   const simIp = req.query.sim_ip || '192.168.1.102';
+  const adblock = req.query.adblock === 'true';
 
-  // Decode obfuscated token if present
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
 
   if (!targetUrl) return res.status(400).send('Missing target URL parameter.');
 
-  // Multi-layer URL decoding & unwrapping nested proxy loops
   try {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
@@ -55,16 +53,14 @@ export default async function handler(req, res) {
     }
   }
 
-  // Smart URL normalization for search terms and protocol-less inputs
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://www.ecosia.org/search?q=' + encodeURIComponent(targetUrl);
     }
   }
 
-  // Advanced Device User-Agent profiles to prevent school device fingerprint blocks
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
@@ -80,8 +76,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // School filter evasion headers
-    const evasionHeaders = {
+    const proxyHeaders = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
@@ -91,39 +86,37 @@ export default async function handler(req, res) {
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
       'forwarded': `for=${simIp};proto=https`,
-      'via': '1.1 secure-cloudflare-gateway',
       'cache-control': 'no-cache',
       'pragma': 'no-cache',
       'upgrade-insecure-requests': '1',
-      'dnt': '1',
-      'sec-gpc': '1'
+      'dnt': '1'
     };
 
     if (req.headers.range) {
-      evasionHeaders['range'] = req.headers.range;
+      proxyHeaders['range'] = req.headers.range;
     }
 
     const fetchOptions = {
       method: req.method,
-      headers: evasionHeaders,
+      headers: proxyHeaders,
       redirect: 'manual',
       compress: true
     };
 
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
-      if (req.headers['content-type']) evasionHeaders['content-type'] = req.headers['content-type'];
+      if (req.headers['content-type']) proxyHeaders['content-type'] = req.headers['content-type'];
       if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
     }
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Handle redirects through token chain
+    // Clean Obfuscated Redirect Handling
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
         const absoluteRedirectUrl = new URL(locationHeader, targetUrl).href;
         const encodedToken = btoa(encodeURIComponent(absoluteRedirectUrl)).replace(/=/g, '');
-        const proxiedRedirect = `/api/proxy?token=${encodedToken}&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}`;
+        const proxiedRedirect = `/api/proxy?token=${encodedToken}&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}`;
         return res.redirect(302, proxiedRedirect);
       }
     }
@@ -135,7 +128,7 @@ export default async function handler(req, res) {
     if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
     if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
-    res.setHeader('x-proxied-by', 'satura-quantum-shield-v4');
+    res.setHeader('x-proxied-by', 'celest-quantum-gateway');
     res.setHeader('referrer-policy', 'no-referrer');
 
     const setCookie = response.headers.get('set-cookie');
@@ -178,7 +171,7 @@ export default async function handler(req, res) {
         
         const absUrl = new URL(trimmed, targetUrl).href;
         const encoded = btoa(encodeURIComponent(absUrl)).replace(/=/g, '');
-        return `/api/proxy?token=` + encoded + `&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}`;
+        return `/api/proxy?token=` + encoded + `&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}`;
       } catch (e) {
         return val;
       }
@@ -227,8 +220,45 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
+      // Adblock injection rules if enabled
+      let adblockScript = '';
+      if (adblock) {
+        adblockScript = `
+          <script>
+            (function() {
+              const blockedDomains = ['googlesyndication', 'doubleclick', 'adservice', 'adnxs', 'amazon-adsystem', 'criteo', 'hotjar', 'quantserve', 'scorecardresearch'];
+              const originalFetch = window.fetch;
+              window.fetch = function(...args) {
+                const url = args[0] || '';
+                if (typeof url === 'string' && blockedDomains.some(d => url.includes(d))) {
+                  return Promise.reject(new Error('Blocked by Celest AdBlock'));
+                }
+                return originalFetch.apply(this, args);
+              };
+              const originalOpen = XMLHttpRequest.prototype.open;
+              XMLHttpRequest.prototype.open = function(method, url, ...args) {
+                if (typeof url === 'string' && blockedDomains.some(d => url.includes(d))) {
+                  this.abort = function() {};
+                  return;
+                }
+                return originalOpen.apply(this, [method, url, ...args]);
+              };
+              setInterval(() => {
+                document.querySelectorAll('iframe, ins, script').forEach(el => {
+                  const src = el.src || el.getAttribute('data-src') || '';
+                  if (blockedDomains.some(d => src.includes(d))) {
+                    el.remove();
+                  }
+                });
+              }, 1000);
+            })();
+          </script>
+        `;
+      }
+
       const injectionScript = `
         <base href="${baseUrl}/">
+        ${adblockScript}
         <script>
           (function() {
             function encodeProxyUrl(url) {
@@ -240,7 +270,7 @@ export default async function handler(req, res) {
                 
                 const abs = new URL(trimmed, document.baseURI).href;
                 const encoded = btoa(encodeURIComponent(abs)).replace(/=/g, '');
-                return '/api/proxy?token=' + encoded + '&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}';
+                return '/api/proxy?token=' + encoded + '&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}';
               } catch(e) { return url; }
             }
 
@@ -281,55 +311,29 @@ export default async function handler(req, res) {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>satura — connection error</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+        <title>celest — connection error</title>
+        <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
         <style>
           body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000000;
-            color: #ffffff;
-            font-family: 'Inter', Arial, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+            background-color: #000000; color: #ffffff;
+            font-family: 'Share Tech Mono', monospace;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; text-transform: lowercase;
           }
-          .error-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            max-width: 420px;
-            padding: 20px;
-          }
-          .error-text {
-            font-size: 0.95rem;
-            color: #888888;
-            line-height: 1.5;
-            text-transform: lowercase;
-          }
-          .error-face {
-            font-size: 1.4rem;
-            margin-top: 4px;
-            color: #ffffff;
-            font-family: monospace;
-            white-space: pre;
-            line-height: 1.2;
-            user-select: none;
-          }
+          .error-container { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; padding: 20px; }
+          .error-text { font-size: 0.95rem; color: #888888; line-height: 1.5; }
+          .error-face { font-size: 1.4rem; margin-top: 4px; color: #ffffff; font-family: monospace; white-space: pre; line-height: 1.2; }
         </style>
       </head>
       <body>
         <div class="error-container">
-          <div class="error-text">sorry, we couldn't load your site. maybe because im too stupid or the site isn't actually a real thing</div>
+          <div class="error-text">sorry, we couldn't load your site. maybe because of a connection error or the site isn't a valid address</div>
           <div class="error-face">
-&nbsp;&nbsp;__<br>
-&nbsp;&nbsp;/ &nbsp;\\<br>
-| &nbsp;&nbsp;&nbsp;&nbsp;|<br>
-&nbsp;&nbsp;\\__/
+  __<br>
+  /  \\<br>
+|    |<br>
+  \\__/
           </div>
         </div>
       </body>
