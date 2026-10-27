@@ -4,27 +4,28 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'at26_v1.0';
-if (localStorage.getItem('at26_version') !== CURRENT_VERSION) {
-  localStorage.setItem('at26_version', CURRENT_VERSION);
+const CURRENT_VERSION = 'celest_v1.0';
+if (localStorage.getItem('celest_version') !== CURRENT_VERSION) {
+  localStorage.setItem('celest_version', CURRENT_VERSION);
 }
 
-if (!localStorage.getItem('at26_user_name')) {
-  localStorage.setItem('at26_user_name', 'at26user-' + Math.floor(1000 + Math.random() * 9000));
-  localStorage.setItem('at26_user_bio', 'exploring the web with at26.');
-  localStorage.setItem('at26_user_pfp', '🚀');
-  localStorage.setItem('at26_user_color', '#ffffff');
-  localStorage.setItem('at26_username_anim', 'none');
+if (!localStorage.getItem('celest_user_name')) {
+  localStorage.setItem('celest_user_name', 'celestuser-' + Math.floor(1000 + Math.random() * 9000));
+  localStorage.setItem('celest_user_bio', 'exploring the web with celest.');
+  localStorage.setItem('celest_user_pfp', '🚀');
+  localStorage.setItem('celest_user_color', '#ffffff');
+  localStorage.setItem('celest_username_anim', 'none');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let historyLog = JSON.parse(localStorage.getItem('at26_history') || '[]');
-let bookmarksList = JSON.parse(localStorage.getItem('at26_bookmarks') || '[]');
+let historyLog = JSON.parse(localStorage.getItem('celest_history') || '[]');
+let bookmarksList = JSON.parse(localStorage.getItem('celest_bookmarks') || '[]');
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
 const proxyInput = document.getElementById('proxy-input');
+const homeSearchInput = document.getElementById('home-search-bar');
 const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
@@ -32,7 +33,6 @@ const gamesPageView = document.getElementById('games-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
 const liveTimeDisplay = document.getElementById('live-time-display');
 
-// Live Time Ticker Below Thumbnail / Home
 function updateLiveTime() {
   if (!liveTimeDisplay) return;
   const now = new Date();
@@ -135,6 +135,26 @@ document.getElementById('dock-settings')?.addEventListener('click', () => {
   document.getElementById('dock-settings').classList.add('active');
 });
 
+/* Home Grid Nav Actions */
+document.getElementById('nav-games')?.addEventListener('click', () => {
+  hideAllPages();
+  if (gamesPageView) gamesPageView.classList.add('active');
+  document.getElementById('dock-games').classList.add('active');
+});
+document.getElementById('nav-settings')?.addEventListener('click', () => {
+  hideAllPages();
+  if (settingsPageView) settingsPageView.classList.add('active');
+  document.getElementById('dock-settings').classList.add('active');
+});
+document.getElementById('nav-ai')?.addEventListener('click', () => {
+  hideAllPages();
+  if (chatPageView) chatPageView.classList.add('active');
+  document.getElementById('dock-chat').classList.add('active');
+  if (window.initChat) window.initChat();
+});
+document.getElementById('nav-apps')?.addEventListener('click', () => launchProxy('https://html.duckduckgo.com'));
+document.getElementById('nav-music')?.addEventListener('click', () => launchProxy('https://soundcloud.com'));
+
 /* Settings Tab Switching */
 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -170,10 +190,10 @@ document.addEventListener('keydown', (e) => {
 
 const tabCloakPreset = document.getElementById('tab-cloak-preset');
 if (tabCloakPreset) {
-  tabCloakPreset.value = localStorage.getItem('at26_cloak_preset') || 'at26';
+  tabCloakPreset.value = localStorage.getItem('celest_cloak_preset') || 'celest';
   tabCloakPreset.addEventListener('change', (e) => {
     const val = e.target.value;
-    localStorage.setItem('at26_cloak_preset', val);
+    localStorage.setItem('celest_cloak_preset', val);
     const titleEl = document.getElementById('tab-title');
     const faviconEl = document.getElementById('tab-favicon');
     if (val === 'google') {
@@ -183,13 +203,13 @@ if (tabCloakPreset) {
       if (titleEl) titleEl.textContent = 'dashboard | khan academy';
       if (faviconEl) faviconEl.href = 'https://cdn.kastatic.org/images/favicon.ico';
     } else {
-      if (titleEl) titleEl.textContent = 'at26';
-      if (faviconEl) faviconEl.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='10' y='65' fill='%23fff' font-family='Share Tech Mono, monospace' font-size='35'>at26</text></svg>";
+      if (titleEl) titleEl.textContent = 'celest';
+      if (faviconEl) faviconEl.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='5' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='32'>celest</text></svg>";
     }
   });
 }
 
-/* Profile Settings */
+/* Profile Settings with immediate live propagation */
 const profileNameInput = document.getElementById('profile-name');
 const profileBioInput = document.getElementById('profile-bio');
 const profilePfpInput = document.getElementById('profile-pfp');
@@ -197,21 +217,22 @@ const profileColorInput = document.getElementById('profile-color');
 const profileAnimSelect = document.getElementById('profile-anim');
 
 function loadProfileSettings() {
-  if (profileNameInput) profileNameInput.value = localStorage.getItem('at26_user_name') || '';
-  if (profileBioInput) profileBioInput.value = localStorage.getItem('at26_user_bio') || '';
-  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('at26_user_pfp') || '';
-  if (profileColorInput) profileColorInput.value = localStorage.getItem('at26_user_color') || '#ffffff';
-  if (profileAnimSelect) profileAnimSelect.value = localStorage.getItem('at26_username_anim') || 'none';
+  if (profileNameInput) profileNameInput.value = localStorage.getItem('celest_user_name') || '';
+  if (profileBioInput) profileBioInput.value = localStorage.getItem('celest_user_bio') || '';
+  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('celest_user_pfp') || '';
+  if (profileColorInput) profileColorInput.value = localStorage.getItem('celest_user_color') || '#ffffff';
+  if (profileAnimSelect) profileAnimSelect.value = localStorage.getItem('celest_username_anim') || 'none';
 }
 loadProfileSettings();
 
 document.getElementById('save-profile')?.addEventListener('click', () => {
-  localStorage.setItem('at26_user_name', profileNameInput.value.trim() || 'at26user');
-  localStorage.setItem('at26_user_bio', profileBioInput.value.trim());
-  localStorage.setItem('at26_user_pfp', profilePfpInput.value.trim() || '🚀');
-  localStorage.setItem('at26_user_color', profileColorInput.value);
-  localStorage.setItem('at26_username_anim', profileAnimSelect.value);
-  alert('profile settings saved!');
+  localStorage.setItem('celest_user_name', profileNameInput.value.trim() || 'celestuser');
+  localStorage.setItem('celest_user_bio', profileBioInput.value.trim());
+  localStorage.setItem('celest_user_pfp', profilePfpInput.value.trim() || '🚀');
+  localStorage.setItem('celest_user_color', profileColorInput.value);
+  localStorage.setItem('celest_username_anim', profileAnimSelect.value);
+  alert('profile settings saved and updated!');
+  if (window.initChat) window.initChat();
 });
 
 /* Data JSON Export / Import & Deletion */
@@ -225,7 +246,7 @@ document.getElementById('export-json-btn')?.addEventListener('click', () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'at26_backup.json';
+  a.download = 'celest_backup.json';
   a.click();
   URL.revokeObjectURL(url);
 });
@@ -256,7 +277,7 @@ document.getElementById('clear-local-data')?.addEventListener('click', () => {
   }
 });
 
-/* Toolbar Actions & Proxy Execution connected to /api/proxy */
+/* Toolbar Actions & Proxy Execution */
 document.getElementById('btn-home')?.addEventListener('click', () => {
   hideAllPages();
   if (homeView) homeView.classList.add('active');
@@ -318,7 +339,7 @@ window.launchProxy = function(rawInput) {
 
   historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
   if (historyLog.length > 50) historyLog.pop();
-  localStorage.setItem('at26_history', JSON.stringify(historyLog));
+  localStorage.setItem('celest_history', JSON.stringify(historyLog));
 
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
@@ -335,6 +356,14 @@ if (proxyInput) {
     }
   });
 }
+if (homeSearchInput) {
+  homeSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      launchProxy(homeSearchInput.value);
+    }
+  });
+}
 
 /* Starring / Bookmarking */
 document.getElementById('btn-star')?.addEventListener('click', () => {
@@ -342,7 +371,7 @@ document.getElementById('btn-star')?.addEventListener('click', () => {
   if (currentTab && currentTab.url) {
     if (!bookmarksList.some(b => b.url === currentTab.url)) {
       bookmarksList.push({ title: currentTab.title, url: currentTab.url });
-      localStorage.setItem('at26_bookmarks', JSON.stringify(bookmarksList));
+      localStorage.setItem('celest_bookmarks', JSON.stringify(bookmarksList));
       alert('page starred and bookmarked!');
     } else {
       alert('page is already bookmarked.');
@@ -362,7 +391,7 @@ document.getElementById('btn-history')?.addEventListener('click', () => {
 document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
 document.getElementById('clear-history')?.addEventListener('click', () => {
   historyLog = [];
-  localStorage.removeItem('at26_history');
+  localStorage.removeItem('celest_history');
   document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">no history yet.</p>';
 });
 
@@ -395,7 +424,7 @@ function applyTheme(key) {
   root.style.setProperty('--subtext', t.subtext);
   root.style.setProperty('--accent', t.accent);
   root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('at26_theme', key);
+  localStorage.setItem('celest_theme', key);
 }
 
 document.querySelectorAll('.theme-card').forEach(card => {
@@ -405,12 +434,12 @@ document.querySelectorAll('.theme-card').forEach(card => {
     applyTheme(card.getAttribute('data-theme'));
   });
 });
-applyTheme(localStorage.getItem('at26_theme') || 'oled');
+applyTheme(localStorage.getItem('celest_theme') || 'oled');
 
 const guiScaleSlider = document.getElementById('gui-scale-slider');
 const guiScaleVal = document.getElementById('gui-scale-val');
 if (guiScaleSlider) {
-  const savedScale = localStorage.getItem('at26_gui_scale') || '1.0';
+  const savedScale = localStorage.getItem('celest_gui_scale') || '1.0';
   guiScaleSlider.value = savedScale;
   document.documentElement.style.setProperty('--gui-scale', savedScale);
   if (guiScaleVal) guiScaleVal.textContent = savedScale;
@@ -419,7 +448,7 @@ if (guiScaleSlider) {
     const val = e.target.value;
     document.documentElement.style.setProperty('--gui-scale', val);
     if (guiScaleVal) guiScaleVal.textContent = val;
-    localStorage.setItem('at26_gui_scale', val);
+    localStorage.setItem('celest_gui_scale', val);
   });
 }
 
