@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Strip nested proxy wrappers cleanly
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -52,12 +53,12 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback / Fast search query parsing using Yahoo Search
+  // Fallback search engine using Qwant
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://search.yahoo.com/search?p=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://www.qwant.com/?q=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -117,7 +118,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Robust Server Redirect Handling
+    // Redirect handler
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -280,7 +281,6 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Intercept dynamic SPA link clicks & form submissions
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -296,7 +296,6 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept dynamically appended resources (scripts, iframes, images)
             const observer = new MutationObserver((mutations) => {
               mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
@@ -349,16 +348,16 @@ export default async function handler(req, res) {
           }
           .error-container { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; padding: 20px; }
           .error-text { font-size: 0.95rem; color: #888888; line-height: 1.5; }
-          .error-face { font-size: 1.4rem; margin-top: 4px; color: #ffffff; font-family: monospace; white-space: pre; line-height: 1.2; }
+          .error-face { font-size: 1.2rem; margin-top: 4px; color: #ffffff; white-space: pre; line-height: 1.3; }
         </style>
       </head>
       <body>
         <div class="error-container">
           <div class="error-text">sorry, we couldn't load your site. maybe because of a connection error or the site isn't a valid address</div>
           <div class="error-face">
-  __<br>
-  /  \\<br>
-|    |<br>
+  __
+  /  \\
+|    |
   \\__/
           </div>
         </div>
