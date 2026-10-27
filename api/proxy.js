@@ -18,6 +18,7 @@ export default async function handler(req, res) {
   const simIp = req.query.sim_ip || '192.168.1.102';
   const adblock = req.query.adblock === 'true';
 
+  // Decode token cleanly
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -36,6 +37,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Strip any nested proxy wrappers completely to get the raw underlying destination URL
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -43,7 +45,6 @@ export default async function handler(req, res) {
         let base64 = tParam.replace(/-/g, '+').replace(/_/g, '/');
         while (base64.length % 4) { base64 += '='; }
         targetUrl = decodeURIComponent(atob(base64));
-        break;
       } else {
         const parts = targetUrl.split('/api/proxy?url=');
         targetUrl = decodeURIComponent(parts[parts.length - 1]);
@@ -53,11 +54,12 @@ export default async function handler(req, res) {
     }
   }
 
+  // Fallback / Fast search query parsing using Bing
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://www.ecosia.org/search?q=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://www.bing.com/search?q=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -110,7 +112,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Clean Obfuscated Redirect Handling
+    // Robust Server Redirect Handling
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -220,7 +222,6 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
-      // Adblock injection rules if enabled
       let adblockScript = '';
       if (adblock) {
         adblockScript = `
