@@ -18,7 +18,6 @@ export default async function handler(req, res) {
   const simIp = req.query.sim_ip || '192.168.1.102';
   const adblock = req.query.adblock === 'true';
 
-  // Decode token cleanly
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -37,7 +36,6 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Strip any nested proxy wrappers completely to get the raw underlying destination URL
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -54,12 +52,12 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback / Fast search query parsing using Bing
+  // Fallback / Fast search query parsing using Yahoo Search
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://www.bing.com/search?q=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://search.yahoo.com/search?p=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -85,6 +83,13 @@ export default async function handler(req, res) {
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'cross-site',
+      'sec-fetch-user': '?1',
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
       'forwarded': `for=${simIp};proto=https`,
@@ -275,6 +280,7 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
+            // Intercept dynamic SPA link clicks & form submissions
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -289,6 +295,25 @@ export default async function handler(req, res) {
                 form.action = encodeProxyUrl(form.action);
               }
             }, true);
+
+            // Intercept dynamically appended resources (scripts, iframes, images)
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                  if (node.nodeType === 1) {
+                    ['src', 'href', 'data-src'].forEach(attr => {
+                      if (node.hasAttribute && node.hasAttribute(attr)) {
+                        const val = node.getAttribute(attr);
+                        if (val && !val.includes('/api/proxy?token=')) {
+                          node.setAttribute(attr, encodeProxyUrl(val));
+                        }
+                      }
+                    });
+                  }
+                });
+              });
+            });
+            observer.observe(document.documentElement, { childList: true, subtree: true });
           })();
         </script>
       `;
