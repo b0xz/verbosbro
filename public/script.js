@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'celest_v1.0';
+const CURRENT_VERSION = 'celest_v1.2';
 if (localStorage.getItem('celest_version') !== CURRENT_VERSION) {
   localStorage.setItem('celest_version', CURRENT_VERSION);
 }
@@ -30,6 +30,7 @@ const proxyViewer = document.getElementById('proxy-viewer');
 const homeView = document.getElementById('home-view');
 const chatPageView = document.getElementById('chat-page-view');
 const gamesPageView = document.getElementById('games-page-view');
+const appsPageView = document.getElementById('apps-page-view');
 const settingsPageView = document.getElementById('settings-page-view');
 const liveTimeDisplay = document.getElementById('live-time-display');
 
@@ -100,6 +101,7 @@ function hideAllPages() {
   if (proxyViewer) proxyViewer.classList.remove('active');
   if (chatPageView) chatPageView.classList.remove('active');
   if (gamesPageView) gamesPageView.classList.remove('active');
+  if (appsPageView) appsPageView.classList.remove('active');
   if (settingsPageView) settingsPageView.classList.remove('active');
   document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
 }
@@ -141,19 +143,22 @@ document.getElementById('nav-games')?.addEventListener('click', () => {
   if (gamesPageView) gamesPageView.classList.add('active');
   document.getElementById('dock-games').classList.add('active');
 });
-document.getElementById('nav-settings')?.addEventListener('click', () => {
+document.getElementById('nav-apps')?.addEventListener('click', () => {
   hideAllPages();
-  if (settingsPageView) settingsPageView.classList.add('active');
-  document.getElementById('dock-settings').classList.add('active');
+  if (appsPageView) appsPageView.classList.add('active');
 });
-document.getElementById('nav-ai')?.addEventListener('click', () => {
+document.getElementById('nav-music')?.addEventListener('click', () => launchProxy('https://soundcloud.com'));
+document.getElementById('nav-chat')?.addEventListener('click', () => {
   hideAllPages();
   if (chatPageView) chatPageView.classList.add('active');
   document.getElementById('dock-chat').classList.add('active');
   if (window.initChat) window.initChat();
 });
-document.getElementById('nav-apps')?.addEventListener('click', () => launchProxy('https://html.duckduckgo.com'));
-document.getElementById('nav-music')?.addEventListener('click', () => launchProxy('https://soundcloud.com'));
+document.getElementById('nav-settings')?.addEventListener('click', () => {
+  hideAllPages();
+  if (settingsPageView) settingsPageView.classList.add('active');
+  document.getElementById('dock-settings').classList.add('active');
+});
 
 /* Settings Tab Switching */
 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
@@ -277,7 +282,7 @@ document.getElementById('clear-local-data')?.addEventListener('click', () => {
   }
 });
 
-/* Toolbar Actions & Proxy Execution */
+/* Toolbar Actions & Proxy Execution using Ecosia Search Engine */
 document.getElementById('btn-home')?.addEventListener('click', () => {
   hideAllPages();
   if (homeView) homeView.classList.add('active');
@@ -316,7 +321,9 @@ document.getElementById('btn-fullscreen')?.addEventListener('click', () => {
 function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
-  if (!query.includes('.') || query.includes(' ')) return 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+  if (!query.includes('.') || query.includes(' ')) {
+    return 'https://www.ecosia.org/search?q=' + encodeURIComponent(query);
+  }
   if (/^https?:\/\//i.test(query)) return query;
   return 'https://' + query;
 }
