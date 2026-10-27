@@ -215,6 +215,65 @@
       font-size: 0.8rem;
     }
 
+    /* Apps Hub Styles with Favicons */
+    .apps-container {
+      padding: 30px;
+      overflow-y: auto;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: var(--bg);
+      padding-bottom: 80px;
+    }
+    .apps-category-title {
+      font-size: 1.1rem;
+      color: var(--subtext);
+      margin-bottom: 12px;
+      border-bottom: var(--panel-border);
+      padding-bottom: 6px;
+    }
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .app-card {
+      background: var(--panel);
+      border: var(--panel-border);
+      border-radius: var(--border-radius);
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .app-card:hover {
+      border-color: var(--accent);
+      background: var(--hover);
+    }
+    .app-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-card-icon {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .app-card-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .app-card-desc {
+      font-size: 0.78rem;
+      color: var(--subtext);
+    }
+
     /* Bottom Navigation Dock */
     .sidebar-dock {
       position: fixed;
@@ -294,7 +353,7 @@
       padding: 10px;
     }
 
-    /* Fullscreen Tabbed Settings */
+    /* Fullscreen Settings View with Tabs */
     .settings-container {
       padding: 30px;
       overflow-y: auto;
@@ -398,7 +457,7 @@
   <!-- Workspace Area -->
   <div class="workspace-area">
 
-    <!-- Home View matching Celest -->
+    <!-- Home View with Ecosia Fast Search -->
     <div class="view-page active" id="home-view">
       <div class="celest-brand">celest</div>
       <input type="text" class="search-lessons-bar" id="home-search-bar" placeholder="search lessons" autocomplete="off">
@@ -415,9 +474,9 @@
           <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           <span class="home-nav-label">music</span>
         </button>
-        <button class="home-nav-item" id="nav-ai">
-          <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v1c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-1c1.66 0 3-1.34 3-3s-1.34-3-3-3zm-8-5c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-3 11.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm6 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-          <span class="home-nav-label">ai</span>
+        <button class="home-nav-item" id="nav-chat">
+          <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          <span class="home-nav-label">chat</span>
         </button>
         <button class="home-nav-item" id="nav-settings">
           <svg class="home-nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
@@ -429,6 +488,79 @@
 
     <!-- Proxy Viewer -->
     <iframe class="view-page proxy-viewer" id="proxy-viewer" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"></iframe>
+
+    <!-- Apps Hub View with Favicons -->
+    <div class="view-page" id="apps-page-view">
+      <div class="apps-container">
+        <h2>celest apps & sites directory</h2>
+
+        <!-- Game Sites Section -->
+        <div>
+          <div class="apps-category-title">popular game sites</div>
+          <div class="apps-grid">
+            <div class="app-card" onclick="launchProxy('https://poki.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=poki.com&sz=32" alt=""><span class="app-card-title">poki</span></div>
+              <div class="app-card-desc">online mini games & arcade favorites</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://crazygames.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=crazygames.com&sz=32" alt=""><span class="app-card-title">crazygames</span></div>
+              <div class="app-card-desc">3d action, multiplayer & puzzle games</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://retrogames.cc')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=retrogames.cc&sz=32" alt=""><span class="app-card-title">retrogames</span></div>
+              <div class="app-card-desc">classic retro console emulators</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://itch.io')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=itch.io&sz=32" alt=""><span class="app-card-title">itch.io</span></div>
+              <div class="app-card-desc">indie games hub</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Sites Section -->
+        <div>
+          <div class="apps-category-title">video & streaming</div>
+          <div class="apps-grid">
+            <div class="app-card" onclick="launchProxy('https://youtube.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=youtube.com&sz=32" alt=""><span class="app-card-title">youtube</span></div>
+              <div class="app-card-desc">video streaming & creators</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://twitch.tv')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=twitch.tv&sz=32" alt=""><span class="app-card-title">twitch</span></div>
+              <div class="app-card-desc">live streams & esports</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://vimeo.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=vimeo.com&sz=32" alt=""><span class="app-card-title">vimeo</span></div>
+              <div class="app-card-desc">creative video hosting platform</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Useful Sites Section -->
+        <div>
+          <div class="apps-category-title">useful web tools & search</div>
+          <div class="apps-grid">
+            <div class="app-card" onclick="launchProxy('https://ecosia.org')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=ecosia.org&sz=32" alt=""><span class="app-card-title">ecosia</span></div>
+              <div class="app-card-desc">eco-friendly alternative search engine</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://wikipedia.org')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=wikipedia.org&sz=32" alt=""><span class="app-card-title">wikipedia</span></div>
+              <div class="app-card-desc">free online encyclopedia</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://github.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt=""><span class="app-card-title">github</span></div>
+              <div class="app-card-desc">developer platform & code repositories</div>
+            </div>
+            <div class="app-card" onclick="launchProxy('https://spotify.com')">
+              <div class="app-card-header"><img class="app-card-icon" src="https://www.google.com/s2/favicons?domain=spotify.com&sz=32" alt=""><span class="app-card-title">spotify</span></div>
+              <div class="app-card-desc">music & podcast streaming</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
     <!-- Chat View -->
     <div class="view-page" id="chat-page-view">
@@ -573,7 +705,7 @@
     <button class="dock-btn active" id="dock-home" title="home"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>home</button>
     <button class="dock-btn" id="dock-chat" title="chat"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>chat</button>
     <button class="dock-btn" id="dock-games" title="games"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>games</button>
-    <button class="dock-btn" id="dock-settings" title="settings"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>settings</button>
+    <button class="dock-btn" id="dock-settings" title="settings"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.47l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.47l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>settings</button>
   </div>
 
 </div>
