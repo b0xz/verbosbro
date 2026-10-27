@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'celest_v1.2';
+const CURRENT_VERSION = 'celest_v1.3';
 if (localStorage.getItem('celest_version') !== CURRENT_VERSION) {
   localStorage.setItem('celest_version', CURRENT_VERSION);
 }
@@ -170,6 +170,16 @@ document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   });
 });
 
+/* Adblock Toggle Setting */
+const adblockToggle = document.getElementById('adblock-toggle');
+if (adblockToggle) {
+  const savedAdblock = localStorage.getItem('celest_adblock') === 'true';
+  adblockToggle.checked = savedAdblock;
+  adblockToggle.addEventListener('change', (e) => {
+    localStorage.setItem('celest_adblock', e.target.checked);
+  });
+}
+
 /* Cloaking / Stealth Handling */
 let isCloaked = false;
 const cloakNotice = document.getElementById('cloak-notice');
@@ -334,9 +344,10 @@ window.launchProxy = function(rawInput) {
 
   const currentTab = tabs.find(t => t.id === activeTabId);
   const simIp = '192.168.1.102';
+  const adblockEnabled = localStorage.getItem('celest_adblock') === 'true';
   
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
-  const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}`;
+  const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}&adblock=${adblockEnabled}`;
   
   if (currentTab) {
     currentTab.url = targetUrl;
