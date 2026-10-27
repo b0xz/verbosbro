@@ -35,7 +35,7 @@ function bindModalActions() {
   if (udMessageBtn) {
     udMessageBtn.onclick = () => {
       if (!window.selectedDashboardUser) return;
-      const myName = localStorage.getItem('satura_user_name');
+      const myName = localStorage.getItem('celest_user_name');
       if (window.selectedDashboardUser === myName) {
         alert("you cannot DM yourself!");
         return;
@@ -56,9 +56,9 @@ function bindModalActions() {
 }
 
 async function sendHeartbeat() {
-  const user = localStorage.getItem('satura_user_name') || 'saturauser-1000';
-  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
-  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
+  const user = localStorage.getItem('celest_user_name') || 'celestuser-1000';
+  const bio = localStorage.getItem('celest_user_bio') || 'exploring the web with celest.';
+  const pfp = localStorage.getItem('celest_user_pfp') || '⭐';
 
   try {
     await fetch('/api/chat', {
@@ -102,7 +102,7 @@ async function fetchChat(forceScroll = false) {
     const res = await fetch('/api/chat');
     if (!res.ok) return;
     const data = await res.json();
-    const myName = localStorage.getItem('satura_user_name');
+    const myName = localStorage.getItem('celest_user_name');
 
     const filteredData = data.filter(m => {
       if (currentChatRoom === 'global') return m.recipient === 'global' || !m.recipient;
@@ -130,7 +130,7 @@ async function fetchChat(forceScroll = false) {
         const pfpDiv = document.createElement('div');
         pfpDiv.className = 'chat-msg-pfp';
         pfpDiv.innerHTML = pfpHTML;
-        pfpDiv.onclick = () => window.openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
+        pfpDiv.onclick = () => window.openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with celest.');
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'chat-msg-content';
@@ -142,7 +142,7 @@ async function fetchChat(forceScroll = false) {
         userSpan.className = 'chat-msg-username';
         userSpan.textContent = m.user;
         userSpan.style.color = m.color || '#ffffff';
-        userSpan.onclick = () => window.openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with satura.');
+        userSpan.onclick = () => window.openUserDashboard(m.user, m.pfp || '⭐', m.bio || 'exploring the web with celest.');
 
         const timeSpan = document.createElement('span');
         timeSpan.className = 'chat-msg-time';
@@ -153,7 +153,7 @@ async function fetchChat(forceScroll = false) {
 
         const textDiv = document.createElement('div');
         textDiv.className = 'chat-msg-text';
-        textDiv.style.fontFamily = m.font || 'Inter, sans-serif';
+        textDiv.style.fontFamily = m.font || 'Share Tech Mono, monospace';
         textDiv.style.whiteSpace = 'pre-wrap';
         textDiv.textContent = m.text;
 
@@ -212,11 +212,11 @@ async function sendChat() {
   if (now - lastMessageTime < 1000) return;
   lastMessageTime = now;
 
-  const user = localStorage.getItem('satura_user_name') || 'saturauser-1000';
-  const pfp = localStorage.getItem('satura_user_pfp') || '⭐';
-  const bio = localStorage.getItem('satura_user_bio') || 'exploring the web with satura.';
-  const color = localStorage.getItem('satura_user_color') || '#ffffff';
-  const font = localStorage.getItem('satura_chat_font') || 'Inter, sans-serif';
+  const user = localStorage.getItem('celest_user_name') || 'celestuser-1000';
+  const pfp = localStorage.getItem('celest_user_pfp') || '⭐';
+  const bio = localStorage.getItem('celest_user_bio') || 'exploring the web with celest.';
+  const color = localStorage.getItem('celest_user_color') || '#ffffff';
+  const font = localStorage.getItem('celest_chat_font') || 'Share Tech Mono, monospace';
 
   try {
     const res = await fetch('/api/chat', {
