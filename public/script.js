@@ -11,7 +11,7 @@ if (localStorage.getItem('celest_version') !== CURRENT_VERSION) {
 
 if (!localStorage.getItem('celest_user_name')) {
   localStorage.setItem('celest_user_name', 'celestuser-' + Math.floor(1000 + Math.random() * 9000));
-  localStorage.setItem('celest_user_bio', 'vector network explorer.');
+  localStorage.setItem('celest_user_bio', 'exploring the web with celest.');
   localStorage.setItem('celest_user_pfp', '🚀');
   localStorage.setItem('celest_user_color', '#ffffff');
 }
@@ -105,6 +105,7 @@ function hideAllPages() {
   document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
 }
 
+/* Dock Navigation */
 document.getElementById('dock-home')?.addEventListener('click', () => {
   hideAllPages();
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -135,6 +136,7 @@ document.getElementById('dock-settings')?.addEventListener('click', () => {
   document.getElementById('dock-settings').classList.add('active');
 });
 
+/* Home Grid Nav Actions */
 document.getElementById('nav-games')?.addEventListener('click', () => {
   hideAllPages();
   if (gamesPageView) gamesPageView.classList.add('active');
@@ -157,6 +159,7 @@ document.getElementById('nav-settings')?.addEventListener('click', () => {
   document.getElementById('dock-settings').classList.add('active');
 });
 
+/* Settings Tab Switching */
 document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
@@ -166,21 +169,77 @@ document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   });
 });
 
+/* Themes */
+const THEMES = {
+  midnight: { bg: '#0b0f19', panel: '#111827', border: '#1f2937', text: '#f3f4f6', subtext: '#9ca3af', accent: '#3b82f6', hover: '#1f2937' },
+  oled: { bg: '#000000', panel: '#050505', border: '#1f1f1f', text: '#f8fafc', subtext: '#888888', accent: '#ffffff', hover: '#121212' },
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#133a23', text: '#86efac', subtext: '#4ade80', accent: '#22c55e', hover: '#0d2e1a' },
+  blossom: { bg: '#12050b', panel: '#210813', border: '#421226', text: '#fbcfe8', subtext: '#f472b6', accent: '#ec4899', hover: '#300b1b' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', text: '#fca5a5', subtext: '#f87171', accent: '#ef4444', hover: '#2f0c11' },
+  aquatic: { bg: '#020d14', panel: '#051926', border: '#0e314a', text: '#7dd3fc', subtext: '#38bdf8', accent: '#0ea5e9', hover: '#092436' }
+};
+
+function applyTheme(key) {
+  const t = THEMES[key] || THEMES.midnight;
+  const root = document.documentElement;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--panel', t.panel);
+  root.style.setProperty('--border', t.border);
+  root.style.setProperty('--text', t.text);
+  root.style.setProperty('--subtext', t.subtext);
+  root.style.setProperty('--accent', t.accent);
+  root.style.setProperty('--hover', t.hover);
+  localStorage.setItem('celest_theme', key);
+}
+
+document.querySelectorAll('.theme-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    applyTheme(card.getAttribute('data-theme'));
+  });
+});
+applyTheme(localStorage.getItem('celest_theme') || 'midnight');
+
+/* Adblock Toggle */
 const adblockToggle = document.getElementById('adblock-toggle');
 if (adblockToggle) {
-  const savedAdblock = localStorage.getItem('celest_adblock') === 'true';
-  adblockToggle.checked = savedAdblock;
+  adblockToggle.checked = localStorage.getItem('celest_adblock') === 'true';
   adblockToggle.addEventListener('change', (e) => {
     localStorage.setItem('celest_adblock', e.target.checked);
   });
 }
 
+/* Userscripts Management */
+const userscriptInput = document.getElementById('userscript-input');
+if (userscriptInput) {
+  userscriptInput.value = localStorage.getItem('celest_userscript_code') || '';
+}
+document.getElementById('save-userscript')?.addEventListener('click', () => {
+  localStorage.setItem('celest_userscript_code', userscriptInput.value);
+  alert('userscript saved successfully!');
+});
+
+/* Inspect Element Tool Trigger */
+document.getElementById('toggle-inspector-btn')?.addEventListener('click', () => {
+  try {
+    if (proxyViewer && proxyViewer.contentWindow) {
+      proxyViewer.contentWindow.postMessage({ type: 'TOGGLE_INSPECTOR' }, '*');
+      alert('inspector message sent to active proxied frame!');
+    } else {
+      alert('no active proxy page loaded to inspect.');
+    }
+  } catch (e) {
+    alert('unable to access active frame.');
+  }
+});
+
+/* Cloaking / Stealth Handling */
 let isCloaked = false;
 function toggleCloak(forceState) {
   isCloaked = typeof forceState === 'boolean' ? forceState : !isCloaked;
   document.body.style.opacity = isCloaked ? '0' : '1';
 }
-
 document.getElementById('manual-cloak-btn')?.addEventListener('click', () => toggleCloak(true));
 document.addEventListener('keydown', (e) => {
   if (e.key === '\\') {
@@ -189,47 +248,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const profileNameInput = document.getElementById('profile-name');
-const profileBioInput = document.getElementById('profile-bio');
-const profilePfpInput = document.getElementById('profile-pfp');
-
-function loadProfileSettings() {
-  if (profileNameInput) profileNameInput.value = localStorage.getItem('celest_user_name') || '';
-  if (profileBioInput) profileBioInput.value = localStorage.getItem('celest_user_bio') || '';
-  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('celest_user_pfp') || '';
-}
-loadProfileSettings();
-
-document.getElementById('save-profile')?.addEventListener('click', () => {
-  localStorage.setItem('celest_user_name', profileNameInput.value.trim() || 'celestuser');
-  localStorage.setItem('celest_user_bio', profileBioInput.value.trim());
-  localStorage.setItem('celest_user_pfp', profilePfpInput.value.trim() || '🚀');
-  alert('profile updated!');
-  if (window.initChat) window.initChat();
-});
-
-document.getElementById('export-json-btn')?.addEventListener('click', () => {
-  const data = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    data[key] = localStorage.getItem(key);
-  }
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'celest_backup.json';
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById('clear-local-data')?.addEventListener('click', () => {
-  if (confirm('wipe all local data?')) {
-    localStorage.clear();
-    location.reload();
-  }
-});
-
+/* Toolbar Actions & Proxy Execution */
 document.getElementById('btn-home')?.addEventListener('click', () => {
   hideAllPages();
   if (homeView) homeView.classList.add('active');
@@ -282,6 +301,7 @@ window.launchProxy = function(rawInput) {
   const currentTab = tabs.find(t => t.id === activeTabId);
   const simIp = '192.168.1.102';
   const adblockEnabled = localStorage.getItem('celest_adblock') === 'true';
+  const userscript = localStorage.getItem('celest_userscript_code') || '';
   
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
   const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}&adblock=${adblockEnabled}`;
@@ -296,6 +316,7 @@ window.launchProxy = function(rawInput) {
   if (historyLog.length > 50) historyLog.pop();
   localStorage.setItem('celest_history', JSON.stringify(historyLog));
 
+  // Update address bar to show clean human-readable domain/path
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
   if (proxyViewer) proxyViewer.classList.add('active');
@@ -319,39 +340,5 @@ if (homeSearchInput) {
     }
   });
 }
-
-document.getElementById('btn-star')?.addEventListener('click', () => {
-  const currentTab = tabs.find(t => t.id === activeTabId);
-  if (currentTab && currentTab.url) {
-    if (!bookmarksList.some(b => b.url === currentTab.url)) {
-      bookmarksList.push({ title: currentTab.title, url: currentTab.url });
-      localStorage.setItem('celest_bookmarks', JSON.stringify(bookmarksList));
-      alert('page bookmarked!');
-    } else {
-      alert('already bookmarked.');
-    }
-  }
-});
-
-const historyModal = document.getElementById('history-modal');
-document.getElementById('btn-history')?.addEventListener('click', () => {
-  const listEl = document.getElementById('history-list');
-  listEl.innerHTML = historyLog.map(h => `<div class="list-item" onclick="launchProxy('${h.url}'); historyModal.classList.add('hidden');"><span>${h.url}</span><span style="color:var(--subtext);font-size:0.7rem;">${h.time}</span></div>`).join('') || '<p style="color:var(--subtext);">no history.</p>';
-  historyModal.classList.remove('hidden');
-});
-document.getElementById('close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
-document.getElementById('clear-history')?.addEventListener('click', () => {
-  historyLog = [];
-  localStorage.removeItem('celest_history');
-  document.getElementById('history-list').innerHTML = '<p style="color:var(--subtext);">no history.</p>';
-});
-
-const bookmarksModal = document.getElementById('bookmarks-modal');
-document.getElementById('btn-bookmarks')?.addEventListener('click', () => {
-  const listEl = document.getElementById('bookmarks-list');
-  listEl.innerHTML = bookmarksList.map(b => `<div class="list-item" onclick="launchProxy('${b.url}'); bookmarksModal.classList.add('hidden');"><span>${b.title}</span><span style="color:var(--subtext);font-size:0.7rem;">${b.url}</span></div>`).join('') || '<p style="color:var(--subtext);">no bookmarks.</p>';
-  bookmarksModal.classList.remove('hidden');
-});
-document.getElementById('close-bookmarks')?.addEventListener('click', () => bookmarksModal.classList.add('hidden'));
 
 renderTabs();
