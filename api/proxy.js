@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
+  // CORS & Security Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
   const simIp = req.query.sim_ip || '192.168.1.102';
   const adblock = req.query.adblock === 'true';
 
+  // Decode proxy token cleanly
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -36,6 +38,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Strip nested proxy wrappers completely to get the raw destination URL
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback search engine using Yahoo
+  // Fallback search engine handling (Yahoo Search for address bar queries)
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
@@ -64,10 +67,7 @@ export default async function handler(req, res) {
   const UA_MAP = {
     desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     tablet: 'Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
-    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
-    xbox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; Xbox Series X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edge/110.0.1587.57',
-    playstation: 'Mozilla/5.0 (PlayStation 5 3.20) AppleWebKit/605.1.15 (KHTML, like Gecko)',
-    smarttv: 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.100 TV Safari/537.36'
+    mobile: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
   };
 
   const selectedUA = UA_MAP[device] || UA_MAP.desktop;
@@ -76,6 +76,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
+    // Comprehensive modern browser headers to prevent blocks
     const proxyHeaders = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -83,6 +84,13 @@ export default async function handler(req, res) {
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'cross-site',
+      'sec-fetch-user': '?1',
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
       'forwarded': `for=${simIp};proto=https`,
@@ -110,6 +118,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
+    // Robust Server Redirect Handling (Resolves relative/absolute location headers correctly)
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -301,16 +310,32 @@ export default async function handler(req, res) {
             background-color: #0b0f19; color: #f3f4f6;
             font-family: 'Share Tech Mono', monospace;
             display: flex; align-items: center; justify-content: center;
-            text-align: center; text-transform: lowercase;
+            overflow: hidden; text-transform: lowercase;
+            animation: fadeInError 0.5s cubic-bezier(0.16, 1, 0.3, 1);
           }
-          .error-container { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; padding: 20px; }
-          .error-text { font-size: 0.95rem; color: #9ca3af; line-height: 1.5; }
-          .error-face { font-size: 1.2rem; margin-top: 4px; color: #f3f4f6; white-space: pre; line-height: 1.3; font-family: monospace; }
+          @keyframes fadeInError {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+          .error-container { 
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; gap: 16px; 
+            max-width: 440px; padding: 30px; background: rgba(17, 24, 39, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+            backdrop-filter: blur(10px); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            text-align: center;
+          }
+          .error-title { font-size: 1.1rem; color: #38bdf8; font-weight: bold; letter-spacing: 1px; }
+          .error-text { font-size: 0.9rem; color: #9ca3af; line-height: 1.5; }
+          .error-face { font-size: 1.3rem; margin-top: 4px; color: #f3f4f6; white-space: pre; line-height: 1.3; font-family: monospace; }
         </style>
       </head>
       <body>
+        <canvas id="glslCanvas"></canvas>
         <div class="error-container">
-          <div class="error-text">sorry, we couldn't load your site. maybe because of a connection error or the site isn't a valid address</div>
+          <div class="error-title">// connection fault</div>
+          <div class="error-text">unable to resolve target destination. please verify the URL or check your network connection.</div>
           <div class="error-face">
   __
   /  \\
@@ -318,6 +343,60 @@ export default async function handler(req, res) {
   \\__/
           </div>
         </div>
+        <script>
+          const canvas = document.getElementById('glslCanvas');
+          const ctx = canvas.getContext('2d');
+          let width, height;
+          function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+          }
+          window.addEventListener('resize', resize);
+          resize();
+
+          const particles = [];
+          for(let i=0; i<40; i++) {
+            particles.push({
+              x: Math.random() * width,
+              y: Math.random() * height,
+              vx: (Math.random() - 0.5) * 0.6,
+              vy: (Math.random() - 0.5) * 0.6,
+              size: Math.random() * 2 + 1
+            });
+          }
+
+          function animate() {
+            ctx.fillStyle = 'rgba(11, 15, 25, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<particles.length; i++) {
+              let p = particles[i];
+              p.x += p.vx; p.y += p.vy;
+              if(p.x < 0) p.x = width; if(p.x > width) p.x = 0;
+              if(p.y < 0) p.y = height; if(p.y > height) p.y = 0;
+
+              ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+              ctx.fill();
+
+              for(let j=i+1; j<particles.length; j++) {
+                let p2 = particles[j];
+                let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                if(dist < 120) {
+                  ctx.beginPath();
+                  ctx.moveTo(p.x, p.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.stroke();
+                }
+              }
+            }
+            requestAnimationFrame(animate);
+          }
+          animate();
+        </script>
       </body>
       </html>
     `);
