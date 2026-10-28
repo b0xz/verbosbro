@@ -36,7 +36,6 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Strip nested proxy wrappers cleanly
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -53,12 +52,12 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback search engine using Qwant
+  // Fallback search engine using Yahoo
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://www.qwant.com/?q=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://search.yahoo.com/search?p=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -84,13 +83,6 @@ export default async function handler(req, res) {
       'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
-      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'sec-fetch-dest': 'document',
-      'sec-fetch-mode': 'navigate',
-      'sec-fetch-site': 'cross-site',
-      'sec-fetch-user': '?1',
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
       'forwarded': `for=${simIp};proto=https`,
@@ -118,7 +110,6 @@ export default async function handler(req, res) {
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    // Redirect handler
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -242,22 +233,6 @@ export default async function handler(req, res) {
                 }
                 return originalFetch.apply(this, args);
               };
-              const originalOpen = XMLHttpRequest.prototype.open;
-              XMLHttpRequest.prototype.open = function(method, url, ...args) {
-                if (typeof url === 'string' && blockedDomains.some(d => url.includes(d))) {
-                  this.abort = function() {};
-                  return;
-                }
-                return originalOpen.apply(this, [method, url, ...args]);
-              };
-              setInterval(() => {
-                document.querySelectorAll('iframe, ins, script').forEach(el => {
-                  const src = el.src || el.getAttribute('data-src') || '';
-                  if (blockedDomains.some(d => src.includes(d))) {
-                    el.remove();
-                  }
-                });
-              }, 1000);
             })();
           </script>
         `;
@@ -295,24 +270,6 @@ export default async function handler(req, res) {
                 form.action = encodeProxyUrl(form.action);
               }
             }, true);
-
-            const observer = new MutationObserver((mutations) => {
-              mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                  if (node.nodeType === 1) {
-                    ['src', 'href', 'data-src'].forEach(attr => {
-                      if (node.hasAttribute && node.hasAttribute(attr)) {
-                        const val = node.getAttribute(attr);
-                        if (val && !val.includes('/api/proxy?token=')) {
-                          node.setAttribute(attr, encodeProxyUrl(val));
-                        }
-                      }
-                    });
-                  }
-                });
-              });
-            });
-            observer.observe(document.documentElement, { childList: true, subtree: true });
           })();
         </script>
       `;
@@ -341,14 +298,14 @@ export default async function handler(req, res) {
         <style>
           body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
-            background-color: #000000; color: #ffffff;
+            background-color: #0b0f19; color: #f3f4f6;
             font-family: 'Share Tech Mono', monospace;
             display: flex; align-items: center; justify-content: center;
             text-align: center; text-transform: lowercase;
           }
           .error-container { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 420px; padding: 20px; }
-          .error-text { font-size: 0.95rem; color: #888888; line-height: 1.5; }
-          .error-face { font-size: 1.2rem; margin-top: 4px; color: #ffffff; white-space: pre; line-height: 1.3; }
+          .error-text { font-size: 0.95rem; color: #9ca3af; line-height: 1.5; }
+          .error-face { font-size: 1.2rem; margin-top: 4px; color: #f3f4f6; white-space: pre; line-height: 1.3; font-family: monospace; }
         </style>
       </head>
       <body>
