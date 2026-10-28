@@ -23,7 +23,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; font-weight: 300; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); transition: background 0.3s ease, color 0.3s ease; }
 
     #app-container {
       width: calc(100% / var(--gui-scale));
@@ -160,8 +160,14 @@
       display: none;
       flex-direction: column;
       background: var(--bg);
+      animation: fadeIn 0.25s ease-in-out;
     }
     .view-page.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* Home View */
     #home-view {
@@ -319,6 +325,11 @@
     .setting-card { background: var(--panel); border: var(--panel-border); border-radius: var(--border-radius); padding: 18px; display: flex; flex-direction: column; gap: 10px; max-width: 620px; }
     .setting-card label { font-size: 0.85rem; color: var(--subtext); }
     .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
+
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .theme-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+    .theme-card:hover, .theme-card.active { border-color: var(--accent); background: var(--hover); }
+    .theme-color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); }
 
     .action-btn { background: var(--accent); border: none; border-radius: 8px; padding: 10px 18px; font-weight: bold; color: #ffffff; cursor: pointer; }
     .action-btn:hover { opacity: 0.9; }
@@ -489,12 +500,31 @@
         <h2>settings & preferences</h2>
 
         <div class="settings-tabs-header">
-          <button class="settings-tab-btn active" data-tab="privacy">privacy & adblock</button>
+          <button class="settings-tab-btn active" data-tab="ui">ui themes</button>
+          <button class="settings-tab-btn" data-tab="privacy">privacy & adblock</button>
+          <button class="settings-tab-btn" data-tab="userscripts">userscripts</button>
+          <button class="settings-tab-btn" data-tab="tools">inspect element</button>
           <button class="settings-tab-btn" data-tab="profile">profile</button>
           <button class="settings-tab-btn" data-tab="misc">data & backup</button>
         </div>
 
-        <div class="settings-tab-pane active" id="pane-privacy">
+        <!-- UI Themes Tab -->
+        <div class="settings-tab-pane active" id="pane-ui">
+          <div class="setting-card">
+            <label>color scheme</label>
+            <div class="theme-grid">
+              <div class="theme-card active" data-theme="midnight"><div class="theme-color-preview" style="background:#0b0f19;"></div><span>midnight blue</span></div>
+              <div class="theme-card" data-theme="oled"><div class="theme-color-preview" style="background:#000000;"></div><span>oled black</span></div>
+              <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>matrix green</span></div>
+              <div class="theme-card" data-theme="blossom"><div class="theme-color-preview" style="background:#2d121c;"></div><span>blossom pink</span></div>
+              <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>crimson red</span></div>
+              <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>aquatic cyan</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy & Adblock Tab -->
+        <div class="settings-tab-pane" id="pane-privacy">
           <div class="setting-card">
             <label>adblocker & tracker shield</label>
             <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
@@ -508,6 +538,25 @@
           </div>
         </div>
 
+        <!-- Userscripts Tab -->
+        <div class="settings-tab-pane" id="pane-userscripts">
+          <div class="setting-card">
+            <label>custom userscript code (injected into all proxied pages)</label>
+            <textarea id="userscript-input" class="setting-input" rows="8" placeholder="// write custom javascript here..."></textarea>
+            <button class="action-btn" id="save-userscript">save userscript</button>
+          </div>
+        </div>
+
+        <!-- Inspect Element Tab -->
+        <div class="settings-tab-pane" id="pane-tools">
+          <div class="setting-card">
+            <label>inspector tool</label>
+            <p style="font-size:0.85rem; color:var(--subtext); line-height:1.4;">toggle the built-in element inspector overlay to view and edit dom elements inside active proxied pages.</p>
+            <button class="action-btn" id="toggle-inspector-btn">launch live inspector</button>
+          </div>
+        </div>
+
+        <!-- Profile Tab -->
         <div class="settings-tab-pane" id="pane-profile">
           <div class="setting-card">
             <label>account display name</label>
@@ -524,6 +573,7 @@
           <button class="action-btn" id="save-profile">save profile settings</button>
         </div>
 
+        <!-- Misc Tab -->
         <div class="settings-tab-pane" id="pane-misc">
           <div class="setting-card">
             <label>export local data (json backup)</label>
