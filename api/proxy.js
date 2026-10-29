@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // 1. Enable Global CORS Handshaking & Security Bypass Headers
+  // 1. Global CORS Handshaking & Security Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const device = req.query.device || 'desktop';
   const simIp = req.query.sim_ip || '192.168.1.102';
 
-  // 2. Decode Token using standard Base64 conversion
+  // 2. Decode Token securely
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Prevent infinite nesting extraction loops
+  // Prevent infinite extraction loops
   while (targetUrl.includes('/service/') || targetUrl.includes('/api/proxy?token=')) {
     try {
       if (targetUrl.includes('/service/')) {
@@ -77,6 +77,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
+    // 3. Super-strength proxy headers matching real browser signatures
     const proxyHeaders = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -98,11 +99,9 @@ export default async function handler(req, res) {
       'upgrade-insecure-requests': '1'
     };
 
-    // Forward incoming client cookies/authorization if available
     if (req.headers['cookie']) proxyHeaders['cookie'] = req.headers['cookie'];
     if (req.headers['authorization']) proxyHeaders['authorization'] = req.headers['authorization'];
 
-    // 3. Make fetch request intercepting server-side redirects manually
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: proxyHeaders,
@@ -110,7 +109,7 @@ export default async function handler(req, res) {
       compress: true
     });
 
-    // 4. Robust Redirect Location Mapping (Fixing redirect loops)
+    // 4. Robust Redirect Location Mapping
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location') || response.headers.get('Location');
       if (locationHeader) {
@@ -163,7 +162,6 @@ export default async function handler(req, res) {
     const isCSS = contentType.includes('text/css') || contentType.includes('css');
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
 
-    // Helper utility to convert relative/absolute assets seamlessly 
     function proxifyUrl(val) {
       try {
         if (!val || typeof val !== 'string') return val;
@@ -203,7 +201,7 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // 5. Inject Client-Side DOM Observers & URL Rewriters for HTML pages
+    // 5. Super-Strength Client-Side Injection Script (DOM Observers + Fetch/XHR Interceptors)
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -231,7 +229,7 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Capture clicks globally on anchors/buttons to ensure navigation redirects work smoothly
+            // Global Click Interceptor for Links & Buttons
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -240,13 +238,68 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept standard form postings
+            // Global Form Submission Interceptor
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
                 form.action = encodeProxyUrl(form.action);
               }
             }, true);
+
+            // MutationObserver to dynamically rewrite lazily loaded DOM attributes (src, href, srcset, action)
+            const observer = new MutationObserver(function(mutations) {
+              mutations.forEach(function(mutation) {
+                if (mutation.addedNodes) {
+                  mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                      ['src', 'href', 'action', 'data-src'].forEach(attr => {
+                        if (node.hasAttribute && node.hasAttribute(attr)) {
+                          const val = node.getAttribute(attr);
+                          if (val && !val.startsWith('/service/') && !val.startsWith('data:') && !val.startsWith('javascript:')) {
+                            node.setAttribute(attr, encodeProxyUrl(val));
+                          }
+                        }
+                      });
+                      // Scan child elements as well
+                      node.querySelectorAll?.('[src], [href], [action]').forEach(child => {
+                        ['src', 'href', 'action'].forEach(attr => {
+                          if (child.hasAttribute(attr)) {
+                            const val = child.getAttribute(attr);
+                            if (val && !val.startsWith('/service/') && !val.startsWith('data:') && !val.startsWith('javascript:')) {
+                              child.setAttribute(attr, encodeProxyUrl(val));
+                            }
+                          }
+                        });
+                      });
+                    }
+                  });
+                }
+              });
+            });
+
+            if (document.documentElement) {
+              observer.observe(document.documentElement, { childList: true, subtree: true });
+            }
+
+            // Intercept window.fetch to ensure internal SPA api requests route correctly
+            const originalFetch = window.fetch;
+            window.fetch = function(input, init) {
+              if (typeof input === 'string') {
+                input = encodeProxyUrl(input);
+              } else if (input instanceof Request) {
+                input = new Request(encodeProxyUrl(input.url), input);
+              }
+              return originalFetch.apply(this, arguments);
+            };
+
+            // Intercept XMLHttpRequest for legacy API compatibility
+            const originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+              if (typeof url === 'string') {
+                arguments[1] = encodeProxyUrl(url);
+              }
+              return originalOpen.apply(this, arguments);
+            };
           })();
         </script>
       `;
