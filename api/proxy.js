@@ -36,16 +36,20 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
+  while (targetUrl.includes('/service/') || targetUrl.includes('/api/proxy?token=')) {
     try {
-      if (targetUrl.includes('token=')) {
+      if (targetUrl.includes('/service/')) {
+        const tParam = targetUrl.split('/service/')[1].split('&')[0];
+        let base64 = tParam.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) { base64 += '='; }
+        targetUrl = decodeURIComponent(atob(base64));
+      } else if (targetUrl.includes('token=')) {
         const tParam = targetUrl.split('token=')[1].split('&')[0];
         let base64 = tParam.replace(/-/g, '+').replace(/_/g, '/');
         while (base64.length % 4) { base64 += '='; }
         targetUrl = decodeURIComponent(atob(base64));
       } else {
-        const parts = targetUrl.split('/api/proxy?url=');
-        targetUrl = decodeURIComponent(parts[parts.length - 1]);
+        break;
       }
     } catch (e) {
       break;
@@ -96,7 +100,7 @@ export default async function handler(req, res) {
       if (locationHeader) {
         const absoluteRedirectUrl = new URL(locationHeader, targetUrl).href;
         const encodedToken = btoa(encodeURIComponent(absoluteRedirectUrl)).replace(/=/g, '');
-        const proxiedRedirect = `/api/proxy?token=${encodedToken}&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}`;
+        const proxiedRedirect = `/service/${encodedToken}`;
         return res.redirect(302, proxiedRedirect);
       }
     }
@@ -106,7 +110,7 @@ export default async function handler(req, res) {
 
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
 
-    res.setHeader('x-proxied-by', 'onyx-gateway');
+    res.setHeader('x-proxied-by', 'onyx-ultraviolet-gateway');
     res.setHeader('referrer-policy', 'no-referrer');
 
     const headersToRemove = [
@@ -132,11 +136,11 @@ export default async function handler(req, res) {
         if (!val || typeof val !== 'string') return val;
         let trimmed = val.trim();
         if (/^(data:|javascript:|#|mailto:|blob:|about:)/i.test(trimmed)) return val;
-        if (trimmed.includes('/api/proxy?token=')) return val;
+        if (trimmed.includes('/service/')) return val;
         
         const absUrl = new URL(trimmed, targetUrl).href;
         const encoded = btoa(encodeURIComponent(absUrl)).replace(/=/g, '');
-        return `/api/proxy?token=` + encoded + `&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}`;
+        return `/service/${encoded}`;
       } catch (e) {
         return val;
       }
@@ -178,11 +182,11 @@ export default async function handler(req, res) {
                 if (!url || typeof url !== 'string') return url;
                 let trimmed = url.trim();
                 if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('javascript:') || trimmed.startsWith('about:')) return url;
-                if (trimmed.includes('/api/proxy?token=')) return url;
+                if (trimmed.includes('/service/')) return url;
                 
                 const abs = new URL(trimmed, document.baseURI).href;
                 const encoded = btoa(encodeURIComponent(abs)).replace(/=/g, '');
-                return '/api/proxy?token=' + encoded + '&sim_ip=${simIp}&adblock=${adblock}';
+                return '/service/' + encoded;
               } catch(e) { return url; }
             }
 
