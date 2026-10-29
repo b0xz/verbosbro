@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title id="tab-title">celest</title>
-  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='15' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='32'>c</text></svg>">
+  <title id="tab-title">onyx</title>
+  <link id="tab-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='15' y='65' fill='%23fff' font-family='sans-serif' font-weight='bold' font-size='32'>o</text></svg>">
 
   <style>
     :root {
@@ -188,7 +188,7 @@
       padding-bottom: 60px;
       background: transparent;
     }
-    .celest-brand {
+    .onyx-brand {
       font-size: 3.5rem;
       font-weight: 700;
       letter-spacing: -1px;
@@ -341,6 +341,12 @@
     .setting-card label { font-size: 0.85rem; color: var(--subtext); }
     .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
 
+    /* Search Engine Picker Grid */
+    .search-engines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 6px; }
+    .search-engine-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+    .search-engine-card:hover, .search-engine-card.active { border-color: var(--text); background: var(--hover); }
+    .search-engine-icon { width: 18px; height: 18px; object-fit: contain; }
+
     .action-btn { background: #ffffff; border: none; border-radius: 8px; padding: 10px 18px; font-weight: 600; color: #000000; cursor: pointer; }
     .action-btn:hover { opacity: 0.85; }
 
@@ -390,7 +396,7 @@
 
     <!-- Home View -->
     <div class="view-page active" id="home-view">
-      <div class="celest-brand">celest</div>
+      <div class="onyx-brand">onyx</div>
       <input type="text" class="search-lessons-bar" id="home-search-bar" placeholder="search network..." autocomplete="off">
       <div class="home-nav-grid">
         <button class="home-nav-item" id="nav-games">
@@ -512,15 +518,58 @@
         <h2>settings & preferences</h2>
 
         <div class="settings-tabs-header">
-          <button class="settings-tab-btn active" data-tab="privacy">privacy & adblock</button>
+          <button class="settings-tab-btn active" data-tab="searchengine">search engine</button>
+          <button class="settings-tab-btn" data-tab="privacy">privacy & adblock</button>
           <button class="settings-tab-btn" data-tab="userscripts">userscripts</button>
           <button class="settings-tab-btn" data-tab="tools">inspect element</button>
           <button class="settings-tab-btn" data-tab="profile">profile</button>
           <button class="settings-tab-btn" data-tab="misc">data & backup</button>
         </div>
 
+        <!-- Search Engine Tab -->
+        <div class="settings-tab-pane active" id="pane-searchengine">
+          <div class="setting-card">
+            <label>default search engine</label>
+            <div class="search-engines-grid" id="search-engines-container">
+              <!-- Dynamically populated or static cards -->
+              <div class="search-engine-card active" data-engine="google">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=google.com&sz=32" alt="">
+                <span>google</span>
+              </div>
+              <div class="search-engine-card" data-engine="duckduckgo">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=duckduckgo.com&sz=32" alt="">
+                <span>duckduckgo</span>
+              </div>
+              <div class="search-engine-card" data-engine="yahoo">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=yahoo.com&sz=32" alt="">
+                <span>yahoo</span>
+              </div>
+              <div class="search-engine-card" data-engine="bing">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=bing.com&sz=32" alt="">
+                <span>bing</span>
+              </div>
+              <div class="search-engine-card" data-engine="brave">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=brave.com&sz=32" alt="">
+                <span>brave</span>
+              </div>
+              <div class="search-engine-card" data-engine="ecosia">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=ecosia.org&sz=32" alt="">
+                <span>ecosia</span>
+              </div>
+              <div class="search-engine-card" data-engine="startpage">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=startpage.com&sz=32" alt="">
+                <span>startpage</span>
+              </div>
+              <div class="search-engine-card" data-engine="qwant">
+                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=qwant.com&sz=32" alt="">
+                <span>qwant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Privacy & Adblock Tab -->
-        <div class="settings-tab-pane active" id="pane-privacy">
+        <div class="settings-tab-pane" id="pane-privacy">
           <div class="setting-card">
             <label>adblocker & tracker shield</label>
             <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
@@ -619,7 +668,6 @@
 </div>
 
 <script>
-  // Slow moving black & white constellation background
   const canvas = document.getElementById('constellation-canvas');
   const ctx = canvas.getContext('2d');
   let width, height;
