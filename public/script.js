@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'onyx_v1.7';
+const CURRENT_VERSION = 'onyx_v1.8';
 if (localStorage.getItem('onyx_version') !== CURRENT_VERSION) {
   localStorage.setItem('onyx_version', CURRENT_VERSION);
 }
@@ -206,7 +206,9 @@ const SEARCH_ENGINES = {
   yahoo: 'https://search.yahoo.com/search?p=',
   bing: 'https://www.bing.com/search?q=',
   brave: 'https://search.brave.com/search?q=',
-  ecosia: 'https://www.ecosia.org/search?q='
+  ecosia: 'https://www.ecosia.org/search?q=',
+  startpage: 'https://www.startpage.com/sp/search?query=',
+  qwant: 'https://www.qwant.com/?q='
 };
 
 let activeEngineKey = localStorage.getItem('onyx_search_engine') || 'google';
@@ -343,8 +345,7 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   const currentTab = tabs.find(t => t.id === activeTabId);
-  const encodedToken = Buffer.from(encodeURIComponent(targetUrl))
-    .toString('base64')
+  const encodedToken = btoa(encodeURIComponent(targetUrl))
     .replace(/=/g, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
