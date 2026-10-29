@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
+  // 1. Enable Global CORS Handshaking & Security Bypass Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -12,12 +13,10 @@ export default async function handler(req, res) {
 
   let targetUrl = req.query.url || (req.body && req.body.url);
   const token = req.query.token;
-  const mode = req.query.mode || 'fast';
   const device = req.query.device || 'desktop';
-  const vpn = req.query.vpn || 'us-east';
   const simIp = req.query.sim_ip || '192.168.1.102';
-  const adblock = req.query.adblock === 'true';
 
+  // 2. Decode Token using standard Base64 conversion
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -36,6 +35,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
+  // Prevent infinite nesting extraction loops
   while (targetUrl.includes('/service/') || targetUrl.includes('/api/proxy?token=')) {
     try {
       if (targetUrl.includes('/service/')) {
@@ -56,6 +56,7 @@ export default async function handler(req, res) {
     }
   }
 
+  // Format incomplete URL lookups safely
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
@@ -97,10 +98,11 @@ export default async function handler(req, res) {
       'upgrade-insecure-requests': '1'
     };
 
-    const clientHeaders = req.headers;
-    if (clientHeaders['cookie']) proxyHeaders['cookie'] = clientHeaders['cookie'];
-    if (clientHeaders['authorization']) proxyHeaders['authorization'] = clientHeaders['authorization'];
+    // Forward incoming client cookies/authorization if available
+    if (req.headers['cookie']) proxyHeaders['cookie'] = req.headers['cookie'];
+    if (req.headers['authorization']) proxyHeaders['authorization'] = req.headers['authorization'];
 
+    // 3. Make fetch request intercepting server-side redirects manually
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: proxyHeaders,
@@ -108,6 +110,7 @@ export default async function handler(req, res) {
       compress: true
     });
 
+    // 4. Robust Redirect Location Mapping (Fixing redirect loops)
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location') || response.headers.get('Location');
       if (locationHeader) {
@@ -160,6 +163,7 @@ export default async function handler(req, res) {
     const isCSS = contentType.includes('text/css') || contentType.includes('css');
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
 
+    // Helper utility to convert relative/absolute assets seamlessly 
     function proxifyUrl(val) {
       try {
         if (!val || typeof val !== 'string') return val;
@@ -199,6 +203,7 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
+    // 5. Inject Client-Side DOM Observers & URL Rewriters for HTML pages
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -226,6 +231,7 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
+            // Capture clicks globally on anchors/buttons to ensure navigation redirects work smoothly
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -234,6 +240,7 @@ export default async function handler(req, res) {
               }
             }, true);
 
+            // Intercept standard form postings
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
