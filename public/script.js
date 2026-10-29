@@ -4,7 +4,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'onyx_v1.8';
+const CURRENT_VERSION = 'onyx_v1.9';
 if (localStorage.getItem('onyx_version') !== CURRENT_VERSION) {
   localStorage.setItem('onyx_version', CURRENT_VERSION);
 }
