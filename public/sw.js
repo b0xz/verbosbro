@@ -9,7 +9,6 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Intercept requests matching our proxy service route
   if (url.pathname.startsWith('/service/')) {
     const encodedPart = url.pathname.replace('/service/', '');
     const targetUrl = decodeProxyPath(encodedPart);
