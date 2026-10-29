@@ -1,10 +1,14 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+      console.log('onyx ultraviolet-style service worker active:', reg.scope);
+    }).catch(err => {
+      console.error('sw registration failed:', err);
+    });
   });
 }
 
-const CURRENT_VERSION = 'onyx_v1.5';
+const CURRENT_VERSION = 'onyx_v1.6';
 if (localStorage.getItem('onyx_version') !== CURRENT_VERSION) {
   localStorage.setItem('onyx_version', CURRENT_VERSION);
 }
@@ -296,10 +300,10 @@ window.launchProxy = function(rawInput) {
   const currentTab = tabs.find(t => t.id === activeTabId);
   const simIp = '192.168.1.102';
   const adblockEnabled = localStorage.getItem('onyx_adblock') === 'true';
-  const userscript = localStorage.getItem('onyx_userscript_code') || '';
   
+  // Ultraviolet style service worker route encoding
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
-  const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}&adblock=${adblockEnabled}`;
+  const proxyUrl = `/service/${encodedToken}`;
   
   if (currentTab) {
     currentTab.url = targetUrl;
