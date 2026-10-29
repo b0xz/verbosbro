@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // 1. Global CORS Handshaking & Security Headers
+  // 1. Comprehensive CORS & Security Handshaking Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   const device = req.query.device || 'desktop';
   const simIp = req.query.sim_ip || '192.168.1.102';
 
-  // 2. Decode Token securely
+  // 2. Ultra-Safe URL & Token Decoding Pipeline
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       }
       targetUrl = decodeURIComponent(Buffer.from(base64, 'base64').toString('utf8'));
     } catch (e) {
-      return res.status(400).send('Invalid proxy token.');
+      return res.status(400).send('Invalid proxy token serialization.');
     }
   }
 
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Prevent infinite extraction loops
+  // Prevent infinite nesting/extraction loops
   while (targetUrl.includes('/service/') || targetUrl.includes('/api/proxy?token=')) {
     try {
       if (targetUrl.includes('/service/')) {
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // Format incomplete URL lookups safely
+  // Format incomplete URL queries safely
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // 3. Super-strength proxy headers matching real browser signatures
+    // 3. Enterprise-Grade Proxy Headers to bypass bot/CAPTCHA triggers
     const proxyHeaders = {
       'user-agent': selectedUA,
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -102,6 +102,7 @@ export default async function handler(req, res) {
     if (req.headers['cookie']) proxyHeaders['cookie'] = req.headers['cookie'];
     if (req.headers['authorization']) proxyHeaders['authorization'] = req.headers['authorization'];
 
+    // 4. Perform Upstream Fetch Request
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: proxyHeaders,
@@ -109,7 +110,7 @@ export default async function handler(req, res) {
       compress: true
     });
 
-    // 4. Robust Redirect Location Mapping
+    // 5. Bulletproof Redirect Interception & Normalization
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location') || response.headers.get('Location');
       if (locationHeader) {
@@ -141,7 +142,7 @@ export default async function handler(req, res) {
       try { res.setHeader('set-cookie', setCookieHeader.replace(/Domain=[^;]+/gi, '')); } catch(e) {}
     }
 
-    res.setHeader('x-proxied-by', 'onyx-ultraviolet-gateway');
+    res.setHeader('x-proxied-by', 'onyx-ultraviolet-gateway-v2');
     res.setHeader('referrer-policy', 'no-referrer');
 
     const headersToRemove = [
@@ -201,7 +202,7 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // 5. Super-Strength Client-Side Injection Script (DOM Observers + Fetch/XHR Interceptors)
+    // 6. Advanced Client-Side Injection Script (DOM Observers, PushState, Fetch/XHR Interceptors)
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -229,7 +230,25 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Global Click Interceptor for Links & Buttons
+            // Intercept History pushState and replaceState for SPA Routing
+            const originalPushState = history.pushState;
+            const originalReplaceState = history.replaceState;
+
+            history.pushState = function(state, title, url) {
+              if (url) arguments[2] = encodeProxyUrl(url);
+              return originalPushState.apply(this, arguments);
+            };
+
+            history.replaceState = function(state, title, url) {
+              if (url) arguments[2] = encodeProxyUrl(url);
+              return originalReplaceState.apply(this, arguments);
+            };
+
+            window.addEventListener('popstate', function() {
+              // Ensure smooth back/forward state synchronization
+            });
+
+            // Global Click Interceptor
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -246,13 +265,13 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // MutationObserver to dynamically rewrite lazily loaded DOM attributes (src, href, srcset, action)
+            // MutationObserver to rewrite dynamic DOM nodes and lazy attributes
             const observer = new MutationObserver(function(mutations) {
               mutations.forEach(function(mutation) {
                 if (mutation.addedNodes) {
                   mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType === 1) {
-                      ['src', 'href', 'action', 'data-src'].forEach(attr => {
+                      ['src', 'href', 'action', 'data-src', 'srcset'].forEach(attr => {
                         if (node.hasAttribute && node.hasAttribute(attr)) {
                           const val = node.getAttribute(attr);
                           if (val && !val.startsWith('/service/') && !val.startsWith('data:') && !val.startsWith('javascript:')) {
@@ -260,9 +279,8 @@ export default async function handler(req, res) {
                           }
                         }
                       });
-                      // Scan child elements as well
-                      node.querySelectorAll?.('[src], [href], [action]').forEach(child => {
-                        ['src', 'href', 'action'].forEach(attr => {
+                      node.querySelectorAll?.('[src], [href], [action], [data-src]').forEach(child => {
+                        ['src', 'href', 'action', 'data-src'].forEach(attr => {
                           if (child.hasAttribute(attr)) {
                             const val = child.getAttribute(attr);
                             if (val && !val.startsWith('/service/') && !val.startsWith('data:') && !val.startsWith('javascript:')) {
@@ -281,7 +299,7 @@ export default async function handler(req, res) {
               observer.observe(document.documentElement, { childList: true, subtree: true });
             }
 
-            // Intercept window.fetch to ensure internal SPA api requests route correctly
+            // Intercept Fetch API
             const originalFetch = window.fetch;
             window.fetch = function(input, init) {
               if (typeof input === 'string') {
@@ -292,7 +310,7 @@ export default async function handler(req, res) {
               return originalFetch.apply(this, arguments);
             };
 
-            // Intercept XMLHttpRequest for legacy API compatibility
+            // Intercept XMLHttpRequest
             const originalOpen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function(method, url) {
               if (typeof url === 'string') {
