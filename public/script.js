@@ -1,14 +1,10 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
-      console.log('onyx ultraviolet-style service worker active:', reg.scope);
-    }).catch(err => {
-      console.error('sw registration failed:', err);
-    });
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   });
 }
 
-const CURRENT_VERSION = 'onyx_v1.6';
+const CURRENT_VERSION = 'onyx_v1.7';
 if (localStorage.getItem('onyx_version') !== CURRENT_VERSION) {
   localStorage.setItem('onyx_version', CURRENT_VERSION);
 }
@@ -172,6 +168,37 @@ document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   });
 });
 
+/* Themes */
+const THEMES = {
+  midnight: { bg: '#000000', panel: '#0a0a0a', border: '#222222', text: '#ffffff', subtext: '#888888', hover: '#161616' },
+  matrix: { bg: '#020b05', panel: '#051b0f', border: '#133a23', text: '#86efac', subtext: '#4ade80', hover: '#0d2e1a' },
+  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', text: '#fca5a5', subtext: '#f87171', hover: '#2f0c11' },
+  aquatic: { bg: '#020d14', panel: '#051926', border: '#0e314a', text: '#7dd3fc', subtext: '#38bdf8', hover: '#092436' },
+  sunset: { bg: '#140812', panel: '#260d21', border: '#4a193f', text: '#f5d0fe', subtext: '#e879f9', hover: '#3b1231' },
+  slate: { bg: '#0f172a', panel: '#1e293b', border: '#334155', text: '#f8fafc', subtext: '#94a3b8', hover: '#273548' }
+};
+
+function applyTheme(key) {
+  const t = THEMES[key] || THEMES.midnight;
+  const root = document.documentElement;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--panel', t.panel);
+  root.style.setProperty('--border', t.border);
+  root.style.setProperty('--text', t.text);
+  root.style.setProperty('--subtext', t.subtext);
+  root.style.setProperty('--hover', t.hover);
+  localStorage.setItem('onyx_theme', key);
+}
+
+document.querySelectorAll('.theme-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    applyTheme(card.getAttribute('data-theme'));
+  });
+});
+applyTheme(localStorage.getItem('onyx_theme') || 'midnight');
+
 /* Search Engine Selector */
 const SEARCH_ENGINES = {
   google: 'https://www.google.com/search?q=',
@@ -179,9 +206,7 @@ const SEARCH_ENGINES = {
   yahoo: 'https://search.yahoo.com/search?p=',
   bing: 'https://www.bing.com/search?q=',
   brave: 'https://search.brave.com/search?q=',
-  ecosia: 'https://www.ecosia.org/search?q=',
-  startpage: 'https://www.startpage.com/sp/search?query=',
-  qwant: 'https://www.qwant.com/?q='
+  ecosia: 'https://www.ecosia.org/search?q='
 };
 
 let activeEngineKey = localStorage.getItem('onyx_search_engine') || 'google';
@@ -197,6 +222,26 @@ document.querySelectorAll('.search-engine-card').forEach(card => {
     activeEngineKey = card.getAttribute('data-engine');
     localStorage.setItem('onyx_search_engine', activeEngineKey);
   });
+});
+
+/* Profile & Chat Settings */
+const profileNameInput = document.getElementById('profile-name');
+const profileBioInput = document.getElementById('profile-bio');
+const profilePfpInput = document.getElementById('profile-pfp');
+
+function loadProfileSettings() {
+  if (profileNameInput) profileNameInput.value = localStorage.getItem('onyx_user_name') || '';
+  if (profileBioInput) profileBioInput.value = localStorage.getItem('onyx_user_bio') || '';
+  if (profilePfpInput) profilePfpInput.value = localStorage.getItem('onyx_user_pfp') || '';
+}
+loadProfileSettings();
+
+document.getElementById('save-profile')?.addEventListener('click', () => {
+  localStorage.setItem('onyx_user_name', profileNameInput.value.trim() || 'onyxuser');
+  localStorage.setItem('onyx_user_bio', profileBioInput.value.trim());
+  localStorage.setItem('onyx_user_pfp', profilePfpInput.value.trim() || '💎');
+  alert('profile settings saved successfully!');
+  if (window.initChat) window.initChat();
 });
 
 /* Adblock Toggle */
@@ -298,11 +343,12 @@ window.launchProxy = function(rawInput) {
   if (!targetUrl) return;
 
   const currentTab = tabs.find(t => t.id === activeTabId);
-  const simIp = '192.168.1.102';
-  const adblockEnabled = localStorage.getItem('onyx_adblock') === 'true';
+  const encodedToken = Buffer.from(encodeURIComponent(targetUrl))
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
   
-  // Ultraviolet style service worker route encoding
-  const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
   const proxyUrl = `/service/${encodedToken}`;
   
   if (currentTab) {
