@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // CORS & Security Headers
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -19,7 +18,6 @@ export default async function handler(req, res) {
   const simIp = req.query.sim_ip || '192.168.1.102';
   const adblock = req.query.adblock === 'true';
 
-  // Decode proxy token cleanly
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -38,7 +36,6 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Strip nested proxy wrappers completely to get the raw destination URL
   while (targetUrl.includes('/api/proxy?token=') || targetUrl.includes('/api/proxy?url=')) {
     try {
       if (targetUrl.includes('token=')) {
@@ -55,7 +52,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Fallback search engine handling (Yahoo Search for address bar queries)
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
@@ -76,49 +72,25 @@ export default async function handler(req, res) {
     const parsedUrl = new URL(targetUrl);
     const baseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
 
-    // Comprehensive modern browser headers to prevent blocks
     const proxyHeaders = {
       'user-agent': selectedUA,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
-      'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
-      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-      'sec-ch-ua-mobile': '?0',
-      'sec-ch-ua-platform': '"Windows"',
-      'sec-fetch-dest': 'document',
-      'sec-fetch-mode': 'navigate',
-      'sec-fetch-site': 'cross-site',
-      'sec-fetch-user': '?1',
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
-      'forwarded': `for=${simIp};proto=https`,
       'cache-control': 'no-cache',
-      'pragma': 'no-cache',
-      'upgrade-insecure-requests': '1',
-      'dnt': '1'
+      'upgrade-insecure-requests': '1'
     };
 
-    if (req.headers.range) {
-      proxyHeaders['range'] = req.headers.range;
-    }
-
-    const fetchOptions = {
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers: proxyHeaders,
       redirect: 'manual',
       compress: true
-    };
+    });
 
-    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
-      if (req.headers['content-type']) proxyHeaders['content-type'] = req.headers['content-type'];
-      if (req.body) fetchOptions.body = typeof req.body === 'object' ? JSON.stringify(req.body) : req.body;
-    }
-
-    const response = await fetch(targetUrl, fetchOptions);
-
-    // Robust Server Redirect Handling (Resolves relative/absolute location headers correctly)
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location');
       if (locationHeader) {
@@ -133,22 +105,9 @@ export default async function handler(req, res) {
     const contentType = rawContentType.toLowerCase();
 
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
-    if (response.headers.get('content-range')) res.setHeader('content-range', response.headers.get('content-range'));
-    if (response.headers.get('accept-ranges')) res.setHeader('accept-ranges', response.headers.get('accept-ranges'));
 
     res.setHeader('x-proxied-by', 'celest-quantum-gateway');
     res.setHeader('referrer-policy', 'no-referrer');
-
-    const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
-      try {
-        const sanitizedCookie = setCookie
-          .replace(/;\s*Domain=[^;]+/gi, '')
-          .replace(/;\s*Secure/gi, '')
-          .replace(/;\s*SameSite=[^;]+/gi, '; SameSite=None');
-        res.setHeader('set-cookie', sanitizedCookie);
-      } catch (e) {}
-    }
 
     const headersToRemove = [
       'x-frame-options',
@@ -157,8 +116,6 @@ export default async function handler(req, res) {
       'x-content-type-options',
       'cross-origin-opener-policy',
       'cross-origin-embedder-policy',
-      'cross-origin-resource-policy',
-      'permissions-policy',
       'strict-transport-security'
     ];
 
@@ -188,35 +145,19 @@ export default async function handler(req, res) {
     if (!isHTML && !isCSS && !isJS) {
       res.status(response.status);
       try { res.removeHeader('content-length'); } catch (e) {}
-      
-      if (response.body) {
-        try {
-          const reader = response.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            res.write(value);
-          }
-          return res.end();
-        } catch (streamErr) {
-          const buffer = Buffer.from(await response.arrayBuffer());
-          return res.send(buffer);
-        }
-      }
-      return res.end();
+      const buffer = Buffer.from(await response.arrayBuffer());
+      return res.send(buffer);
     }
 
     let body = await response.text();
 
     if (isCSS) {
       body = body.replace(/url\((['"]?)([^'"\)]+)\1\)/gi, (m, q, val) => `url(${q}${proxifyUrl(val)}${q})`);
-      body = body.replace(/@import\s+(['"])([^'"\)]+)\1/gi, (m, q, val) => `@import ${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
 
     if (isJS) {
-      body = body.replace(/(fetch\s*\(\s*)(['"])([^'\"]+)\2/gi, (m, p1, q, val) => `${p1}${q}${proxifyUrl(val)}${q}`);
       try { res.removeHeader('content-length'); } catch (e) {}
       return res.status(200).send(body);
     }
@@ -228,28 +169,8 @@ export default async function handler(req, res) {
         .replace(/crossorigin="[^"]*"/gi, '')
         .replace(/http:\/\//gi, 'https://');
 
-      let adblockScript = '';
-      if (adblock) {
-        adblockScript = `
-          <script>
-            (function() {
-              const blockedDomains = ['googlesyndication', 'doubleclick', 'adservice', 'adnxs', 'amazon-adsystem', 'criteo', 'hotjar', 'quantserve', 'scorecardresearch'];
-              const originalFetch = window.fetch;
-              window.fetch = function(...args) {
-                const url = args[0] || '';
-                if (typeof url === 'string' && blockedDomains.some(d => url.includes(d))) {
-                  return Promise.reject(new Error('Blocked by Celest AdBlock'));
-                }
-                return originalFetch.apply(this, args);
-              };
-            })();
-          </script>
-        `;
-      }
-
       const injectionScript = `
         <base href="${baseUrl}/">
-        ${adblockScript}
         <script>
           (function() {
             function encodeProxyUrl(url) {
@@ -261,7 +182,7 @@ export default async function handler(req, res) {
                 
                 const abs = new URL(trimmed, document.baseURI).href;
                 const encoded = btoa(encodeURIComponent(abs)).replace(/=/g, '');
-                return '/api/proxy?token=' + encoded + '&mode=${mode}&device=${device}&vpn=${vpn}&sim_ip=${simIp}&adblock=${adblock}';
+                return '/api/proxy?token=' + encoded + '&sim_ip=${simIp}&adblock=${adblock}';
               } catch(e) { return url; }
             }
 
@@ -285,8 +206,6 @@ export default async function handler(req, res) {
 
       if (body.includes('<head>')) {
         body = body.replace('<head>', `<head>${injectionScript}`);
-      } else if (body.includes('<head ')) {
-        body = body.replace(/<head(.*?)>/i, (m, attrs) => `<head${attrs}>${injectionScript}`);
       } else {
         body = injectionScript + body;
       }
@@ -302,101 +221,35 @@ export default async function handler(req, res) {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>celest — connection error</title>
-        <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+        <title>celest — unknown website</title>
         <style>
           body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
-            background-color: #0b0f19; color: #f3f4f6;
-            font-family: 'Share Tech Mono', monospace;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; text-transform: lowercase;
-            animation: fadeInError 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            background-color: #000000; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; align-items: center; justify-content: flex-start;
+            padding-left: 10vw; overflow: hidden; text-transform: lowercase;
+            animation: fadeInError 0.4s ease-out;
           }
           @keyframes fadeInError {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
           }
-          canvas { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
           .error-container { 
-            position: relative; z-index: 2;
-            display: flex; flex-direction: column; align-items: center; gap: 16px; 
-            max-width: 440px; padding: 30px; background: rgba(17, 24, 39, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
-            backdrop-filter: blur(10px); box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            text-align: center;
+            display: flex; flex-direction: column; align-items: flex-start; gap: 12px; 
+            max-width: 480px; z-Index: 2; position: relative;
           }
-          .error-title { font-size: 1.1rem; color: #38bdf8; font-weight: bold; letter-spacing: 1px; }
-          .error-text { font-size: 0.9rem; color: #9ca3af; line-height: 1.5; }
-          .error-face { font-size: 1.3rem; margin-top: 4px; color: #f3f4f6; white-space: pre; line-height: 1.3; font-family: monospace; }
+          .error-code { font-size: 0.85rem; color: #888888; font-weight: 500; letter-spacing: 1px; }
+          .error-title { font-size: 2rem; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }
+          .error-text { font-size: 0.95rem; color: #aaaaaa; line-height: 1.5; }
         </style>
       </head>
       <body>
-        <canvas id="glslCanvas"></canvas>
         <div class="error-container">
-          <div class="error-title">// connection fault</div>
-          <div class="error-text">unable to resolve target destination. please verify the URL or check your network connection.</div>
-          <div class="error-face">
-  __
-  /  \\
-|    |
-  \\__/
-          </div>
+          <div class="error-code">error 500</div>
+          <div class="error-title">unknown or unreachable website</div>
+          <div class="error-text">we couldn't connect to the requested address. please verify the URL and try again.</div>
         </div>
-        <script>
-          const canvas = document.getElementById('glslCanvas');
-          const ctx = canvas.getContext('2d');
-          let width, height;
-          function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-          }
-          window.addEventListener('resize', resize);
-          resize();
-
-          const particles = [];
-          for(let i=0; i<40; i++) {
-            particles.push({
-              x: Math.random() * width,
-              y: Math.random() * height,
-              vx: (Math.random() - 0.5) * 0.6,
-              vy: (Math.random() - 0.5) * 0.6,
-              size: Math.random() * 2 + 1
-            });
-          }
-
-          function animate() {
-            ctx.fillStyle = 'rgba(11, 15, 25, 0.2)';
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
-            ctx.lineWidth = 1;
-            for(let i=0; i<particles.length; i++) {
-              let p = particles[i];
-              p.x += p.vx; p.y += p.vy;
-              if(p.x < 0) p.x = width; if(p.x > width) p.x = 0;
-              if(p.y < 0) p.y = height; if(p.y > height) p.y = 0;
-
-              ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-              ctx.fill();
-
-              for(let j=i+1; j<particles.length; j++) {
-                let p2 = particles[j];
-                let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-                if(dist < 120) {
-                  ctx.beginPath();
-                  ctx.moveTo(p.x, p.y);
-                  ctx.lineTo(p2.x, p2.y);
-                  ctx.stroke();
-                }
-              }
-            }
-            requestAnimationFrame(animate);
-          }
-          animate();
-        </script>
       </body>
       </html>
     `);
