@@ -22,7 +22,7 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); touch-action: manipulation; text-transform: lowercase; font-weight: 400; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg); color: var(--text); transition: background 0.3s ease, color 0.3s ease; }
 
     #constellation-canvas {
       position: fixed;
@@ -341,7 +341,11 @@
     .setting-card label { font-size: 0.85rem; color: var(--subtext); }
     .setting-input { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; color: var(--text); outline: none; width: 100%; }
 
-    /* Search Engine Picker Grid */
+    .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .theme-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+    .theme-card:hover, .theme-card.active { border-color: var(--text); background: var(--hover); }
+    .theme-color-preview { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--border); }
+
     .search-engines-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 6px; }
     .search-engine-card { background: var(--bg); border: var(--panel-border); border-radius: 8px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
     .search-engine-card:hover, .search-engine-card.active { border-color: var(--text); background: var(--hover); }
@@ -518,20 +522,35 @@
         <h2>settings & preferences</h2>
 
         <div class="settings-tabs-header">
-          <button class="settings-tab-btn active" data-tab="searchengine">search engine</button>
+          <button class="settings-tab-btn active" data-tab="ui">ui themes</button>
+          <button class="settings-tab-btn" data-tab="searchengine">search engine</button>
           <button class="settings-tab-btn" data-tab="privacy">privacy & adblock</button>
           <button class="settings-tab-btn" data-tab="userscripts">userscripts</button>
           <button class="settings-tab-btn" data-tab="tools">inspect element</button>
-          <button class="settings-tab-btn" data-tab="profile">profile</button>
+          <button class="settings-tab-btn" data-tab="profile">profile & chat</button>
           <button class="settings-tab-btn" data-tab="misc">data & backup</button>
         </div>
 
+        <!-- UI Themes Tab -->
+        <div class="settings-tab-pane active" id="pane-ui">
+          <div class="setting-card">
+            <label>color scheme</label>
+            <div class="theme-grid">
+              <div class="theme-card active" data-theme="midnight"><div class="theme-color-preview" style="background:#000000;"></div><span>midnight obsidian</span></div>
+              <div class="theme-card" data-theme="matrix"><div class="theme-color-preview" style="background:#022c14;"></div><span>matrix green</span></div>
+              <div class="theme-card" data-theme="crimson"><div class="theme-color-preview" style="background:#2a080c;"></div><span>crimson red</span></div>
+              <div class="theme-card" data-theme="aquatic"><div class="theme-color-preview" style="background:#061a24;"></div><span>aquatic cyan</span></div>
+              <div class="theme-card" data-theme="sunset"><div class="theme-color-preview" style="background:#24101e;"></div><span>sunset purple</span></div>
+              <div class="theme-card" data-theme="slate"><div class="theme-color-preview" style="background:#1e293b;"></div><span>slate gray</span></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Search Engine Tab -->
-        <div class="settings-tab-pane active" id="pane-searchengine">
+        <div class="settings-tab-pane" id="pane-searchengine">
           <div class="setting-card">
             <label>default search engine</label>
             <div class="search-engines-grid" id="search-engines-container">
-              <!-- Dynamically populated or static cards -->
               <div class="search-engine-card active" data-engine="google">
                 <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=google.com&sz=32" alt="">
                 <span>google</span>
@@ -555,14 +574,6 @@
               <div class="search-engine-card" data-engine="ecosia">
                 <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=ecosia.org&sz=32" alt="">
                 <span>ecosia</span>
-              </div>
-              <div class="search-engine-card" data-engine="startpage">
-                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=startpage.com&sz=32" alt="">
-                <span>startpage</span>
-              </div>
-              <div class="search-engine-card" data-engine="qwant">
-                <img class="search-engine-icon" src="https://www.google.com/s2/favicons?domain=qwant.com&sz=32" alt="">
-                <span>qwant</span>
               </div>
             </div>
           </div>
@@ -601,10 +612,10 @@
           </div>
         </div>
 
-        <!-- Profile Tab -->
+        <!-- Profile & Chat Tab -->
         <div class="settings-tab-pane" id="pane-profile">
           <div class="setting-card">
-            <label>account display name</label>
+            <label>chat display name</label>
             <input type="text" id="profile-name" class="setting-input" placeholder="your username...">
           </div>
           <div class="setting-card">
