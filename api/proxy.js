@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://search.yahoo.com/search?p=' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -106,7 +106,7 @@ export default async function handler(req, res) {
 
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
 
-    res.setHeader('x-proxied-by', 'celest-quantum-gateway');
+    res.setHeader('x-proxied-by', 'onyx-gateway');
     res.setHeader('referrer-policy', 'no-referrer');
 
     const headersToRemove = [
@@ -221,7 +221,7 @@ export default async function handler(req, res) {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>celest — unknown website</title>
+        <title>onyx — connection error</title>
         <style>
           body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
@@ -247,8 +247,8 @@ export default async function handler(req, res) {
       <body>
         <div class="error-container">
           <div class="error-code">error 500</div>
-          <div class="error-title">unknown or unreachable website</div>
-          <div class="error-text">we couldn't connect to the requested address. please verify the URL and try again.</div>
+          <div class="error-title">connection fault</div>
+          <div class="error-text">you might have typed the site wrong!!!!! or some bug i need to fix</div>
         </div>
       </body>
       </html>
