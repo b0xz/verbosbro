@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  // 1. Enable Global CORS Handshaking
   res.setHeader('access-control-allow-origin', '*');
   res.setHeader('access-control-allow-methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('access-control-allow-headers', '*');
@@ -19,7 +18,6 @@ export default async function handler(req, res) {
   const simIp = req.query.sim_ip || '192.168.1.102';
   const adblock = req.query.adblock === 'true';
 
-  // 2. Decode Token using standard Base64 conversion
   if (token && !targetUrl) {
     try {
       let base64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -38,7 +36,6 @@ export default async function handler(req, res) {
     targetUrl = decodeURIComponent(targetUrl);
   } catch (e) {}
 
-  // Prevent infinite extraction patterns
   while (targetUrl.includes('/service/') || targetUrl.includes('/api/proxy?token=')) {
     try {
       if (targetUrl.includes('/service/')) {
@@ -59,12 +56,11 @@ export default async function handler(req, res) {
     }
   }
 
-  // Format incomplete URL lookups safely
   if (!/^https?:\/\//i.test(targetUrl)) {
     if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
       targetUrl = 'https://' + targetUrl;
     } else {
-      targetUrl = 'https://google.com' + encodeURIComponent(targetUrl);
+      targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(targetUrl);
     }
   }
 
@@ -92,7 +88,6 @@ export default async function handler(req, res) {
       'upgrade-insecure-requests': '1'
     };
 
-    // 3. Make fetch request intercepting server-side redirects manually
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: proxyHeaders,
@@ -100,12 +95,10 @@ export default async function handler(req, res) {
       compress: true
     });
 
-    // 4. Handle Case-Insensitive Redirect Location Strings Safely
     if ([301, 302, 303, 307, 308].includes(response.status)) {
       const locationHeader = response.headers.get('location') || response.headers.get('Location');
       if (locationHeader) {
         const absoluteRedirectUrl = new URL(locationHeader, targetUrl).href;
-        // Node Safe Buffer Conversion to avoid character breaking
         const encodedToken = Buffer.from(encodeURIComponent(absoluteRedirectUrl))
           .toString('base64')
           .replace(/=/g, '')
@@ -114,7 +107,6 @@ export default async function handler(req, res) {
           
         const proxiedRedirect = `/service/${encodedToken}`;
         
-        // Use manual redirect fallback structure if res.redirect is not natively provisioned
         if (typeof res.redirect === 'function') {
           return res.redirect(302, proxiedRedirect);
         } else {
@@ -150,7 +142,6 @@ export default async function handler(req, res) {
     const isCSS = contentType.includes('text/css') || contentType.includes('css');
     const isJS = contentType.includes('javascript') || contentType.includes('application/ecmascript') || contentType.includes('module');
 
-    // Helper utility to convert relative/absolute assets seamlessly 
     function proxifyUrl(val) {
       try {
         if (!val || typeof val !== 'string') return val;
@@ -190,7 +181,6 @@ export default async function handler(req, res) {
       return res.status(200).send(body);
     }
 
-    // 5. Inject Client-Side Dom Observers with URL-Safe Encoding Fallbacks
     if (isHTML) {
       body = body
         .replace(/integrity="[^"]*"/gi, '')
@@ -210,7 +200,6 @@ export default async function handler(req, res) {
                 if (trimmed.includes('/service/')) return url;
                 
                 const abs = new URL(trimmed, document.baseURI).href;
-                // Binary and Unicode safe encoding implementation for client browser environments
                 const encoded = btoa(encodeURIComponent(abs))
                   .replace(/=/g, '')
                   .replace(/\\+/g, '-')
@@ -219,7 +208,6 @@ export default async function handler(req, res) {
               } catch(e) { return url; }
             }
 
-            // Capture clicks globally on anchors/buttons to ensure navigation redirects work smoothly
             document.addEventListener('click', function(e) {
               const anchor = e.target.closest('a, area');
               if (anchor && anchor.href && !anchor.href.startsWith('javascript:') && !anchor.href.startsWith('#')) {
@@ -228,7 +216,6 @@ export default async function handler(req, res) {
               }
             }, true);
 
-            // Intercept standard form postings
             document.addEventListener('submit', function(e) {
               const form = e.target;
               if (form && form.action) {
@@ -250,6 +237,43 @@ export default async function handler(req, res) {
     return res.status(200).send(body);
 
   } catch (error) {
-    return res.status(500).send('Internal Proxy Error: ' + error.message);
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>onyx — connection error</title>
+        <style>
+          body {
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+            background-color: #000000; color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; align-items: center; justify-content: flex-start;
+            padding-left: 10vw; overflow: hidden; text-transform: lowercase;
+            animation: fadeInError 0.4s ease-out;
+          }
+          @keyframes fadeInError {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .error-container { 
+            display: flex; flex-direction: column; align-items: flex-start; gap: 12px; 
+            max-width: 480px; z-Index: 2; position: relative;
+          }
+          .error-code { font-size: 0.85rem; color: #888888; font-weight: 500; letter-spacing: 1px; }
+          .error-title { font-size: 2rem; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }
+          .error-text { font-size: 0.95rem; color: #aaaaaa; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="error-container">
+          <div class="error-code">error 500</div>
+          <div class="error-title">connection fault</div>
+          <div class="error-text">you might have typed the site wrong!!!!! or some bug i need to fix</div>
+        </div>
+      </body>
+      </html>
+    `);
   }
 }
