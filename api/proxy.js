@@ -78,15 +78,28 @@ export default async function handler(req, res) {
 
     const proxyHeaders = {
       'user-agent': selectedUA,
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
+      'accept-encoding': 'gzip, deflate, br',
       'referer': `${baseUrl}/`,
       'origin': baseUrl,
       'x-forwarded-for': simIp,
       'x-real-ip': simIp,
       'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'sec-fetch-dest': 'document',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-user': '?1',
       'upgrade-insecure-requests': '1'
     };
+
+    const clientHeaders = req.headers;
+    if (clientHeaders['cookie']) proxyHeaders['cookie'] = clientHeaders['cookie'];
+    if (clientHeaders['authorization']) proxyHeaders['authorization'] = clientHeaders['authorization'];
 
     const response = await fetch(targetUrl, {
       method: req.method,
@@ -120,6 +133,11 @@ export default async function handler(req, res) {
     const contentType = rawContentType.toLowerCase();
 
     try { res.setHeader('content-type', rawContentType); } catch (e) {}
+
+    const setCookieHeader = response.headers.get('set-cookie');
+    if (setCookieHeader) {
+      try { res.setHeader('set-cookie', setCookieHeader.replace(/Domain=[^;]+/gi, '')); } catch(e) {}
+    }
 
     res.setHeader('x-proxied-by', 'onyx-ultraviolet-gateway');
     res.setHeader('referrer-policy', 'no-referrer');
