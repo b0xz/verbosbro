@@ -4,22 +4,21 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const CURRENT_VERSION = 'celest_v1.4';
-if (localStorage.getItem('celest_version') !== CURRENT_VERSION) {
-  localStorage.setItem('celest_version', CURRENT_VERSION);
+const CURRENT_VERSION = 'onyx_v1.5';
+if (localStorage.getItem('onyx_version') !== CURRENT_VERSION) {
+  localStorage.setItem('onyx_version', CURRENT_VERSION);
 }
 
-if (!localStorage.getItem('celest_user_name')) {
-  localStorage.setItem('celest_user_name', 'celestuser-' + Math.floor(1000 + Math.random() * 9000));
-  localStorage.setItem('celest_user_bio', 'exploring the web with celest.');
-  localStorage.setItem('celest_user_pfp', '🚀');
-  localStorage.setItem('celest_user_color', '#ffffff');
+if (!localStorage.getItem('onyx_user_name')) {
+  localStorage.setItem('onyx_user_name', 'onyxuser-' + Math.floor(1000 + Math.random() * 9000));
+  localStorage.setItem('onyx_user_bio', 'exploring the web with onyx.');
+  localStorage.setItem('onyx_user_pfp', '💎');
 }
 
 let tabs = [{ id: 1, title: 'new tab', url: '', src: 'about:blank' }];
 let activeTabId = 1;
-let historyLog = JSON.parse(localStorage.getItem('celest_history') || '[]');
-let bookmarksList = JSON.parse(localStorage.getItem('celest_bookmarks') || '[]');
+let historyLog = JSON.parse(localStorage.getItem('onyx_history') || '[]');
+let bookmarksList = JSON.parse(localStorage.getItem('onyx_bookmarks') || '[]');
 
 const tabBar = document.getElementById('tab-bar');
 const addTabBtn = document.getElementById('add-tab-btn');
@@ -169,54 +168,49 @@ document.querySelectorAll('.settings-tab-btn').forEach(btn => {
   });
 });
 
-/* Themes */
-const THEMES = {
-  midnight: { bg: '#0b0f19', panel: '#111827', border: '#1f2937', text: '#f3f4f6', subtext: '#9ca3af', accent: '#3b82f6', hover: '#1f2937' },
-  oled: { bg: '#000000', panel: '#050505', border: '#1f1f1f', text: '#f8fafc', subtext: '#888888', accent: '#ffffff', hover: '#121212' },
-  matrix: { bg: '#020b05', panel: '#051b0f', border: '#133a23', text: '#86efac', subtext: '#4ade80', accent: '#22c55e', hover: '#0d2e1a' },
-  blossom: { bg: '#12050b', panel: '#210813', border: '#421226', text: '#fbcfe8', subtext: '#f472b6', accent: '#ec4899', hover: '#300b1b' },
-  crimson: { bg: '#120305', panel: '#21080b', border: '#3d1217', text: '#fca5a5', subtext: '#f87171', accent: '#ef4444', hover: '#2f0c11' },
-  aquatic: { bg: '#020d14', panel: '#051926', border: '#0e314a', text: '#7dd3fc', subtext: '#38bdf8', accent: '#0ea5e9', hover: '#092436' }
+/* Search Engine Selector */
+const SEARCH_ENGINES = {
+  google: 'https://www.google.com/search?q=',
+  duckduckgo: 'https://duckduckgo.com/?q=',
+  yahoo: 'https://search.yahoo.com/search?p=',
+  bing: 'https://www.bing.com/search?q=',
+  brave: 'https://search.brave.com/search?q=',
+  ecosia: 'https://www.ecosia.org/search?q=',
+  startpage: 'https://www.startpage.com/sp/search?query=',
+  qwant: 'https://www.qwant.com/?q='
 };
 
-function applyTheme(key) {
-  const t = THEMES[key] || THEMES.midnight;
-  const root = document.documentElement;
-  root.style.setProperty('--bg', t.bg);
-  root.style.setProperty('--panel', t.panel);
-  root.style.setProperty('--border', t.border);
-  root.style.setProperty('--text', t.text);
-  root.style.setProperty('--subtext', t.subtext);
-  root.style.setProperty('--accent', t.accent);
-  root.style.setProperty('--hover', t.hover);
-  localStorage.setItem('celest_theme', key);
-}
-
-document.querySelectorAll('.theme-card').forEach(card => {
-  card.addEventListener('click', () => {
-    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+let activeEngineKey = localStorage.getItem('onyx_search_engine') || 'google';
+document.querySelectorAll('.search-engine-card').forEach(card => {
+  if (card.getAttribute('data-engine') === activeEngineKey) {
     card.classList.add('active');
-    applyTheme(card.getAttribute('data-theme'));
+  } else {
+    card.classList.remove('active');
+  }
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.search-engine-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    activeEngineKey = card.getAttribute('data-engine');
+    localStorage.setItem('onyx_search_engine', activeEngineKey);
   });
 });
-applyTheme(localStorage.getItem('celest_theme') || 'midnight');
 
 /* Adblock Toggle */
 const adblockToggle = document.getElementById('adblock-toggle');
 if (adblockToggle) {
-  adblockToggle.checked = localStorage.getItem('celest_adblock') === 'true';
+  adblockToggle.checked = localStorage.getItem('onyx_adblock') === 'true';
   adblockToggle.addEventListener('change', (e) => {
-    localStorage.setItem('celest_adblock', e.target.checked);
+    localStorage.setItem('onyx_adblock', e.target.checked);
   });
 }
 
 /* Userscripts Management */
 const userscriptInput = document.getElementById('userscript-input');
 if (userscriptInput) {
-  userscriptInput.value = localStorage.getItem('celest_userscript_code') || '';
+  userscriptInput.value = localStorage.getItem('onyx_userscript_code') || '';
 }
 document.getElementById('save-userscript')?.addEventListener('click', () => {
-  localStorage.setItem('celest_userscript_code', userscriptInput.value);
+  localStorage.setItem('onyx_userscript_code', userscriptInput.value);
   alert('userscript saved successfully!');
 });
 
@@ -288,7 +282,8 @@ function processUrl(rawInput) {
   let query = rawInput.trim();
   if (!query) return '';
   if (!query.includes('.') || query.includes(' ')) {
-    return 'https://search.yahoo.com/search?p=' + encodeURIComponent(query);
+    const baseSearchUrl = SEARCH_ENGINES[activeEngineKey] || SEARCH_ENGINES.google;
+    return baseSearchUrl + encodeURIComponent(query);
   }
   if (/^https?:\/\//i.test(query)) return query;
   return 'https://' + query;
@@ -300,8 +295,8 @@ window.launchProxy = function(rawInput) {
 
   const currentTab = tabs.find(t => t.id === activeTabId);
   const simIp = '192.168.1.102';
-  const adblockEnabled = localStorage.getItem('celest_adblock') === 'true';
-  const userscript = localStorage.getItem('celest_userscript_code') || '';
+  const adblockEnabled = localStorage.getItem('onyx_adblock') === 'true';
+  const userscript = localStorage.getItem('onyx_userscript_code') || '';
   
   const encodedToken = btoa(encodeURIComponent(targetUrl)).replace(/=/g, '');
   const proxyUrl = `/api/proxy?token=${encodedToken}&sim_ip=${simIp}&adblock=${adblockEnabled}`;
@@ -314,9 +309,8 @@ window.launchProxy = function(rawInput) {
 
   historyLog.unshift({ url: targetUrl, time: new Date().toLocaleTimeString() });
   if (historyLog.length > 50) historyLog.pop();
-  localStorage.setItem('celest_history', JSON.stringify(historyLog));
+  localStorage.setItem('onyx_history', JSON.stringify(historyLog));
 
-  // Update address bar to show clean human-readable domain/path
   if (proxyInput) proxyInput.value = targetUrl;
   hideAllPages();
   if (proxyViewer) proxyViewer.classList.add('active');
